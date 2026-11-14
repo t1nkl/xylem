@@ -6,5 +6,26 @@
     <description>Xylem updates</description>
     <language>en</language>
     <!-- items: newest first -->
+    <item>
+      <title>v1.0.0</title>
+      <pubDate>Sat, 14 Nov 2026 23:33:12 GMT</pubDate>
+      <sparkle:version>13</sparkle:version>
+      <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### New
+- **Automatic updates.** Xylem checks for a new version every few hours, downloads it in the background and installs it when you quit. Xylem > Check for Updates… shows what's new and can install it right away; Settings > General > Updates turns the automatic check off.
+- **Crash reports.** If Xylem crashes, it sends a report so the bug can be fixed: the error, macOS version, Mac model and Xylem version - never your prompts, files or IP address.
+- **Estimated costs are marked.** A model Xylem doesn't have a price for yet is priced like the newest model of its family, and the Usage dashboard now says so: an "estimated" tag on its row and the estimated part under Total Cost.
+
+### Improved
+- Right panel: section arrows before the titles, clearer headers, and Claude/Git and This project/All switches across the full width. The panel refreshes by itself; Cmd+K "Refresh Sidebar" is still there.
+- Settings > General fits without scrolling.
+
+### Changed
+- Xylem now runs on Apple silicon Macs only (M1 or newer).
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.0.0/Xylem-v1.0.0.dmg" type="application/octet-stream" sparkle:edSignature="rnH9PStKXtKQsXvcbneuquNKaOuCLhkV6o2+D+8rI8PU4y/2k9iwFRryiOtQX3GonDJ57atGGQVSdum4ghyMAQ==" length="5649967"/>
+    </item>
   </channel>
 </rss>
