@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
   <channel>
     <title>Xylem</title>
-    <link>https://t1nkl.github.io/xylem-releases/</link>
+    <link>https://t1nkl.github.io/xylem/</link>
     <description>Xylem updates</description>
     <language>en</language>
     <!-- items: newest first -->
