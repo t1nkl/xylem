@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://t1nkl.github.io/xylem/sitemap.xml
+Sitemap: https://xylem.t1nkl.dev/sitemap.xml
