@@ -7,6 +7,27 @@
     <language>en</language>
     <!-- items: newest first -->
     <item>
+      <title>v1.0.3</title>
+      <pubDate>Sun, 15 Nov 2026 17:48:54 GMT</pubDate>
+      <sparkle:version>16</sparkle:version>
+      <sparkle:shortVersionString>1.0.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### New
+- **Send crash reports switch.** Settings > General > Privacy lets you turn crash reports off (they are on by default and take effect after a restart). Reports never include your prompts or project names.
+
+### Improved
+- **Recent Projects fill the window.** The New Tab screen shows as many full rows of projects as fit on your screen, with a "Show more" tile at the end when there are more.
+- **No more piles of empty tabs.** New Tab takes you to a tab that is still waiting for a folder instead of opening another one.
+- **Full first prompt on hover.** In the Sessions list, hovering a session shows its whole first message, not just the first line.
+- **Hover feedback** on tabs, the tab close button, Open Folder, Command Palette, All Sessions and Doctor.
+- **Cleaner prompt search.** Cmd+K no longer lists prompts from temporary folders left behind by other tools.
+- **Tidier welcome screens.** The Resume button names the project instead of quoting your last prompt, and the New Tab screen sits higher with less empty space.
+- The Settings window opens centred on the screen and fits the General tab without scrolling.
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.0.3/Xylem-v1.0.3.dmg" type="application/octet-stream" sparkle:edSignature="gBX03bFVGv8RXhCwtqhscsEBqEagHIO10E8mVS/dXPmrRdBbp3f+JfqJGpT8YTYj+XHohwyQCth0d41Lt93uBg==" length="5687349"/>
+    </item>
+    <item>
       <title>v1.0.2</title>
       <pubDate>Sun, 15 Nov 2026 12:58:12 GMT</pubDate>
       <sparkle:version>15</sparkle:version>
