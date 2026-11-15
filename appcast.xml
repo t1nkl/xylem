@@ -7,6 +7,19 @@
     <language>en</language>
     <!-- items: newest first -->
     <item>
+      <title>v1.0.2</title>
+      <pubDate>Sun, 15 Nov 2026 12:58:12 GMT</pubDate>
+      <sparkle:version>15</sparkle:version>
+      <sparkle:shortVersionString>1.0.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### Improved
+- **Cleaner project lists.** Projects that live in temporary folders (left behind by tools that run Claude Code once per task) no longer fill Directories, Recent Projects and Sessions. Usage still counts what they cost.
+- **Clearer folder prompts.** When macOS asks whether Xylem may open your Desktop, Documents, Downloads or an external or network drive, the prompt now says why: Claude Code and the shell in your tabs need it to work with your projects there.
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.0.2/Xylem-v1.0.2.dmg" type="application/octet-stream" sparkle:edSignature="ucm9BWbpFWHfMeNgMr9hTEj+N+/iLL2Uv1mDEA8HI95uO5JQkgTLH4VZFkGOZOceVLlFuXBSuQjvqyTz6Rb8Ag==" length="5660835"/>
+    </item>
+    <item>
       <title>v1.0.1</title>
       <pubDate>Sun, 15 Nov 2026 08:53:00 GMT</pubDate>
       <sparkle:version>14</sparkle:version>
