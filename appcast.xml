@@ -7,6 +7,20 @@
     <language>en</language>
     <!-- items: newest first -->
     <item>
+      <title>v1.0.4</title>
+      <pubDate>Sun, 15 Nov 2026 18:13:29 GMT</pubDate>
+      <sparkle:version>17</sparkle:version>
+      <sparkle:shortVersionString>1.0.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### Fixed
+- **Project names.** Projects that have no saved sessions showed wrong names and paths: a folder like `billing-api` appeared as `api`, under a path that doesn't exist. Xylem now finds the real folder on disk, whatever its name (dashes, dots, spaces or non-Latin letters).
+- **Smoother scrolling** through a long Recent Projects list: every card has the same height now ("No sessions" for a project without any).
+- **Dates.** After a week, recent projects and sessions show the day ("Oct 20", or "Oct 20, 2025" for earlier years) instead of "20/10/26".
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.0.4/Xylem-v1.0.4.dmg" type="application/octet-stream" sparkle:edSignature="TA/of+zDZLKoKiQnmmbOScf7zvHNYnCBqC6vm2+VKjer71BWwVvommMQkba8gi3f2EMZUXuj4Ql0UusRA8vZAw==" length="5694401"/>
+    </item>
+    <item>
       <title>v1.0.3</title>
       <pubDate>Sun, 15 Nov 2026 17:48:54 GMT</pubDate>
       <sparkle:version>16</sparkle:version>
