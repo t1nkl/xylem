@@ -128,7 +128,7 @@
     background: var(--w-main); color: var(--w-text);
     box-shadow: 0 0 0 1px #3A3A3A, 0 40px 80px -30px rgba(0,0,0,.9);
     font: 13px/1.3 var(--sys);
-    display: grid; grid-template-columns: 252px minmax(0, 1fr) 260px; grid-template-rows: 52px minmax(0, 1fr) 36px;
+    display: grid; grid-template-columns: var(--side-w, 252px) minmax(0, 1fr) 260px; grid-template-rows: 52px minmax(0, 1fr) 36px;
   }
   .win * { min-width: 0; }
   .win svg { flex: none; }
@@ -141,6 +141,16 @@
   .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
   .lights i:nth-child(1) { background: #FF5F57; } .lights i:nth-child(2) { background: #FEBC2E; } .lights i:nth-child(3) { background: #28C840; }
   .side-head .ib { margin-left: auto; }
+  .sbt { all: unset; box-sizing: border-box; display: grid; place-items: center; width: 30px; height: 26px; border-radius: 8px; color: var(--w-text2); cursor: pointer; margin-left: auto; }
+  .sbt:hover { background: rgba(255,255,255,.08); color: var(--w-text); }
+  .sbt:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  /* The tab list collapsed, as the system sidebar button does in the app:
+     the column goes to 0, the lights and the button stay at the toolbar's left. */
+  .win.noside { --side-w: 0px; }
+  .win.noside .side { padding: 0; border: 0; overflow: visible; }
+  .win.noside .side > :not(.side-head) { display: none; }
+  .win.noside .side-head { position: absolute; top: 0; left: 14px; z-index: 4; width: 96px; padding: 0; }
+  .win.noside .toolbar { padding-left: 120px; }
   .ib { display: grid; place-items: center; width: 30px; height: 26px; border-radius: 8px; color: var(--w-text2); }
   .search { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.08); border-radius: 9px; padding: 6px 9px; color: var(--w-muted); margin: 2px 0 12px; }
   .label { color: var(--w-muted); font-size: 11px; font-weight: 600; padding: 0 6px 6px; }
@@ -203,11 +213,14 @@
   .term.pick { background: #1A1A1A; font: 12px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--body, sans-serif); color: #EBEBEB; padding: 26px 22px 16px; overflow: auto; align-items: center; }
   .pk-hero { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
   .pk-icon { width: 52px; height: 52px; border-radius: 12px; display: grid; place-items: center; color: #16A34A; background: rgba(22,163,74,.14); box-shadow: inset 0 0 0 1px rgba(22,163,74,.5); }
-  .pk-hero b { font-size: 22px; font-weight: 600; }
   .pk-hero span { color: #A0A0A0; }
   .pk-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 440px; margin: 18px 0 20px; }
   .pk-btn { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 8px; font-weight: 600; background: rgba(22,163,74,.22); box-shadow: inset 0 0 0 1px rgba(22,163,74,.5); }
   .pk-btn.alt { background: rgba(46,46,46,.7); box-shadow: inset 0 0 0 .5px #2E2E2E; color: #A0A0A0; font-weight: 500; }
+  .pk-btn { transition: background .12s, box-shadow .12s, color .12s; }
+  .pk-btn:hover { background: rgba(22,163,74,.34); box-shadow: inset 0 0 0 1px rgba(22,163,74,.85); }
+  .pk-btn.alt:hover { background: #2E2E2E; box-shadow: inset 0 0 0 .5px rgba(112,112,112,.6); color: #EBEBEB; }
+  .pk-btn:active { opacity: .75; }
   .pk-btn kbd { margin-left: auto; font: 10px/1 ui-monospace, Menlo, monospace; padding: 2px 5px; border-radius: 3px; box-shadow: inset 0 0 0 .5px rgba(235,235,235,.25); color: rgba(235,235,235,.7); background: none; border: 0; }
   .pk-recent { width: 100%; }
   .pk-head { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; letter-spacing: .08em; color: #6B6B6B; margin-bottom: 8px; }
@@ -231,6 +244,7 @@
   .strip span { display: flex; align-items: center; gap: 5px; }
   .strip .div { width: 1px; height: 16px; background: #3A3A3A; }
   .strip .doc { margin-left: auto; color: var(--accent); }
+  .strip button.doc:hover:not(:disabled) { color: var(--accent); }
   .strip .doc svg { color: var(--accent); }
 
   /* right: the Claude panel, new style */
@@ -317,7 +331,7 @@
   .search input::placeholder { color: var(--w-muted); }
   .search:focus-within { box-shadow: 0 0 0 2px rgba(110,168,254,.6); }
   .tab { position: relative; }
-  .tab .x { position: absolute; right: 6px; top: 50%; margin-top: -9px; width: 18px; height: 18px; border-radius: 5px; display: none; place-items: center; color: var(--w-text2); }
+  .tab .x { position: absolute; right: 6px; top: 7px; width: 18px; height: 18px; border-radius: 5px; display: none; place-items: center; color: var(--w-text2); }
   .tab:hover .x, .tab:focus-within .x { display: grid; }
   .tab .x:hover { background: rgba(255,255,255,.12); color: var(--w-text); }
   .tab .x .ico { width: 10px; height: 10px; stroke-width: 2; }
@@ -330,7 +344,7 @@
   .pill .model:hover:not(:disabled) { background: rgba(255,255,255,.08); }
   .pill .model:disabled { opacity: .4; }
   .win.noinsp .insp { display: none; }
-  .win.noinsp { grid-template-columns: 252px minmax(0, 1fr) 0; }
+  .win.noinsp { grid-template-columns: var(--side-w, 252px) minmax(0, 1fr) 0; }
   .win.noinsp .term, .win.noinsp .strip { grid-column: 2 / 4; }
 
   .term:focus { outline: none; }
@@ -422,8 +436,8 @@
   @media (max-width: 1100px) {
     .overlay.menu { right: 12px; }
     .overlay.pop { right: 8px; }
-    .toast { left: calc(236px + (100% - 236px) / 2); }
-    .win.noinsp { grid-template-columns: 236px minmax(0, 1fr); }
+    .toast { left: calc(var(--side-w, 236px) + (100% - var(--side-w, 236px)) / 2); }
+    .win.noinsp { grid-template-columns: var(--side-w, 236px) minmax(0, 1fr); }
     .win.noinsp .term, .win.noinsp .strip { grid-column: 2; }
   }
   @media (max-width: 680px) {
@@ -441,11 +455,11 @@
     summary::after, .win > * { transition: none; }
   }
   @media (max-width: 1100px) {
-    .win { grid-template-columns: 236px minmax(0, 1fr); }
+    .win { grid-template-columns: var(--side-w, 236px) minmax(0, 1fr); }
     .insp { display: none; }
     .toolbar { grid-column: 2 / 3; }
     .pill.icons { display: none; }
-    .overlay { left: calc(236px + (100% - 236px) / 2); }
+    .overlay { left: calc(var(--side-w, 236px) + (100% - var(--side-w, 236px)) / 2); }
     .win.show-insp .insp { display: block; position: absolute; z-index: 3; right: 0; top: 52px; bottom: 0; width: min(260px, 80%); box-shadow: -20px 0 40px rgba(0,0,0,.5); }
   }
   @media (max-width: 980px) {
@@ -528,9 +542,9 @@
   <div class="stage">
     <div class="win" aria-label="A live Xylem window you can click around in">
       <aside class="side">
-        <div class="side-head" aria-hidden="true">
-          <div class="lights"><i></i><i></i><i></i></div>
-          <span class="ib"><svg class="ico"><use href="#i-sidebar"/></svg></span>
+        <div class="side-head">
+          <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+          <button type="button" class="ib sbt" data-act="side" aria-label="Hide the tab list" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-sidebar"/></svg></button>
         </div>
         <label class="search"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><input type="search" placeholder="Search tabs" aria-label="Search tabs" autocomplete="off" spellcheck="false"></label>
         <div class="label" aria-hidden="true">Tabs</div>
@@ -631,7 +645,7 @@
         </details>
         <details>
           <summary>What leaves my Mac?</summary>
-          <p>Nothing about you or your code. Xylem checks status.claude.com for outages, skills.sh for the skills directory, and every few hours this site for a new version of Xylem. If Xylem crashes, it sends a crash report to Sentry with the error, macOS version, Mac model and Xylem version, never your prompts, files or IP address. Claude Code talks to Anthropic as usual.</p>
+          <p>Nothing about you or your code. Xylem checks status.claude.com for outages, skills.sh for the skills directory, and every few hours this site for a new version of Xylem. If Xylem crashes, it sends a crash report to Sentry with the error, macOS version, Mac model and Xylem version, never your prompts, files or IP address. You can turn crash reports off in Settings &gt; General &gt; Privacy. Claude Code talks to Anthropic as usual.</p>
         </details>
         <details>
           <summary>Which Macs does it run on?</summary>
@@ -817,7 +831,7 @@
   }
 
   const folderIcon = c => `<span class="pk-f" style="background:${c}2E;color:${c}"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M1.5 3.5A1.5 1.5 0 0 1 3 2h3.2l1.6 1.6H13A1.5 1.5 0 0 1 14.5 5v7A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12z" fill="currentColor"/></svg></span>`;
-  const pickerHTML = () => `<div class="pk-hero"><span class="pk-icon"><svg width="24" height="24" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3" fill="currentColor"/><path d="M6.5 9.5l3 2.5-3 2.5M11.5 15h5" fill="none" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><b>Xylem</b><span>Pick a project folder to spin up Claude Code.</span></div>
+  const pickerHTML = () => `<div class="pk-hero"><span class="pk-icon"><svg width="24" height="24" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3" fill="currentColor"/><path d="M6.5 9.5l3 2.5-3 2.5M11.5 15h5" fill="none" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Pick a project folder to spin up Claude Code.</span></div>
     <div class="pk-actions"><button type="button" class="pk-btn" data-act="openfolder">Open Folder… <kbd>⌘O</kbd></button><button type="button" class="pk-btn alt" data-act="palette">Command Palette <kbd>⌘K</kbd></button></div>
     <div class="pk-recent"><div class="pk-head"><span>RECENT PROJECTS</span><span>${recent.length}</span></div><div class="pk-grid">${recent.map(([n, p, t, k, c], i) =>
       `<button type="button" class="pk-card" data-open="${i}" aria-label="Open ${n}"><span class="pk-top">${folderIcon(c)}<small>${t}</small></span><b>${n}</b><span class="path">${p}</span><span class="n">${k} sessions</span></button>`).join('')}</div></div>`;
@@ -945,11 +959,16 @@
   function runAction(act, el) {
     const t = active();
     switch (act) {
-      case 'newtab': addTab(mk({ picker: true, name: 'New Tab', path: 'Pick a folder' })); break;
+      case 'newtab': { // as in the app: go to a tab still waiting for a folder
+        const waiting = t.picker ? t : tabs.find(x => x.picker);
+        if (waiting) select(waiting.id); else addTab(mk({ picker: true, name: 'New Tab', path: 'Pick a folder' }));
+        break;
+      }
       case 'openfolder': { const i = recent.findIndex(r => !tabs.some(t => t.name === r[0])); openProject(i < 0 ? 0 : i); break; }
       case 'palette': openPalette(''); break;
       case 'usage': toggle($('.overlay.usage')); break;
       case 'insp': win.classList.toggle('noinsp'); closeOverlays(); fitStrip(); break;
+      case 'side': setSide(!win.classList.contains('noside')); break;
       case 'overview': openOverview(); break;
       case 'model': {
         if (t.picker) break;
@@ -1001,6 +1020,13 @@
 
   // ---------- overlays ----------
   function closeOverlays() { win.querySelectorAll('.overlay.show').forEach(o => o.classList.remove('show')); }
+  function setSide(collapsed) {
+    win.classList.toggle('noside', collapsed);
+    const b = $('.sbt');
+    b.setAttribute('aria-pressed', String(collapsed));
+    b.setAttribute('aria-label', collapsed ? 'Show the tab list' : 'Hide the tab list');
+    closeOverlays(); fitStrip();
+  }
   function toggle(o) { const show = !o.classList.contains('show'); closeOverlays(); o.classList.toggle('show', show); }
   let toastTimer = 0;
   function toast(text) {
@@ -1164,6 +1190,8 @@
   const narrow = matchMedia('(max-width: 1100px)');
   const phone = matchMedia('(max-width: 680px)');
   let pinned = null;
+  // Phones show the tabs as an avatar strip with no collapse button.
+  phone.addEventListener('change', e => { if (e.matches && win.classList.contains('noside')) setSide(false); });
   function focus(key) {
     win.classList.remove('focusing', 'focus-attention', 'focus-branch', 'show-insp');
     renderTop();
@@ -1172,6 +1200,7 @@
     items.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.key === key)));
     if (!key) return;
     win.classList.add('focusing');
+    if ((key === 'tabs' || key === 'attention') && win.classList.contains('noside')) setSide(false);
     if (key === 'prompts') { palette.classList.add('show'); palField.value = 'retry'; palSel = 0; renderPalette(); return; }
     if (key === 'panel' && (narrow.matches || win.classList.contains('noinsp'))) {
       // The panel is hidden: slide it in over the terminal.
