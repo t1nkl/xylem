@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Xylem - a native Mac app for Claude Code</title>
-<meta name="description" content="A free Mac app for Claude Code: every conversation in its own tab, a mark on the one waiting for you, and your usage and Claude setup always at hand.">
+<meta name="description" content="A free desktop app for Claude Code on Mac: run every session in its own tab, see which one needs you, and track usage, costs and your Claude setup.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="author" content="t1nkl">
 <link rel="canonical" href="https://xylem.t1nkl.dev/">
@@ -16,7 +16,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://xylem.t1nkl.dev/">
 <meta property="og:title" content="Xylem - every Claude Code session in one Mac window">
-<meta property="og:description" content="A free Mac app for Claude Code: every conversation in its own tab, a mark on the one waiting for you, and your usage and Claude setup always at hand.">
+<meta property="og:description" content="A free desktop app for Claude Code on Mac: run every session in its own tab, see which one needs you, and track usage, costs and your Claude setup.">
 <meta property="og:image" content="https://xylem.t1nkl.dev/assets/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
@@ -24,7 +24,7 @@
 <meta property="og:image:alt" content="Xylem: every Claude Code session, one window. A free native Mac app.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Xylem - every Claude Code session in one Mac window">
-<meta name="twitter:description" content="A free Mac app for Claude Code: every conversation in its own tab, a mark on the one waiting for you, and your usage and Claude setup always at hand.">
+<meta name="twitter:description" content="A free desktop app for Claude Code on Mac: run every session in its own tab, see which one needs you, and track usage, costs and your Claude setup.">
 <meta name="twitter:image" content="https://xylem.t1nkl.dev/assets/og-image.png">
 <meta name="twitter:image:alt" content="Xylem: every Claude Code session, one window. A free native Mac app.">
 
@@ -38,13 +38,24 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Xylem",
-  "description": "A free Mac app for Claude Code: every conversation in its own tab, a mark on the one waiting for you, and your usage and Claude setup always at hand.",
+  "description": "A free desktop app for Claude Code on Mac: run every session in its own tab, see which one needs you, and track usage, costs and your Claude setup.",
   "url": "https://xylem.t1nkl.dev/",
   "image": "https://xylem.t1nkl.dev/assets/og-image.png",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "macOS 26 or later (Apple silicon)",
   "downloadUrl": "https://github.com/t1nkl/xylem/releases/latest",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "isAccessibleForFree": true,
+  "screenshot": "https://xylem.t1nkl.dev/assets/og-image.png",
+  "featureList": [
+    "Run several Claude Code sessions side by side, one per tab",
+    "See which session is working, finished or waiting for your permission",
+    "Tabs reopen with their own conversation after a restart",
+    "Skills, agents, MCP servers, plugins, permissions and hooks of the current project in one panel",
+    "Token usage and API-price costs by model, project, session and day",
+    "Search every past prompt and jump back into that conversation",
+    "Open a git worktree on a new branch in its own tab"
+  ],
   "author": { "@type": "Person", "name": "t1nkl", "url": "https://github.com/t1nkl" }
 }
 </script>
@@ -211,7 +222,7 @@
   .pk-card .n { align-self: flex-start; font-size: 9px; font-weight: 500; color: #A0A0A0; background: #2E2E2E; border-radius: 99px; padding: 1px 6px; }
   button.round { font: inherit; color: inherit; border: 0; cursor: pointer; }
   .caret { display: inline-block; width: 7px; height: 14px; background: #CCCCCC; vertical-align: -2px; }
-  .term .perm { margin-top: 12px; border-top: 1px solid #4A4A4A; padding-top: 8px; }
+  .term .perm { margin-top: 12px; border-top: 1px solid #4A4A4A; padding: 8px 0 12px; }
   .term .perm .q { color: #EBEBEB; font-weight: 500; margin-bottom: 4px; }
   .term .perm .sel { color: #6EA8FE; }
 
@@ -298,6 +309,133 @@
   footer .wrap { display: flex; flex-wrap: wrap; gap: 10px 32px; justify-content: space-between; }
   footer p { margin: 0; }
 
+  /* ---------- live window: controls ---------- */
+  :where(.win button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
+  .win button:disabled { cursor: default; }
+  .win.off .ring, .win.off .ring::after { animation-play-state: paused; }
+  .search input { all: unset; flex: 1; min-width: 0; color: var(--w-text); }
+  .search input::placeholder { color: var(--w-muted); }
+  .search:focus-within { box-shadow: 0 0 0 2px rgba(110,168,254,.6); }
+  .tab { position: relative; }
+  .tab .x { position: absolute; right: 6px; top: 50%; margin-top: -9px; width: 18px; height: 18px; border-radius: 5px; display: none; place-items: center; color: var(--w-text2); }
+  .tab:hover .x, .tab:focus-within .x { display: grid; }
+  .tab .x:hover { background: rgba(255,255,255,.12); color: var(--w-text); }
+  .tab .x .ico { width: 10px; height: 10px; stroke-width: 2; }
+  .ico.rot { transform: rotate(45deg); }
+  .tabs .none { color: var(--w-muted); padding: 8px; font-size: 12px; }
+  .all { border-radius: 8px; }
+  .all:hover { background: rgba(255,255,255,.05); }
+  .toolbar .round:hover, .pill .ib:hover { background: rgba(255,255,255,.12); }
+  .pill .model { border-radius: 6px; padding: 3px 4px; margin: 0 -4px; }
+  .pill .model:hover:not(:disabled) { background: rgba(255,255,255,.08); }
+  .pill .model:disabled { opacity: .4; }
+  .win.noinsp .insp { display: none; }
+  .win.noinsp { grid-template-columns: 252px minmax(0, 1fr) 0; }
+  .win.noinsp .term, .win.noinsp .strip { grid-column: 2 / 4; }
+
+  .term:focus { outline: none; }
+  .term:focus-visible { box-shadow: inset 0 0 0 2px rgba(110,168,254,.5); }
+  .term .spin .y { display: inline-block; width: 1ch; }
+  .term .opt { display: block; text-align: left; color: #7A7A7A; font: inherit; }
+  .term .opt.sel { color: #6EA8FE; }
+  .term .opt:hover { color: #EBEBEB; }
+  .term .draft { color: #EBEBEB; white-space: pre; }
+  .term .welcome { border: 1px solid #D97757; border-radius: 6px; padding: 6px 10px; color: #EBEBEB; align-self: flex-start; margin-bottom: 4px; }
+  .term .welcome small { display: block; color: #7A7A7A; font-size: 11.5px; }
+
+  .strip { gap: 2px; padding: 0 8px; }
+  .strip button, .strip .div { flex: none; }
+  .strip button { display: flex; align-items: center; gap: 5px; padding: 3px 7px; border-radius: 5px; color: var(--w-text2); }
+  .strip button:hover:not(:disabled) { background: rgba(255,255,255,.08); color: var(--w-text); }
+  .strip button:disabled { opacity: .35; }
+  .strip .div { margin: 0 6px; }
+  .strip .doc { margin-left: auto; color: var(--accent); }
+  .strip.icons .lbl { display: none; }
+  .strip.tight .more { display: none; }
+
+  .insp { overflow: auto; scrollbar-width: none; }
+  .seg button { padding: 3px 0; border-radius: 6px; color: var(--w-text2); }
+  .seg button.on { background: var(--w-seg); color: #fff; font-weight: 600; }
+  .sec { width: 100%; text-align: left; }
+  .sec .ico { transition: transform .15s; }
+  .sec.closed .ico { transform: rotate(-90deg); }
+  .sec .plus { margin-left: auto; color: var(--w-muted); font-weight: 400; font-size: 15px; line-height: 1; padding: 0 4px; border-radius: 4px; }
+  .sec .plus:hover { color: var(--w-text); background: rgba(255,255,255,.1); }
+  .row.act { width: 100%; text-align: left; border-radius: 6px; }
+  .row.act:hover { background: rgba(255,255,255,.06); }
+  .row i.m { background: var(--w-amber); } .row i.a { background: var(--w-green); } .row i.c { background: var(--w-blue); }
+  .row code { font: 11px var(--mono); background: none; padding: 0; color: var(--w-muted); flex: none; }
+  .ghead { display: flex; align-items: center; gap: 6px; font-weight: 600; padding: 6px 2px 4px; }
+  .ghead .ico { width: 13px; height: 13px; color: var(--w-green); }
+  .ghead small { margin-left: auto; color: var(--w-muted); font-weight: 400; font-size: 12px; }
+  .empty { color: var(--w-muted); padding: 18px 4px; text-align: center; }
+  .empty button { display: block; margin: 8px auto 0; color: var(--accent); font-weight: 500; }
+
+  /* overlays: palette, usage, worktree sheet, model menu, Doctor, All Sessions */
+  .overlay .field { all: unset; box-sizing: border-box; display: block; width: 100%; background: #1E1E1E; border-radius: 8px; padding: 9px 10px; margin-bottom: 6px; color: var(--w-text); }
+  .overlay .field::placeholder { color: var(--w-muted); }
+  .overlay .it { width: 100%; text-align: left; }
+  .overlay .it .ico { width: 13px; height: 13px; color: var(--w-text2); flex: none; align-self: center; }
+  .overlay .it.on .ico { color: #fff; }
+  .overlay .results { max-height: 300px; overflow: auto; scrollbar-width: none; }
+  .overlay .nothing { color: var(--w-muted); padding: 10px 8px; }
+  .overlay.usage .byModel { display: flex; gap: 14px; margin-top: 10px; color: var(--w-text2); font-size: 12px; }
+  .overlay.usage .byModel b { color: var(--w-text); font-weight: 600; }
+  .overlay.sheet { padding: 16px; width: min(380px, 88%); }
+  .sh-t { font-size: 14px; }
+  .sh-d, .sh-n { color: var(--w-text2); margin: 6px 0 10px; font-size: 12px; line-height: 1.4; }
+  .sh-n { color: var(--w-muted); margin: 0 0 12px; }
+  .sh-b { display: flex; justify-content: flex-end; gap: 8px; }
+  .sh-b button { padding: 5px 12px; border-radius: 6px; background: rgba(255,255,255,.1); }
+  .sh-b .primary { background: var(--w-sel); color: #fff; font-weight: 600; }
+  .sh-b .primary:disabled { opacity: .45; }
+  .overlay.menu { left: auto; right: 168px; top: 46px; transform: none; width: 150px; padding: 5px; }
+  .overlay.menu .it { padding: 5px 8px; }
+  .overlay.menu .it:hover { background: var(--w-sel); }
+  .overlay.menu .chk { width: 12px; flex: none; }
+  .overlay.pop { left: auto; right: 268px; top: auto; bottom: 42px; transform: none; width: 280px; padding: 12px; font-size: 12px; }
+  .win.noinsp .overlay.pop { right: 8px; }
+  .pop-h { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+  .pop .ok { width: 10px; height: 10px; border-radius: 50%; background: var(--w-green); }
+  .pop-k { color: var(--w-muted); font-size: 10px; font-weight: 600; margin: 8px 0 3px; }
+  .pop code { font-size: 11px; background: #1E1E1E; }
+  .pop hr { border: 0; border-top: 1px solid #3A3A3A; margin: 10px 0; }
+  .pop p { margin: 4px 0 0; color: var(--w-text2); line-height: 1.4; }
+  .overlay.overview { width: min(560px, 92%); padding: 12px; }
+  .ov-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .ov-card { text-align: left; background: #1E1E1E; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+  .ov-card:hover { box-shadow: inset 0 0 0 1px var(--accent); }
+  .ov-card b { font-size: 13px; }
+  .ov-card small { color: var(--w-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ov-card .bar { height: 4px; border-radius: 2px; background: #3A3A3A; overflow: hidden; }
+  .ov-card .bar i { display: block; height: 100%; background: var(--accent); }
+  .ov-card .st { font-size: 11px; color: var(--w-text2); }
+  .ov-card .st.busy { color: var(--w-busy); } .ov-card .st.warn { color: var(--w-amber); } .ov-card .st.done { color: var(--w-blue); }
+
+  .toast { position: absolute; z-index: 4; left: calc(252px + (100% - 512px) / 2); bottom: 50px; transform: translateX(-50%); background: #2F2F2F; border: 1px solid #3F3F3F; border-radius: 8px; padding: 6px 12px; font-size: 12px; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s, visibility .2s; }
+  .toast.show { opacity: 1; visibility: visible; }
+  .banner { position: absolute; z-index: 5; right: 12px; top: 12px; width: 300px; display: flex; gap: 10px; align-items: center; text-align: left; padding: 10px 12px; border-radius: 14px; background: rgba(48,48,48,.96); border: 1px solid #444; box-shadow: 0 12px 30px rgba(0,0,0,.45); transform: translateX(120%); visibility: hidden; transition: transform .3s ease-out, visibility .3s; }
+  .banner.show { transform: none; visibility: visible; }
+  .banner b { display: block; font-size: 13px; }
+  .banner small { color: var(--w-text2); font-size: 12px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 230px; }
+  .win.noinsp .overlay:not(.menu):not(.pop), .win.noinsp .toast { left: calc(252px + (100% - 252px) / 2); }
+  @media (max-width: 1100px) {
+    .overlay.menu { right: 12px; }
+    .overlay.pop { right: 8px; }
+    .toast { left: calc(236px + (100% - 236px) / 2); }
+    .win.noinsp { grid-template-columns: 236px minmax(0, 1fr); }
+    .win.noinsp .term, .win.noinsp .strip { grid-column: 2; }
+  }
+  @media (max-width: 680px) {
+    .toast { left: 50%; }
+    .banner { width: auto; left: 12px; }
+    .overlay.pop { left: 8px; right: 8px; width: auto; }
+    .ov-grid { grid-template-columns: 1fr; }
+    .win.noinsp { grid-template-columns: minmax(0, 1fr); }
+    .win.noinsp .term, .win.noinsp .strip { grid-column: 1; }
+    .tab .x { display: none !important; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .ring, .ring::after { animation: none; }
     summary::after, .win > * { transition: none; }
@@ -330,12 +468,11 @@
     .side-head, .search, .label, .all { display: none; }
     .tabs { flex-direction: row; gap: 4px; }
     .tab { grid-template-columns: 34px; padding: 3px; }
-    .tab > div:last-child { display: none; }
+    .tab > div:nth-child(2) { display: none; }
     .toolbar { grid-row: 1; grid-column: 1; padding: 0 10px; }
     .pill .sep, .pill .model { display: none; }
     .term { grid-row: 3; grid-column: 1; padding: 12px 14px 0; }
     .strip { grid-row: 4; grid-column: 1; }
-    .strip .more { display: none; }
     .overlay { left: 50%; top: 100px; }
     .win.show-insp .insp { top: 48px; }
     .wtitle.hl { border-radius: 6px; padding: 2px 4px; }
@@ -389,96 +526,74 @@
   </div>
 
   <div class="stage">
-    <div class="win" aria-label="A live Xylem window. Click a tab to switch to it.">
+    <div class="win" aria-label="A live Xylem window you can click around in">
       <aside class="side">
         <div class="side-head" aria-hidden="true">
           <div class="lights"><i></i><i></i><i></i></div>
           <span class="ib"><svg class="ico"><use href="#i-sidebar"/></svg></span>
         </div>
-        <div class="search" aria-hidden="true"><svg class="ico"><use href="#i-search"/></svg>Search tabs</div>
+        <label class="search"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><input type="search" placeholder="Search tabs" aria-label="Search tabs" autocomplete="off" spellcheck="false"></label>
         <div class="label" aria-hidden="true">Tabs</div>
-        <div class="tabs">
-          <button class="tab on" type="button" aria-pressed="true" aria-label="checkout-service, Claude is working">
-            <div class="ava">C<span class="ring"></span></div>
-            <div><div class="t">checkout-service</div><div class="p">Add retries to the payment webhook</div><div class="b"><svg class="ico"><use href="#i-branch"/></svg>fix/webhook-retries · …/checkout-service</div></div>
-          </button>
-          <button class="tab" type="button" aria-pressed="false" aria-label="docs-site, needs your permission">
-            <div class="ava">D<span class="bang">!</span></div>
-            <div><div class="t">docs-site</div><div class="p warn">Needs your permission…</div><div class="b"><svg class="ico"><use href="#i-branch"/></svg>main · …/docs-site</div></div>
-          </button>
-          <button class="tab" type="button" aria-pressed="false" aria-label="mobile-app, finished">
-            <div class="ava">M<span class="dot blue"></span></div>
-            <div><div class="t">mobile-app</div><div class="p">Why does the login screen flicker?</div><div class="b"><svg class="ico"><use href="#i-branch"/></svg>release/3.2 · …/mobile-app</div></div>
-          </button>
-          <button class="tab" type="button" aria-pressed="false" aria-label="infra, quiet">
-            <div class="ava">I<span class="dot green"></span></div>
-            <div><div class="t">infra</div><div class="p">Bump the staging node pool</div><div class="b">~/code/infra</div></div>
-          </button>
-          <button class="tab picker" type="button" aria-pressed="false" aria-label="New Tab, pick a folder">
-            <div class="ava"><svg class="ico"><use href="#i-folder"/></svg></div>
-            <div><div class="t">New Tab</div><div class="p">Pick a folder</div><div class="b">No folder selected</div></div>
-          </button>
-        </div>
-        <div class="all" aria-hidden="true"><svg class="ico"><use href="#i-grid"/></svg>All Sessions</div>
+        <div class="tabs"></div>
+        <button class="all" type="button" data-act="overview"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg>All Sessions</button>
       </aside>
 
-      <div class="toolbar" aria-hidden="true">
-        <button type="button" class="round" aria-label="New Tab"><svg class="ico"><use href="#i-plus"/></svg></button>
-        <div class="wtitle"><b>checkout-service</b><span>~/code/checkout-service</span></div>
-        <div class="pill ctx"><span class="gauge"><i></i></span><span class="pct">43%</span><span class="sep"></span><span class="model"><svg class="ico"><use href="#i-cpu"/></svg>Opus<svg class="ico small"><use href="#i-chev-down"/></svg></span></div>
-        <div class="pill icons"><span class="ib usage"><svg class="ico"><use href="#i-chart"/></svg></span><span class="ib"><svg class="ico"><use href="#i-inspector"/></svg></span></div>
+      <div class="toolbar">
+        <button type="button" class="round" data-act="newtab" aria-label="New Tab"><svg class="ico"><use href="#i-plus"/></svg></button>
+        <div class="wtitle"><b></b><span></span></div>
+        <div class="pill ctx"><span class="gauge" aria-hidden="true"><i></i></span><span class="pct"></span><span class="sep"></span><button type="button" class="model" data-act="model" aria-haspopup="menu" aria-label="Model"><svg class="ico" aria-hidden="true"><use href="#i-cpu"/></svg><span class="mname">Opus</span><svg class="ico small" aria-hidden="true"><use href="#i-chev-down"/></svg></button></div>
+        <div class="pill icons"><button type="button" class="ib usage" data-act="usage" aria-label="Usage"><svg class="ico"><use href="#i-chart"/></svg></button><button type="button" class="ib" data-act="insp" aria-label="Show or hide the right panel"><svg class="ico"><use href="#i-inspector"/></svg></button></div>
       </div>
 
-      <div class="term" aria-live="polite"></div>
+      <div class="term" tabindex="0" aria-live="polite" aria-label="Terminal"></div>
 
-      <div class="strip" aria-hidden="true">
-        <span><svg class="ico"><use href="#i-compress"/></svg>Compact</span>
-        <span><svg class="ico"><use href="#i-eraser"/></svg>Clear</span>
-        <span class="more"><svg class="ico"><use href="#i-brain"/></svg>Memory</span>
-        <span class="more"><svg class="ico"><use href="#i-flag"/></svg>Goal</span>
-        <span class="div more"></span>
-        <span class="more"><svg class="ico"><use href="#i-copy"/></svg>Copy</span>
-        <span class="more"><svg class="ico"><use href="#i-clip"/></svg>File</span>
-        <span class="more"><svg class="ico"><use href="#i-photo"/></svg>Image</span>
-        <span class="more"><svg class="ico"><use href="#i-viewfinder"/></svg>Screenshot</span>
-        <span class="doc"><svg width="15" height="15" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M4.8 8.2l2.2 2.2 4.2-4.6" fill="none" stroke="#1E1E1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Doctor</span>
+      <div class="strip">
+        <button type="button" data-act="compact" data-session><svg class="ico" aria-hidden="true"><use href="#i-compress"/></svg><span class="lbl">Compact</span></button>
+        <button type="button" data-act="clear" data-session><svg class="ico" aria-hidden="true"><use href="#i-eraser"/></svg><span class="lbl">Clear</span></button>
+        <button type="button" data-act="memory" data-session class="more"><svg class="ico" aria-hidden="true"><use href="#i-brain"/></svg><span class="lbl">Memory</span></button>
+        <button type="button" data-act="goal" data-session class="more"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg><span class="lbl">Goal</span></button>
+        <span class="div more" aria-hidden="true"></span>
+        <button type="button" data-act="copy" class="more"><svg class="ico" aria-hidden="true"><use href="#i-copy"/></svg><span class="lbl">Copy</span></button>
+        <button type="button" data-act="file" data-session class="more"><svg class="ico" aria-hidden="true"><use href="#i-clip"/></svg><span class="lbl">File</span></button>
+        <button type="button" data-act="image" data-session class="more"><svg class="ico" aria-hidden="true"><use href="#i-photo"/></svg><span class="lbl">Image</span></button>
+        <button type="button" data-act="screenshot" class="more"><svg class="ico" aria-hidden="true"><use href="#i-viewfinder"/></svg><span class="lbl">Screenshot</span></button>
+        <span class="div" aria-hidden="true"></span>
+        <button type="button" data-act="worktree" class="wt"><svg class="ico" aria-hidden="true"><use href="#i-branch"/></svg><span class="lbl">Worktree</span></button>
+        <button type="button" class="doc" data-act="doctor" aria-label="Doctor: Claude Code found, tab events arriving"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M4.8 8.2l2.2 2.2 4.2-4.6" fill="none" stroke="#1E1E1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Doctor</button>
       </div>
 
-      <aside class="insp" aria-hidden="true">
-        <div class="seg"><span class="on">Claude</span><span>Git</span></div>
-        <div class="seg"><span class="on">This project</span><span>All</span></div>
-        <div class="sec"><svg class="ico"><use href="#i-chev-down"/></svg>Directories <em>58</em></div>
-        <div class="row"><i></i><span>checkout-service</span><small>now</small></div>
-        <div class="row"><i></i><span>docs-site</span><small>2m</small></div>
-        <div class="row"><i></i><span>mobile-app</span><small>1h</small></div>
-        <div class="sec"><svg class="ico"><use href="#i-chev-right"/></svg>Sessions <em>50</em></div>
-        <div class="sec"><svg class="ico"><use href="#i-chev-right"/></svg>Agent Teams</div>
-        <div class="sec"><svg class="ico"><use href="#i-chev-down"/></svg>Skills <em>2</em></div>
-        <div class="row"><i></i><span>release-notes</span><small>project</small></div>
-        <div class="row"><i></i><span>review-pr</span><small>project</small></div>
-        <div class="sec"><svg class="ico"><use href="#i-chev-right"/></svg>Agents <em>3</em></div>
-        <div class="sec"><svg class="ico"><use href="#i-chev-down"/></svg>MCP <em>2</em></div>
-        <div class="row"><i></i><span>github</span><small>project · npx</small></div>
-        <div class="row"><i></i><span>postgres</span><small>local · npx</small></div>
-        <div class="sec"><svg class="ico"><use href="#i-chev-right"/></svg>Plugins <em>1</em></div>
-        <div class="sec"><svg class="ico"><use href="#i-chev-right"/></svg>Permissions <em>14</em></div>
-        <div class="sec"><svg class="ico"><use href="#i-chev-right"/></svg>Hooks <em>2</em></div>
-      </aside>
+      <aside class="insp" aria-label="Right panel"></aside>
 
-      <div class="overlay palette" aria-hidden="true">
-        <div class="field">retry <span class="dim">|</span></div>
-        <div class="grp">Prompts</div>
-        <div class="it on"><span>Add <mark>retry</mark> to the payment webhook, max 3, with backoff</span><small>checkout-service</small></div>
-        <div class="it"><span>Why does the upload <mark>retry</mark> loop forever offline?</span><small>mobile-app</small></div>
-        <div class="it"><span><mark>Retry</mark> flaky e2e tests once in CI</span><small>infra</small></div>
+      <div class="overlay palette" role="dialog" aria-label="Command Palette">
+        <input class="field" type="text" placeholder="Search commands and past prompts" aria-label="Search commands and past prompts" autocomplete="off" spellcheck="false">
+        <div class="results"></div>
       </div>
-      <div class="overlay usage" aria-hidden="true">
+      <div class="overlay usage" role="dialog" aria-label="Usage">
         <div class="cards"><div class="card"><small>Total Cost</small><b>$184.20</b></div><div class="card"><small>Total Sessions</small><b>63</b></div><div class="card"><small>Total Tokens</small><b>412M</b></div></div>
         <div class="bars"><i style="height:30%"></i><i style="height:55%"></i><i style="height:42%"></i><i style="height:80%"></i><i style="height:64%"></i><i style="height:22%"></i><i style="height:12%"></i><i style="height:48%"></i><i style="height:90%"></i><i style="height:70%"></i></div>
+        <div class="byModel"><span><b>Opus</b> $151.80</span><span><b>Sonnet</b> $27.10</span><span><b>Haiku</b> $5.30</span></div>
       </div>
+      <form class="overlay sheet" role="dialog" aria-label="New Worktree Tab">
+        <b class="sh-t">New Worktree Tab</b>
+        <p class="sh-d"></p>
+        <input class="field" name="branch" type="text" placeholder="Branch name" aria-label="Branch name" autocomplete="off" spellcheck="false">
+        <p class="sh-n">New branches start from main. Folder: .claude/worktrees/&lt;branch&gt;</p>
+        <div class="sh-b"><button type="button" data-act="close">Cancel</button><button type="submit" class="primary">Create</button></div>
+      </form>
+      <div class="overlay menu" role="menu" aria-label="Model"></div>
+      <div class="overlay pop" role="dialog" aria-label="Doctor">
+        <div class="pop-h"><span class="ok"></span>Claude Code detected</div>
+        <div class="pop-k">PATH</div><code>~/.local/bin/claude</code>
+        <hr>
+        <div class="pop-h"><span class="ok"></span>Tab events</div>
+        <p>Hooks report what Claude does in each tab. Last event a few seconds ago.</p>
+      </div>
+      <div class="overlay overview" role="dialog" aria-label="All Sessions"></div>
+      <div class="toast" role="status"></div>
+      <button type="button" class="banner" data-act="banner"><img src="assets/icon-192.png" width="30" height="30" alt=""><span><b></b><small></small></span></button>
     </div>
 
-    <p class="try">Xylem runs the same <code>claude</code> you use in Terminal and leaves your Claude Code settings alone. Try it: pick a tab in the window above, or a feature below.</p>
+    <p class="try">Xylem runs the same <code>claude</code> you use in Terminal and leaves your Claude Code settings alone. Try it: the window above works. Switch tabs, answer Claude's question, open ⌘K, or pick a feature below.</p>
     <h2 class="sr-only">Features</h2>
     <div class="tour" id="features">
       <button type="button" data-key="attention" aria-pressed="false"><span class="sym"><span class="r"></span></span><h3>See which tab needs you</h3><p>A yellow ring while Claude is working, a blue dot when it has finished, an orange mark when it needs your permission. The Dock badge and notifications point to the same tab.</p></button>
@@ -486,7 +601,7 @@
       <button type="button" data-key="panel" aria-pressed="false"><span class="sym"><svg class="ico fi" aria-hidden="true"><use href="#i-inspector"/></svg></span><h3>Your setup, in one panel</h3><p>Skills, agents, MCP servers, plugins, permissions and hooks for the current project, and where each one comes from.</p></button>
       <button type="button" data-key="usage" aria-pressed="false"><span class="sym"><kbd>⌘</kbd><kbd>U</kbd></span><h3>Know what you've used</h3><p>Tokens and what they would cost at API prices, by model, project, session and day, subagents included.</p></button>
       <button type="button" data-key="prompts" aria-pressed="false"><span class="sym"><kbd>⌘</kbd><kbd>K</kbd></span><h3>Find any past prompt</h3><p>Search everything you have ever asked Claude, in any project, and jump back into that conversation.</p></button>
-      <button type="button" data-key="branch" aria-pressed="false"><span class="sym"><svg class="ico fi" aria-hidden="true"><use href="#i-branch"/></svg></span><h3>A branch per tab</h3><p>Start a new branch in its own folder (a git worktree) and open it in a tab, so two tasks never touch the same files.</p></button>
+      <button type="button" data-key="branch" aria-pressed="false"><span class="sym"><svg class="ico fi" aria-hidden="true"><use href="#i-branch"/></svg></span><h3>A branch per tab</h3><p>Press Worktree to start a new branch in its own folder (a git worktree) and open it in a tab, so two tasks never touch the same files.</p></button>
     </div>
   </div>
 
@@ -506,6 +621,10 @@
     <div class="wrap faq">
       <h2>Questions</h2>
       <div>
+        <details>
+          <summary>Is Xylem a GUI for Claude Code?</summary>
+          <p>Yes, a desktop app around the real Claude Code CLI. You talk to Claude the same way as in Terminal, and Xylem adds what a terminal window lacks: several sessions in tabs, a mark on the one that is working or waiting for you, past prompts, usage and costs, and your skills, MCP servers and hooks in one panel.</p>
+        </details>
         <details>
           <summary>Does Xylem change my Claude Code settings?</summary>
           <p>No. Xylem only reads your settings files. To know what each tab is doing, it gives <code>claude</code> a few extra hooks when it starts a tab (through <code>--settings</code>), without changing any of your files.</p>
@@ -542,139 +661,544 @@
 <footer>
   <div class="wrap">
     <p>Xylem is an independent project and is not affiliated with Anthropic. Claude is a trademark of Anthropic.</p>
-    <p>© 2026 t1nkl. Free to use, all rights reserved. Terminal by SwiftTerm (MIT).</p>
+    <p>© 2026 t1nkl. Free to use, all rights reserved. Built with SwiftTerm, Sparkle and the Sentry SDK (MIT).</p>
   </div>
 </footer>
 
 <script>
 (() => {
+  // The live window: one list of tabs, rendered on change. Idle costs
+  // nothing: no timers run unless Claude is "working" in some tab, the ring
+  // animation pauses off-screen, and every click goes through one listener.
   const win = document.querySelector('.win');
-  const term = win.querySelector('.term');
-  const title = win.querySelector('.wtitle b');
-  const path = win.querySelector('.wtitle span');
-  const pct = win.querySelector('.pct');
-  const gauge = win.querySelector('.gauge i');
-  const tabs = [...win.querySelectorAll('button.tab')];
-  // name, path, last used, sessions, card colour, the session's last exchange
+  const $ = s => win.querySelector(s);
+  const term = $('.term'), tabList = $('.tabs'), insp = $('.insp'), strip = $('.strip');
+  const title = $('.wtitle b'), path = $('.wtitle span'), pct = $('.pct'), gauge = $('.gauge i');
+  const modelBtn = $('.pill .model'), modelName = $('.mname');
+  const palette = $('.overlay.palette'), palField = palette.querySelector('.field'), palList = palette.querySelector('.results');
+  const sheet = $('.overlay.sheet'), menu = $('.overlay.menu'), overview = $('.overlay.overview');
+  const toastEl = $('.toast'), banner = $('.banner');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const ico = (id, cls = '') => `<svg class="ico ${cls}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+
+  // Claude Code's transcript lines
+  const G = '<span class="g">⏺</span> ';
+  const you = t => `<div class="you">&gt; ${t}</div>`;
+  const say = t => `<div class="gap">${G}${t}</div>`;
+  const tool = (n, a) => `<div class="gap">${G}<span class="you">${n}</span>(${a})</div>`;
+  const res = t => `<div class="dim">&nbsp;&nbsp;⎿ ${t}</div>`;
+  const note = t => `<div class="gap dim">${t}</div>`;
+  const welcome = n => `<div class="welcome">✻ Welcome to Claude Code<small>cwd: ${esc(n)}</small></div>`;
+
+  const MODELS = [['Fable', 'fable', 'Fable 5.2'], ['Opus', 'opus', 'Opus 5.5'], ['Sonnet', 'sonnet', 'Sonnet 5.5'], ['Haiku', 'haiku', 'Haiku 5.5']];
   const recent = [
-    ['api-gateway', '~/code/api-gateway', '5m', 12, '#16A34A', 'Add rate limiting to the public endpoints', 'Added a token-bucket limiter in front of /v1/* with a 429 and a Retry-After header.'],
-    ['design-system', '~/code/design-system', '1h', 7, '#6EA8FE', 'Turn the spacing scale into tokens', 'Moved the 4/8/12/16/24 scale into tokens/spacing.json and replaced 41 hard-coded values.'],
-    ['data-pipeline', '~/work/data-pipeline', '3h', 23, '#F5A524', 'Why is the nightly job twice as slow?', 'The join on events.user_id lost its index after the last migration. Re-adding it brings the job back to 14 minutes.'],
-    ['ios-widgets', '~/code/ios-widgets', 'yesterday', 4, '#CC85F2', 'Add a small widget for today\'s steps', 'Added StepsWidget with a systemSmall family and a timeline that refreshes every 30 minutes.'],
-    ['blog', '~/sites/blog', '2d', 9, '#59D1DE', 'Fix the broken RSS dates', 'Dates were written in local time without an offset; the feed now uses RFC 822 with UTC.'],
-    ['dotfiles', '~/.dotfiles', '1w', 2, '#F299B3', 'Move my zsh aliases into their own file', 'Split them into zsh/aliases.zsh and sourced it from .zshrc.']
+    ['api-gateway', '~/code/api-gateway', '5m', 12, '#16A34A', 'Add rate limiting to the public endpoints', 'Added a token-bucket limiter in front of /v1/* with a 429 and a Retry-After header.', 'main'],
+    ['design-system', '~/code/design-system', '1h', 7, '#6EA8FE', 'Turn the spacing scale into tokens', 'Moved the 4/8/12/16/24 scale into tokens/spacing.json and replaced 41 hard-coded values.', 'tokens'],
+    ['data-pipeline', '~/work/data-pipeline', '3h', 23, '#F5A524', 'Why is the nightly job twice as slow?', 'The join on events.user_id lost its index after the last migration. Re-adding it brings the job back to 14 minutes.', 'main'],
+    ['ios-widgets', '~/code/ios-widgets', 'yesterday', 4, '#CC85F2', 'Add a small widget for today\'s steps', 'Added StepsWidget with a systemSmall family and a timeline that refreshes every 30 minutes.', 'widgets'],
+    ['blog', '~/sites/blog', '2d', 9, '#59D1DE', 'Fix the broken RSS dates', 'Dates were written in local time without an offset; the feed now uses RFC 822 with UTC.', null],
+    ['dotfiles', '~/.dotfiles', '1w', 2, '#F299B3', 'Move my zsh aliases into their own file', 'Split them into zsh/aliases.zsh and sourced it from .zshrc.', null]
   ];
+  // Past prompts for the ⌘K search: [prompt, project]
+  const history = [
+    ['Add retries to the payment webhook, max 3, with backoff', 'checkout-service'],
+    ['Why does the upload retry loop forever offline?', 'mobile-app'],
+    ['Retry flaky e2e tests once in CI', 'infra'],
+    ['Rebuild the docs with the new sidebar', 'docs-site'],
+    ['Why does the login screen flicker?', 'mobile-app'],
+    ['Bump the staging node pool', 'infra'],
+    ...recent.map(r => [r[5], r[0]])
+  ];
+
+  let seq = 0;
+  const mk = o => ({ id: ++seq, model: 'Opus', draft: '', ctx: null, status: 'idle', unseen: false, lines: [], prompt: '', branch: null, ...o });
+  const tabs = [
+    mk({ name: 'checkout-service', path: '~/code/checkout-service', branch: 'fix/webhook-retries', ctx: 43, status: 'working',
+      prompt: 'Add retries to the payment webhook, max 3, with backoff',
+      work: { label: 'Writing the retry test', start: 0, base: 71 },
+      lines: [you('Add retries to the payment webhook, max 3, with backoff'),
+        say('I\'ll wrap the delivery in a retry loop with exponential backoff.'),
+        tool('Update', 'src/webhooks/deliver.ts'), res('Updated with 24 additions and 3 removals'),
+        tool('Bash', 'npm test -- webhooks'), res('18 passed')] }),
+    mk({ name: 'docs-site', path: '~/code/docs-site', branch: 'main', ctx: 21, status: 'needs',
+      prompt: 'Rebuild the docs with the new sidebar',
+      lines: [you('Rebuild the docs with the new sidebar'),
+        say('The sidebar config is updated. Rebuilding from a clean output folder.'),
+        tool('Bash', 'rm -rf .vitepress/dist &amp;&amp; npm run docs:build')],
+      ask: { q: 'Do you want to proceed?', sel: 0, opts: ['Yes', 'Yes, and don\'t ask again for npm run docs:build', 'No, and tell Claude what to do differently'], kind: 'perm' } }),
+    mk({ name: 'mobile-app', path: '~/code/mobile-app', branch: 'release/3.2', ctx: 64, status: 'done', unseen: true,
+      prompt: 'Why does the login screen flicker?',
+      lines: [you('Why does the login screen flicker?'), tool('Read', 'src/screens/Login.tsx'),
+        say('The screen renders twice: <span class="you">useAuth</span> starts as <span class="you">undefined</span>, shows the spinner, then the form. Starting it from the cached session removes the second render.'),
+        tool('Update', 'src/hooks/useAuth.ts'), res('Updated with 6 additions and 2 removals'), note('✻ Worked for 1m 12s')] }),
+    mk({ name: 'infra', path: '~/code/infra', ctx: 12, prompt: 'Bump the staging node pool',
+      lines: [you('Bump the staging node pool'), tool('Update', 'terraform/staging/nodes.tf'), res('node_count 3 to 5'),
+        say('The plan adds two nodes and changes nothing else. Apply it when you\'re ready.')] }),
+    mk({ picker: true, name: 'New Tab', path: 'Pick a folder' })
+  ];
+  let activeId = tabs[0].id;
+  const active = () => tabs.find(t => t.id === activeId);
+  const ui = { panel: 'claude', scope: 'project', closed: new Set(['Sessions', 'Agent Teams', 'Agents', 'Plugins', 'Permissions', 'Hooks', 'Worktrees', 'Branches']), query: '' };
+
+  // ---------- timers: only while something runs ----------
+  let visible = false;
+  function later(t, ms, fn) {
+    const id = setTimeout(() => { t.timers.delete(id); fn(); }, reduce ? 0 : ms);
+    (t.timers ||= new Set()).add(id);
+  }
+  function stopTimers(t) { t.timers?.forEach(clearTimeout); t.timers?.clear(); }
+  // Each step: [delay ms, change]; the change runs, then the tab re-renders.
+  function play(t, steps, done) {
+    let i = 0;
+    const next = () => {
+      if (!tabs.includes(t)) return;
+      if (i >= steps.length) { done?.(); return; }
+      const [ms, fn] = steps[i++];
+      later(t, ms, () => { fn(); changed(t); next(); });
+    };
+    next();
+  }
+  let ticker = 0;
+  function syncTicker() {
+    const need = visible && !reduce && tabs.some(t => t.status === 'working');
+    if (need && !ticker) ticker = setInterval(tick, 1000);
+    if (!need && ticker) { clearInterval(ticker); ticker = 0; }
+  }
+  const SPIN = ['✻', '✽', '✶', '✳', '✢', '·'];
+  let spinI = 0;
+  function tick() {
+    const t = active();
+    if (t.status !== 'working') return;
+    const el = term.querySelector('.spin');
+    if (!el) return;
+    el.querySelector('.y').textContent = SPIN[++spinI % SPIN.length];
+    el.querySelector('.dim').textContent = workMeta(t);
+  }
+  const workMeta = t => `(${t.work.base + Math.round((performance.now() - t.work.start) / 1000)}s · esc to interrupt)`;
+  function work(t, label, base = 0) { t.status = 'working'; t.work = { label, start: performance.now(), base }; t.unseen = false; syncTicker(); }
+  function finish(t, line) {
+    if (line) t.lines.push(line);
+    t.status = 'done';
+    t.work = null;
+    if (t.id !== activeId) { t.unseen = true; notify(t, 'Claude finished', t.prompt); }
+    syncTicker();
+  }
+
+  // ---------- rendering ----------
+  function changed(t) { if (t.id === activeId) { renderTerm(); renderTop(); renderStrip(); } renderTabs(); }
+  function renderAll() { renderTabs(); renderTerm(); renderTop(); renderStrip(); renderInsp(); }
+
+  function mark(t) {
+    if (t.picker) return '';
+    if (t.status === 'working') return '<span class="ring"></span>';
+    if (t.status === 'needs') return '<span class="bang">!</span>';
+    if (t.unseen) return '<span class="dot blue"></span>';
+    return t.id === activeId ? '' : '<span class="dot green"></span>';
+  }
+  const folder = p => p.split('/').pop();
+  function where(t) {
+    if (t.picker) return 'No folder selected';
+    const tail = '…/' + folder(t.path);
+    return t.branch ? `${ico('branch')}${esc(t.branch)} · ${esc(tail)}` : esc(t.path);
+  }
+  function renderTabs() {
+    const q = ui.query.toLowerCase();
+    const shown = tabs.filter(t => !q || (t.name + ' ' + t.prompt + ' ' + (t.branch || '')).toLowerCase().includes(q));
+    tabList.innerHTML = shown.map(t => {
+      const on = t.id === activeId;
+      const line = t.picker ? 'Pick a folder' : t.status === 'needs' ? 'Needs your permission…' : (t.prompt || 'No prompt yet');
+      const state = t.picker ? 'pick a folder' : t.status === 'working' ? 'Claude is working' : t.status === 'needs' ? 'needs your permission' : t.unseen ? 'finished' : 'quiet';
+      return `<div class="tab${on ? ' on' : ''}${t.picker ? ' picker' : ''}" role="button" tabindex="0" data-tab="${t.id}" aria-pressed="${on}" aria-label="${esc(t.name)}, ${state}">
+        <div class="ava">${t.picker ? ico('folder') : esc((folder(t.path).replace(/^\./, '')[0] || '?').toUpperCase())}${mark(t)}</div>
+        <div><div class="t">${esc(t.name)}</div><div class="p${t.status === 'needs' ? ' warn' : ''}">${esc(line)}</div><div class="b">${where(t)}</div></div>
+        <button type="button" class="x" data-close="${t.id}" aria-label="Close ${esc(t.name)}">${ico('plus', 'rot')}</button></div>`;
+    }).join('') || '<div class="none">No tabs match.</div>';
+  }
+
   const folderIcon = c => `<span class="pk-f" style="background:${c}2E;color:${c}"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M1.5 3.5A1.5 1.5 0 0 1 3 2h3.2l1.6 1.6H13A1.5 1.5 0 0 1 14.5 5v7A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12z" fill="currentColor"/></svg></span>`;
-  const pickerHTML = `<div class="pk-hero"><span class="pk-icon"><svg width="24" height="24" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3" fill="currentColor"/><path d="M6.5 9.5l3 2.5-3 2.5M11.5 15h5" fill="none" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><b>Xylem</b><span>Pick a project folder to spin up Claude Code.</span></div>
-    <div class="pk-actions"><span class="pk-btn">Open Folder… <kbd>⌘O</kbd></span><span class="pk-btn alt">Command Palette <kbd>⌘K</kbd></span></div>
+  const pickerHTML = () => `<div class="pk-hero"><span class="pk-icon"><svg width="24" height="24" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3" fill="currentColor"/><path d="M6.5 9.5l3 2.5-3 2.5M11.5 15h5" fill="none" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><b>Xylem</b><span>Pick a project folder to spin up Claude Code.</span></div>
+    <div class="pk-actions"><button type="button" class="pk-btn" data-act="openfolder">Open Folder… <kbd>⌘O</kbd></button><button type="button" class="pk-btn alt" data-act="palette">Command Palette <kbd>⌘K</kbd></button></div>
     <div class="pk-recent"><div class="pk-head"><span>RECENT PROJECTS</span><span>${recent.length}</span></div><div class="pk-grid">${recent.map(([n, p, t, k, c], i) =>
-      `<button type="button" class="pk-card" data-i="${i}" aria-label="Open ${n}"><span class="pk-top">${folderIcon(c)}<small>${t}</small></span><b>${n}</b><span class="path">${p}</span><span class="n">${k} sessions</span></button>`).join('')}</div></div>`;
-  const g = '<span class="g">⏺</span> ';
-  const input = '<div class="prompt">❯ <span class="caret"></span></div><div class="hint">? for shortcuts</div>';
-  const states = [
-    { name: 'checkout-service', path: '~/code/checkout-service', ctx: 43, html:
-      `<div class="out"><div class="you">&gt; Add retries to the payment webhook, max 3, with backoff</div>
-       <div class="gap">${g}I'll wrap the delivery in a retry loop with exponential backoff.</div>
-       <div class="gap">${g}<span class="you">Update</span>(src/webhooks/deliver.ts)</div>
-       <div class="dim">&nbsp;&nbsp;⎿ Updated with 24 additions and 3 removals</div>
-       <div class="gap">${g}<span class="you">Bash</span>(npm test -- webhooks)</div>
-       <div class="dim">&nbsp;&nbsp;⎿ 18 passed</div>
-       <div class="gap"><span class="y">✻</span> <span class="c">Writing the retry test…</span> <span class="dim">(esc to interrupt)</span></div></div>${input}` },
-    { name: 'docs-site', path: '~/code/docs-site', ctx: 21, html:
-      `<div class="out"><div class="you">&gt; Rebuild the docs with the new sidebar</div>
-       <div class="gap">${g}The sidebar config is updated. Rebuilding from a clean output folder.</div>
-       <div class="gap">${g}<span class="you">Bash</span>(rm -rf .vitepress/dist &amp;&amp; npm run docs:build)</div>
-       <div class="perm"><div class="q">Do you want to proceed?</div>
-         <div class="sel">❯ 1. Yes</div><div class="dim">&nbsp;&nbsp;2. Yes, and don't ask again for npm run docs:build</div><div class="dim">&nbsp;&nbsp;3. No, and tell Claude what to do differently</div></div></div>` },
-    { name: 'mobile-app', path: '~/code/mobile-app', ctx: 64, html:
-      `<div class="out"><div class="you">&gt; Why does the login screen flicker?</div>
-       <div class="gap">${g}<span class="you">Read</span>(src/screens/Login.tsx)</div>
-       <div class="gap">${g}The screen renders twice: <span class="you">useAuth</span> starts as <span class="you">undefined</span>, shows the spinner, then the form. Starting it from the cached session removes the second render.</div>
-       <div class="gap">${g}<span class="you">Update</span>(src/hooks/useAuth.ts)</div>
-       <div class="dim">&nbsp;&nbsp;⎿ Updated with 6 additions and 2 removals</div>
-       <div class="gap dim">✻ Worked for 1m 12s</div></div>${input}` },
-    { name: 'infra', path: '~/code/infra', ctx: 12, html:
-      `<div class="out"><div class="you">&gt; Bump the staging node pool</div>
-       <div class="gap">${g}<span class="you">Update</span>(terraform/staging/nodes.tf)</div>
-       <div class="dim">&nbsp;&nbsp;⎿ node_count 3 to 5</div>
-       <div class="gap">${g}The plan adds two nodes and changes nothing else. Apply it when you're ready.</div></div>${input}` },
-    { name: 'New Tab', path: 'Pick a folder', ctx: null, picker: true, html: pickerHTML }
-  ];
-  // A recent project opened from the New Tab: the tab becomes that project,
+      `<button type="button" class="pk-card" data-open="${i}" aria-label="Open ${n}"><span class="pk-top">${folderIcon(c)}<small>${t}</small></span><b>${n}</b><span class="path">${p}</span><span class="n">${k} sessions</span></button>`).join('')}</div></div>`;
+
+  function renderTerm() {
+    const t = active();
+    term.classList.toggle('pick', !!t.picker);
+    if (t.picker) { term.innerHTML = pickerHTML(); return; }
+    let foot;
+    if (t.ask) {
+      foot = `<div class="perm"><div class="q">${esc(t.ask.q)}</div>${t.ask.opts.map((o, i) =>
+        `<button type="button" class="opt${i === t.ask.sel ? ' sel' : ''}" data-opt="${i}">${i === t.ask.sel ? '❯' : '&nbsp;'} ${i + 1}. ${esc(o)}</button>`).join('')}</div>`;
+    } else {
+      foot = (t.status === 'working' ? `<div class="gap spin"><span class="y">✻</span> <span class="c">${esc(t.work.label)}…</span> <span class="dim">${workMeta(t)}</span></div>` : '') +
+        `<div class="prompt">❯ <span class="draft">${esc(t.draft)}</span><span class="caret"></span></div><div class="hint">${t.status === 'working' ? 'esc to interrupt' : '? for shortcuts'}</div>`;
+    }
+    term.innerHTML = `<div class="out">${t.lines.join('')}</div>${foot}`;
+    const out = term.firstChild;
+    out.scrollTop = out.scrollHeight; // newest lines, as a terminal scrolls
+  }
+  function renderTop() {
+    const t = active();
+    title.textContent = t.name;
+    path.textContent = t.path;
+    // No session yet: the app shows "-" instead of 0%.
+    pct.textContent = t.ctx == null ? '-' : t.ctx + '%';
+    gauge.style.width = (t.ctx || 0) + '%';
+    modelName.textContent = t.model;
+    modelBtn.disabled = !!t.picker;
+  }
+  function renderStrip() {
+    const t = active();
+    strip.querySelectorAll('[data-session]').forEach(b => { b.disabled = !!t.picker; });
+    const wt = strip.querySelector('.wt');
+    wt.disabled = !t.branch;
+    wt.title = t.branch ? 'A new branch in its own checkout, opened in a new tab' : 'The active tab\'s folder is not in a git repository';
+    fitStrip();
+  }
+  // ViewThatFits, as in the app: labels, else icons only, else fewer icons.
+  function fitStrip() {
+    strip.classList.remove('icons', 'tight');
+    if (strip.scrollWidth > strip.clientWidth) strip.classList.add('icons');
+    if (strip.scrollWidth > strip.clientWidth) strip.classList.add('tight');
+  }
+
+  const sec = (name, count, body, plus) => {
+    const closed = ui.closed.has(name);
+    return `<button type="button" class="sec${closed ? ' closed' : ''}" data-sec="${name}" aria-expanded="${!closed}">${ico('chev-down')}${name}${count != null ? ` <em>${count}</em>` : ''}${plus ? `<span class="plus" data-act="${plus}" role="button" aria-label="Add">+</span>` : ''}</button>${closed ? '' : body}`;
+  };
+  const row = (dot, text, meta, act) => act
+    ? `<button type="button" class="row act" ${act}><i class="${dot}"></i><span>${esc(text)}</span><small>${esc(meta)}</small></button>`
+    : `<div class="row"><i class="${dot}"></i><span>${esc(text)}</span><small>${meta}</small></div>`;
+  function renderInsp() {
+    const t = active();
+    const seg = (key, a, b) => `<div class="seg">${[a, b].map(([v, l]) => `<button type="button" data-${key}="${v}" class="${ui[key] === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+    let html = seg('panel', ['claude', 'Claude'], ['git', 'Git']);
+    if (ui.panel === 'claude') {
+      const all = ui.scope === 'all' || t.picker;
+      html += seg('scope', ['project', 'This project'], ['all', 'All']);
+      const dirs = recent.slice(0, 4).map(r => row('', r[0], r[2], `data-open="${recent.indexOf(r)}"`)).join('');
+      const own = history.filter(h => all || h[1] === t.name);
+      html += sec('Directories', 58, dirs)
+        + sec('Sessions', all ? 50 : own.length, own.slice(0, 5).map(h => row('', h[0], h[1], `data-resume="${esc(h[1])}"`)).join(''))
+        + sec('Agent Teams', null, '<div class="empty">No agent teams in this project.</div>')
+        + sec('Skills', all ? 7 : 2, [['release-notes', 'project'], ['review-pr', 'project'], ...(all ? [['frontend-design', 'plugin'], ['pdf', 'user'], ['xlsx', 'user']] : [])].map(([n, m]) => row('', n, m)).join(''), 'skills')
+        + sec('Agents', 3, ['code-reviewer', 'test-writer', 'docs-helper'].map(n => row('', n, 'project')).join(''))
+        + sec('MCP', all ? 3 : 2, [['github', 'project · npx'], ['postgres', 'local · npx'], ...(all ? [['linear', 'user · http']] : [])].map(([n, m]) => row('', n, m)).join(''), 'mcp')
+        + sec('Plugins', 1, row('', 'frontend-design', 'user'))
+        + sec('Permissions', 14, [['Bash(npm test:*)', 'allow'], ['Bash(git push:*)', 'ask'], ['Read(.env)', 'deny']].map(([n, m]) => row('', n, m)).join(''))
+        + sec('Hooks', 2, row('', 'PostToolUse', 'prettier --write'));
+    } else if (!t.branch) {
+      html += `<div class="empty">${t.picker ? 'No directory' : 'Not a git repository'}${t.picker ? '' : '<button type="button" data-act="gitinit">Initialize Repository</button>'}</div>`;
+    } else {
+      const files = t.name === 'checkout-service' ? [['m', 'src/webhooks/deliver.ts', 'M'], ['a', 'tests/webhooks/retry.test.ts', 'A']]
+        : t.name === 'docs-site' ? [['m', '.vitepress/config.ts', 'M']] : t.ctx ? [['m', 'README.md', 'M']] : [];
+      html += `<div class="ghead">${ico('branch')}${esc(t.branch)}<small>${files.length ? '↑1' : 'up to date'}</small></div>`
+        + sec('Worktrees', 1, row('', t.name, 'this tab'), 'worktree')
+        + sec('Changes', files.length, files.length ? files.map(([d, f, k]) => row(d, f, k)).join('') : '<div class="empty">No changes</div>')
+        + sec('Branches', 3, [t.branch, 'main', 'release/3.1'].filter((b, i, a) => a.indexOf(b) === i).map(b => row('', b, b === t.branch ? 'current' : '')).join(''))
+        + sec('Commits', 3, [['a1c9e2f', t.prompt || 'Initial commit'], ['7d03b11', 'Update dependencies'], ['e44f0a9', 'Fix the CI cache key']].map(([h, m]) => `<div class="row"><code>${h}</code><span>${esc(m)}</span></div>`).join(''));
+    }
+    insp.innerHTML = html;
+  }
+
+  // ---------- actions ----------
+  function select(id) {
+    const t = tabs.find(x => x.id === id);
+    if (!t) return;
+    activeId = id;
+    t.unseen = false; // opening a tab clears its "finished" dot, as in the app
+    closeOverlays();
+    renderAll();
+  }
+  function addTab(t) {
+    if (tabs.length >= 8) { toast('This demo keeps eight tabs'); return null; }
+    tabs.push(t); select(t.id); return t;
+  }
+  function closeTab(id) {
+    const i = tabs.findIndex(t => t.id === id);
+    if (i < 0) return;
+    stopTimers(tabs[i]);
+    tabs.splice(i, 1);
+    if (!tabs.length) tabs.push(mk({ picker: true, name: 'New Tab', path: 'Pick a folder' }));
+    if (id === activeId) activeId = tabs[Math.min(i, tabs.length - 1)].id;
+    syncTicker();
+    renderAll();
+  }
+  // A recent project opened from a New Tab: the tab becomes that project,
   // its claude continuing the folder's last session (as in the app).
   function openProject(i) {
-    const [n, p, , , , q, a] = recent[i];
-    const t = tabs[4];
-    t.classList.remove('picker');
-    t.setAttribute('aria-label', n + ', Claude is ready');
-    t.querySelector('.ava').textContent = n[0].toUpperCase();
-    t.querySelector('.t').textContent = n;
-    t.querySelector('.p').textContent = q;
-    t.querySelector('.b').textContent = p;
-    states[4] = { name: n, path: p, ctx: 18, html:
-      `<div class="out"><div class="you">&gt; ${q}</div>
-       <div class="gap">${g}${a}</div></div>${input}` };
-    select(4);
+    const [n, p, , , , q, a, branch] = recent[i];
+    const open = tabs.find(t => t.name === n);
+    if (open) { select(open.id); return; }
+    const fresh = { picker: false, name: n, path: p, branch, ctx: 18, prompt: q, status: 'idle', lines: [you(q), say(a)] };
+    const t = active();
+    if (t.picker) { Object.assign(t, fresh); select(t.id); } else addTab(mk(fresh));
   }
-  // "+" in the toolbar: a fresh New Tab (the fifth tab turns back into a picker).
-  const pickerTab = tabs[4].innerHTML;
-  const pickerState = states[4];
-  win.querySelector('button.round').addEventListener('click', () => {
-    const t = tabs[4];
-    t.classList.add('picker'); t.innerHTML = pickerTab; t.setAttribute('aria-label', 'New Tab, pick a folder');
-    states[4] = pickerState; select(4);
-  });
-  term.addEventListener('click', e => { const c = e.target.closest('.pk-card'); if (c) openProject(+c.dataset.i); });
-  function select(i) {
-    tabs.forEach((t, j) => { t.classList.toggle('on', i === j); t.setAttribute('aria-pressed', String(i === j)); });
-    // Opening a tab clears its "finished, not seen" dot, as in the app.
-    tabs[i].querySelector('.dot.blue')?.remove();
-    const s = states[i];
-    term.innerHTML = s.html;
-    term.classList.toggle('pick', !!s.picker);
-    title.textContent = s.name; path.textContent = s.path;
-    // No session yet: the app shows "-" instead of 0%.
-    pct.textContent = s.ctx == null ? '-' : s.ctx + '%'; gauge.style.width = (s.ctx || 0) + '%';
+  function send(t, cmd, steps, label = 'Thinking') {
+    t.draft = '';
+    t.lines.push(you(esc(cmd)));
+    work(t, label);
+    changed(t);
+    play(t, steps);
   }
-  tabs.forEach((t, i) => t.addEventListener('click', () => select(i)));
-  select(0);
+  function runAction(act, el) {
+    const t = active();
+    switch (act) {
+      case 'newtab': addTab(mk({ picker: true, name: 'New Tab', path: 'Pick a folder' })); break;
+      case 'openfolder': { const i = recent.findIndex(r => !tabs.some(t => t.name === r[0])); openProject(i < 0 ? 0 : i); break; }
+      case 'palette': openPalette(''); break;
+      case 'usage': toggle($('.overlay.usage')); break;
+      case 'insp': win.classList.toggle('noinsp'); closeOverlays(); fitStrip(); break;
+      case 'overview': openOverview(); break;
+      case 'model': {
+        if (t.picker) break;
+        menu.innerHTML = MODELS.map(([n, a]) => `<button type="button" class="it" role="menuitemradio" aria-checked="${n === t.model}" data-model="${n}"><span class="chk">${n === t.model ? '✓' : ''}</span><span>${n}</span></button>`).join('');
+        toggle(menu); break;
+      }
+      case 'compact':
+        send(t, '/compact', [[1800, () => { t.lines = [note('✻ Conversation compacted (ctrl+o for history)')]; t.ctx = Math.max(4, Math.round((t.ctx || 8) / 5)); t.status = 'idle'; t.work = null; syncTicker(); }]], 'Compacting conversation');
+        break;
+      case 'clear': t.lines = []; t.draft = ''; t.ctx = null; t.ask = null; stopTimers(t); t.status = 'idle'; t.work = null; syncTicker(); changed(t); break;
+      case 'memory':
+        t.lines.push(you('/memory'));
+        t.ask = { q: 'Select memory to edit:', sel: 0, opts: ['Project memory  ./CLAUDE.md', 'User memory  ~/.claude/CLAUDE.md'], kind: 'memory' };
+        changed(t); term.focus(); break;
+      case 'goal': t.draft = '/goal '; changed(t); term.focus(); break;
+      case 'copy': toast('Copied'); break;
+      case 'file': t.draft += `'/Users/you/Desktop/spec.pdf' `; changed(t); break;
+      case 'image': t.draft += `'/Users/you/Desktop/login-flicker.png' `; changed(t); break;
+      case 'screenshot': toast('Screenshot copied to the clipboard'); break;
+      case 'worktree': openSheet(); break;
+      case 'doctor': toggle($('.overlay.pop')); break;
+      case 'gitinit': t.branch = 'main'; renderAll(); toast('Initialized an empty Git repository'); break;
+      case 'skills': toast('Opens the skills.sh directory'); break;
+      case 'mcp': if (!t.picker) { t.lines.push(you('/mcp'), res('2 servers connected · github, postgres')); changed(t); } break;
+      case 'banner': if (banner.dataset.tab) select(+banner.dataset.tab); hideBanner(); break;
+      case 'close': closeOverlays(); break;
+    }
+  }
+  function answer(t, i) {
+    const ask = t.ask;
+    t.ask = null;
+    if (ask.kind === 'memory') { t.lines.push(res(i ? 'Opened ~/.claude/CLAUDE.md in your editor' : 'Opened ./CLAUDE.md in your editor')); changed(t); return; }
+    if (i === 2) { t.lines.push(res('Interrupted · What should Claude do instead?')); t.status = 'idle'; changed(t); term.focus(); return; }
+    work(t, 'Building the docs', 3);
+    changed(t);
+    play(t, [
+      [1700, () => { t.lines.push(res('vitepress v1.6.3 · build complete in 4.21s')); t.ctx += 3; }],
+      [1500, () => finish(t, say('Rebuilt. The new sidebar shows on every page, and the old output folder is gone.'))],
+      [0, () => t.lines.push(note('✻ Worked for 41s'))]
+    ]);
+  }
+  function interrupt(t) {
+    if (t.status !== 'working') return;
+    stopTimers(t);
+    t.status = 'idle'; t.work = null;
+    t.lines.push(res('Interrupted · What should Claude do instead?'));
+    syncTicker(); changed(t);
+  }
 
-  const target = { tabs: '.side', attention: '.side', branch: '.side', panel: '.insp' };
+  // ---------- overlays ----------
+  function closeOverlays() { win.querySelectorAll('.overlay.show').forEach(o => o.classList.remove('show')); }
+  function toggle(o) { const show = !o.classList.contains('show'); closeOverlays(); o.classList.toggle('show', show); }
+  let toastTimer = 0;
+  function toast(text) {
+    toastEl.textContent = text; toastEl.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1600);
+  }
+  let bannerTimer = 0;
+  function notify(t, head, body) {
+    banner.dataset.tab = t.id;
+    banner.querySelector('b').textContent = `${head} · ${t.name}`;
+    banner.querySelector('small').textContent = body;
+    banner.classList.add('show');
+    clearTimeout(bannerTimer); bannerTimer = setTimeout(hideBanner, 5000);
+  }
+  function hideBanner() { banner.classList.remove('show'); clearTimeout(bannerTimer); }
+  function openSheet() {
+    const t = active();
+    if (!t.branch) return;
+    sheet.querySelector('.sh-d').textContent = `A separate checkout of ${t.name} with its own branch, so a second Claude can work without touching this tab's files.`;
+    sheet.branch.value = '';
+    sheet.querySelector('.primary').disabled = true;
+    toggle(sheet);
+    sheet.branch.focus();
+  }
+  function openOverview() {
+    const cards = tabs.filter(t => !t.picker).map(t => {
+      const [cls, st] = t.status === 'working' ? ['busy', 'Working'] : t.status === 'needs' ? ['warn', 'Waiting for you'] : t.unseen ? ['done', 'Finished'] : ['', 'Idle'];
+      return `<button type="button" class="ov-card" data-tab="${t.id}"><b>${esc(t.name)}</b><small>${esc(t.path)}</small><span class="bar"><i style="width:${t.ctx || 0}%"></i></span><small>${t.model}${t.ctx == null ? '' : ` · ${t.ctx}% context`}</small><small>${esc(t.prompt || 'No prompt yet')}</small><span class="st ${cls}">${st}</span></button>`;
+    }).join('');
+    overview.innerHTML = `<div class="ov-grid">${cards || '<div class="nothing">No sessions open.</div>'}</div>`;
+    toggle(overview);
+  }
+
+  // ⌘K: commands, then past prompts once two letters are typed.
+  let palItems = [], palSel = 0;
+  function openPalette(q) { closeOverlays(); palette.classList.add('show'); palField.value = q; renderPalette(); palField.focus({ preventScroll: true }); }
+  function renderPalette() {
+    const q = palField.value.trim().toLowerCase();
+    const t = active();
+    const cmds = [
+      ['New Tab', 'plus', () => runAction('newtab')],
+      ['Usage Dashboard', 'chart', () => runAction('usage')],
+      ['All Sessions', 'grid', () => runAction('overview')],
+      ...(t.picker ? [] : [['Claude · Compact', 'compress', () => runAction('compact')], ['Claude · Clear', 'eraser', () => runAction('clear')], ['Claude · Goal', 'flag', () => runAction('goal')]]),
+      ...(t.branch ? [['Git · New Worktree Tab…', 'branch', () => runAction('worktree')]] : []),
+      ...(t.picker ? [] : MODELS.filter(m => m[0] !== t.model).map(([n, a]) => [`Claude · Switch to ${n}`, 'cpu', () => setModel(t, n)])),
+      ...tabs.filter(x => x.id !== t.id).map(x => [`Switch to ${x.name}`, 'sidebar', () => select(x.id)])
+    ].filter(([n]) => !q || n.toLowerCase().includes(q)).map(([label, icon, run]) => ({ label: esc(label), icon, run }));
+    const prompts = q.length < 2 ? [] : history.filter(([p]) => p.toLowerCase().includes(q)).slice(0, 6).map(([p, proj]) => {
+      const i = p.toLowerCase().indexOf(q);
+      return { label: esc(p.slice(0, i)) + '<mark>' + esc(p.slice(i, i + q.length)) + '</mark>' + esc(p.slice(i + q.length)), meta: proj, prompt: true, run: () => resume(proj) };
+    });
+    palItems = [...cmds, ...prompts];
+    palSel = Math.min(palSel, Math.max(0, palItems.length - 1));
+    const item = (x, i) => `<button type="button" class="it${i === palSel ? ' on' : ''}" data-pal="${i}">${x.icon ? ico(x.icon) : ''}<span>${x.label}</span>${x.meta ? `<small>${esc(x.meta)}</small>` : ''}</button>`;
+    palList.innerHTML = (cmds.length ? cmds.map(item).join('') : '')
+      + (prompts.length ? `<div class="grp">Prompts</div>${prompts.map((x, i) => item(x, i + cmds.length)).join('')}` : '')
+      || '<div class="nothing">No matches</div>';
+  }
+  function runPalette(i) { const x = palItems[i]; if (!x) return; closeOverlays(); x.run(); }
+  function resume(project) {
+    const open = tabs.find(t => t.name === project);
+    if (open) return select(open.id);
+    const i = recent.findIndex(r => r[0] === project);
+    if (i >= 0) openProject(i);
+  }
+  function setModel(t, n) {
+    const full = MODELS.find(m => m[0] === n);
+    t.model = n;
+    t.lines.push(you('/model ' + full[1]), res('Set model to ' + full[2]));
+    closeOverlays(); changed(t);
+  }
+
+  // ---------- events: one listener per kind ----------
+  win.addEventListener('click', e => {
+    const el = e.target.closest('[data-close],[data-tab],[data-act],[data-open],[data-opt],[data-sec],[data-panel],[data-scope],[data-model],[data-pal],[data-resume]');
+    if (!el) { if (!e.target.closest('.overlay')) closeOverlays(); return; }
+    const d = el.dataset;
+    if (d.close) { e.stopPropagation(); closeTab(+d.close); return; }
+    if (d.act && el.closest('.sec')) { runAction(d.act, el); return; }
+    if (d.tab) { select(+d.tab); return; }
+    if (d.act) { runAction(d.act, el); return; }
+    if (d.open) { openProject(+d.open); return; }
+    if (d.opt) { const t = active(); if (t.ask) { t.ask.sel = +d.opt; answer(t, +d.opt); } return; }
+    if (d.sec) { ui.closed.has(d.sec) ? ui.closed.delete(d.sec) : ui.closed.add(d.sec); renderInsp(); return; }
+    if (d.panel) { ui.panel = d.panel; renderInsp(); return; }
+    if (d.scope) { ui.scope = d.scope; renderInsp(); return; }
+    if (d.model) { setModel(active(), d.model); return; }
+    if (d.pal) { runPalette(+d.pal); return; }
+    if (d.resume) { resume(d.resume); }
+  });
+  tabList.addEventListener('keydown', e => {
+    const row = e.target.closest('[data-tab]');
+    if (row && (e.key === 'Enter' || e.key === ' ') && e.target === row) { e.preventDefault(); select(+row.dataset.tab); }
+  });
+  $('.search input').addEventListener('input', e => { ui.query = e.target.value; renderTabs(); });
+  palField.addEventListener('input', () => { palSel = 0; renderPalette(); });
+  palField.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      palSel = (palSel + (e.key === 'ArrowDown' ? 1 : -1) + palItems.length) % Math.max(1, palItems.length);
+      renderPalette();
+      palList.querySelector('.on')?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') { e.preventDefault(); runPalette(palSel); }
+  });
+  sheet.addEventListener('input', () => { sheet.querySelector('.primary').disabled = !sheet.branch.value.trim(); });
+  sheet.addEventListener('submit', e => {
+    e.preventDefault();
+    const branch = sheet.branch.value.trim().replace(/\s+/g, '-');
+    const base = active();
+    if (!branch || !base.branch) return;
+    closeOverlays();
+    const dir = branch.replace(/\//g, '-');
+    addTab(mk({ name: dir, path: `${base.path}/.claude/worktrees/${dir}`, branch, ctx: null, lines: [welcome(`${base.path}/.claude/worktrees/${dir}`)] }));
+    toast(`Created ${branch} from ${base.branch === 'main' ? 'main' : base.branch}`);
+  });
+  win.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openPalette(''); return; }
+    if (e.key === 'Escape') {
+      if (win.querySelector('.overlay.show')) { closeOverlays(); term.focus({ preventScroll: true }); return; }
+      if (document.activeElement === term) interrupt(active());
+      return;
+    }
+    if (document.activeElement !== term) return;
+    const t = active();
+    if (t.ask) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); t.ask.sel = (t.ask.sel + (e.key === 'ArrowDown' ? 1 : t.ask.opts.length - 1)) % t.ask.opts.length; renderTerm(); }
+      else if (e.key === 'Enter') { e.preventDefault(); answer(t, t.ask.sel); }
+      else if (/^[1-9]$/.test(e.key) && +e.key <= t.ask.opts.length) answer(t, +e.key - 1);
+    }
+  });
+  // Icons-only mode keeps the names as tooltips and for screen readers.
+  strip.querySelectorAll('button .lbl').forEach(l => { l.parentElement.title = l.textContent; l.parentElement.setAttribute('aria-label', l.textContent); });
+  new ResizeObserver(fitStrip).observe(strip);
+
+  // Starts when the window first scrolls into view: the busy tab finishes
+  // its turn, and if you're looking at another tab, says so.
+  let started = false;
+  new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    win.classList.toggle('off', !visible);
+    syncTicker();
+    if (visible && !started) {
+      started = true;
+      const t = tabs[0];
+      t.work.start = performance.now();
+      play(t, [
+        [3500, () => { t.lines.push(tool('Write', 'tests/webhooks/retry.test.ts'), res('Wrote 3 tests')); t.work.label = 'Running the tests'; t.ctx = 45; }],
+        [2800, () => { t.lines.push(tool('Bash', 'npm test -- webhooks'), res('21 passed')); t.ctx = 47; }],
+        [2200, () => finish(t, say('Done. Deliveries retry up to 3 times with 1 s, 2 s and 4 s backoff, and a 4xx other than 429 fails at once. Three new tests cover it.'))],
+        [0, () => t.lines.push(note('✻ Worked for 2m 4s'))]
+      ]);
+    }
+  }, { threshold: 0.3 }).observe(win);
+
+  renderAll();
+
+  // ---------- the feature tour under the window ----------
+  const target = { tabs: '.side', attention: '.side', panel: '.insp' };
   const items = [...document.querySelectorAll('.tour button')];
   const narrow = matchMedia('(max-width: 1100px)');
   const phone = matchMedia('(max-width: 680px)');
   let pinned = null;
   function focus(key) {
     win.classList.remove('focusing', 'focus-attention', 'focus-branch', 'show-insp');
-    const active = tabs.findIndex(t => t.classList.contains('on'));
-    path.textContent = states[active].path;
+    renderTop();
     win.querySelectorAll('.hl, .hl-parent').forEach(e => e.classList.remove('hl', 'hl-parent'));
-    win.querySelectorAll('.overlay').forEach(e => e.classList.remove('show'));
+    closeOverlays();
     items.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.key === key)));
     if (!key) return;
     win.classList.add('focusing');
-    if (key === 'prompts') { win.querySelector('.overlay.palette').classList.add('show'); return; }
-    if (key === 'panel' && narrow.matches) {
-      // The panel is hidden on narrow windows: slide it in over the terminal.
-      win.classList.add('show-insp'); win.querySelector('.insp').classList.add('hl'); return;
+    if (key === 'prompts') { palette.classList.add('show'); palField.value = 'retry'; palSel = 0; renderPalette(); return; }
+    if (key === 'panel' && (narrow.matches || win.classList.contains('noinsp'))) {
+      // The panel is hidden: slide it in over the terminal.
+      win.classList.add('show-insp'); insp.classList.add('hl'); return;
     }
-    if (key === 'branch' && phone.matches) {
-      // Phones hide the tab rows' branch line: show the active tab's in the title.
-      const active = tabs.find(t => t.classList.contains('on'));
-      path.textContent = active.querySelector('.b').textContent;
-      const t = win.querySelector('.wtitle'); t.classList.add('hl'); t.parentElement.classList.add('hl-parent'); return;
+    if (key === 'branch') {
+      win.classList.add('focus-branch');
+      if (phone.matches) {
+        // Phones hide the tab rows' branch line: show the active tab's in the title.
+        const t = active();
+        if (t.branch) path.textContent = '⎇ ' + t.branch;
+        const w = $('.wtitle'); w.classList.add('hl'); w.parentElement.classList.add('hl-parent');
+      } else $('.side').classList.add('hl');
+      const wt = strip.querySelector('.wt');
+      if (getComputedStyle(wt).display !== 'none') { wt.classList.add('hl'); strip.classList.add('hl-parent'); }
+      return;
     }
     if (key === 'usage') {
-      win.querySelector('.overlay.usage').classList.add('show');
-      const icon = win.querySelector('.ib.usage');
+      $('.overlay.usage').classList.add('show');
+      const icon = $('.ib.usage');
       if (getComputedStyle(icon.parentElement).display !== 'none') {
         icon.classList.add('hl'); icon.parentElement.classList.add('hl-parent'); icon.closest('.toolbar').classList.add('hl-parent');
       }
       return;
     }
-    win.querySelector(target[key]).classList.add('hl');
+    $(target[key]).classList.add('hl');
     if (key === 'attention') win.classList.add('focus-attention');
-    if (key === 'branch') win.classList.add('focus-branch');
   }
   items.forEach(b => {
     b.addEventListener('mouseenter', () => focus(b.dataset.key));
