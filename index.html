@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Xylem - a native Mac app for Claude Code</title>
-<meta name="description" content="A free desktop app for Claude Code on Mac: run every session in its own tab, see which one needs you, and track usage, costs and your Claude setup.">
+<meta name="description" content="A free, native Mac app for Claude Code: run every session in its own tab, see which one needs you, and track usage, costs and your Claude setup.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="author" content="t1nkl">
 <link rel="canonical" href="https://xylem.t1nkl.dev/">
@@ -16,17 +16,17 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://xylem.t1nkl.dev/">
 <meta property="og:title" content="Xylem - every Claude Code session in one Mac window">
-<meta property="og:description" content="A free desktop app for Claude Code on Mac: run every session in its own tab, see which one needs you, and track usage, costs and your Claude setup.">
+<meta property="og:description" content="A free, native Mac app for Claude Code: run every session in its own tab, see which one needs you, and track usage, costs and your Claude setup.">
 <meta property="og:image" content="https://xylem.t1nkl.dev/assets/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Xylem: every Claude Code session, one window. A free native Mac app.">
+<meta property="og:image:alt" content="Xylem: every Claude Code session, one window. The app with tabs on the left, a Claude session in the middle and the Changes drawer with a diff on the right.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Xylem - every Claude Code session in one Mac window">
-<meta name="twitter:description" content="A free desktop app for Claude Code on Mac: run every session in its own tab, see which one needs you, and track usage, costs and your Claude setup.">
+<meta name="twitter:description" content="A free, native Mac app for Claude Code: run every session in its own tab, see which one needs you, and track usage, costs and your Claude setup.">
 <meta name="twitter:image" content="https://xylem.t1nkl.dev/assets/og-image.png">
-<meta name="twitter:image:alt" content="Xylem: every Claude Code session, one window. A free native Mac app.">
+<meta name="twitter:image:alt" content="Xylem: every Claude Code session, one window. The app with tabs on the left, a Claude session in the middle and the Changes drawer with a diff on the right.">
 
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
@@ -38,7 +38,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Xylem",
-  "description": "A free desktop app for Claude Code on Mac: run every session in its own tab, see which one needs you, and track usage, costs and your Claude setup.",
+  "description": "A free, native Mac app for Claude Code: run every session in its own tab, see which one needs you, and track usage, costs and your Claude setup.",
   "url": "https://xylem.t1nkl.dev/",
   "image": "https://xylem.t1nkl.dev/assets/og-image.png",
   "applicationCategory": "DeveloperApplication",
@@ -54,7 +54,10 @@
     "Skills, agents, MCP servers, plugins, permissions and hooks of the current project in one panel",
     "Token usage and API-price costs by model, project, session and day",
     "Search every past prompt and jump back into that conversation",
-    "Open a git worktree on a new branch in its own tab"
+    "Open a git worktree on a new branch in its own tab",
+    "Browse the project's files and the diff of every changed file next to the conversation",
+    "Keyboard shortcuts for tabs, panels, files and changes",
+    "A native Swift, SwiftUI and AppKit app, not a web page in a window: a 6 MB download"
   ],
   "author": { "@type": "Person", "name": "t1nkl", "url": "https://github.com/t1nkl" }
 }
@@ -128,7 +131,7 @@
     background: var(--w-main); color: var(--w-text);
     box-shadow: 0 0 0 1px #3A3A3A, 0 40px 80px -30px rgba(0,0,0,.9);
     font: 13px/1.3 var(--sys);
-    display: grid; grid-template-columns: var(--side-w, 252px) minmax(0, 1fr) 260px; grid-template-rows: 52px minmax(0, 1fr) 36px;
+    display: grid; grid-template-columns: var(--side-w, 252px) minmax(0, 1fr) 260px 46px; grid-template-rows: 52px minmax(0, 1fr) 36px;
   }
   .win * { min-width: 0; }
   .win svg { flex: none; }
@@ -183,7 +186,7 @@
   .all { margin-top: auto; display: flex; align-items: center; gap: 8px; color: var(--accent); font-size: 14px; font-weight: 500; padding: 6px; }
 
   /* toolbar over the terminal and the panel */
-  .toolbar { grid-row: 1; grid-column: 2 / 4; display: flex; align-items: center; gap: 12px; padding: 0 10px 0 12px; background: var(--w-main); border-bottom: 1px solid #141414; }
+  .toolbar { grid-row: 1; grid-column: 2 / 5; display: flex; align-items: center; gap: 12px; padding: 0 10px 0 12px; background: var(--w-main); border-bottom: 1px solid #141414; }
   .round { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.07); color: var(--w-text2); }
   .wtitle { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
   .wtitle b { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -196,6 +199,7 @@
   .pill .model { display: flex; align-items: center; gap: 5px; color: var(--w-text); }
   .pill .model .ico.small { width: 10px; height: 10px; color: var(--w-text2); }
   .pill.icons { gap: 2px; padding: 0 4px; }
+  .pill.icons + .pill.icons { margin-left: -4px; }
   .pill.icons .ib { width: 32px; }
 
   /* terminal */
@@ -252,13 +256,69 @@
   .seg { display: grid; grid-template-columns: 1fr 1fr; background: rgba(255,255,255,.07); border-radius: 8px; padding: 2px; font-size: 13px; text-align: center; margin-bottom: 7px; }
   .seg span { padding: 3px 0; border-radius: 6px; color: var(--w-text2); }
   .seg span.on { background: var(--w-seg); color: #fff; font-weight: 600; }
-  .sec { display: flex; align-items: center; gap: 7px; font-weight: 600; font-size: 13px; padding: 8px 2px 5px; color: var(--w-text); }
+  .sec { display: flex; align-items: center; gap: 7px; font-weight: 600; font-size: 13px; padding: 8px 2px 5px; color: #CCCCCC; }
   .sec .ico { width: 10px; height: 10px; color: var(--w-muted); stroke-width: 2; }
   .sec em { font-style: normal; color: var(--w-muted); font-weight: 400; }
-  .row { display: flex; align-items: center; gap: 8px; padding: 4px 2px 4px 6px; font-size: 13px; color: #E0E0E0; }
+  .row { display: flex; align-items: center; gap: 8px; padding: 4px 2px 4px 6px; font-size: 13px; color: #CCCCCC; }
   .row i { width: 6px; height: 6px; border-radius: 50%; background: var(--w-green); flex: none; }
   .row span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .row small { margin-left: auto; color: var(--w-muted); font-size: 12px; white-space: nowrap; flex: none; }
+
+  /* the panel rail: Claude / Git switch the panel, Files / Changes open the drawer */
+  .rail { grid-row: 2 / 4; grid-column: 4; display: flex; flex-direction: column; align-items: center; gap: 5px; padding-top: 9px; background: var(--w-main); border-left: 1px solid #141414; }
+  .rail button { display: grid; place-items: center; width: 34px; height: 30px; border-radius: 7px; color: var(--w-text2); }
+  .rail button .ico { width: 16px; height: 16px; }
+  .rail button:hover:not(:disabled) { background: rgba(255,255,255,.08); color: var(--w-text); }
+  .rail button.on { background: rgba(255,255,255,.14); color: var(--w-text); }
+  .rail button:disabled { opacity: .35; cursor: default; }
+  .rail hr { width: 22px; border: 0; border-top: 1px solid #3A3A3A; margin: 3px 0; }
+
+  /* the drawer over the terminal: the terminal keeps its size */
+  .drawer { position: absolute; z-index: 2; top: 52px; bottom: 36px; right: 46px; width: min(470px, 72%); display: none; flex-direction: column; background: #202020; border-left: 1px solid #0E0E0E; box-shadow: -14px 0 24px -10px rgba(0,0,0,.55); }
+  .drawer.show { display: flex; }
+  .dr-h { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 8px 0 12px; border-bottom: 1px solid #141414; flex: none; }
+  .dr-h b { font-weight: 600; }
+  .dr-h small { color: var(--w-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dr-h .x { margin-left: auto; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; color: var(--w-text2); }
+  .dr-h .x:hover { background: rgba(255,255,255,.08); }
+  .dr-list { flex: 0 0 42%; overflow: auto; padding: 4px 6px; border-bottom: 1px solid #141414; }
+  .dr-list .meta { color: var(--w-muted); font-size: 12px; padding: 4px 6px 2px; }
+  .fr { display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 6px; border-radius: 6px; font-size: 13px; color: #E0E0E0; text-align: left; white-space: nowrap; }
+  .fr:hover { background: rgba(255,255,255,.05); }
+  .fr.on { background: var(--w-sel); }
+  .fr .ico { width: 13px; height: 13px; color: var(--w-text2); }
+  .fr .chev { width: 9px; height: 9px; stroke-width: 2; color: var(--w-muted); transition: transform .12s; }
+  .fr .chev.open { transform: rotate(90deg); }
+  .fr .nochev { width: 9px; flex: none; }
+  .fr span { overflow: hidden; text-overflow: ellipsis; }
+  .fr .k { margin-left: auto; font: 600 10px var(--mono); }
+  .fr .kl { width: 14px; flex: none; text-align: center; font: 700 11px var(--mono); }
+  .fr .kl.k { margin-left: 0; }
+  .fr .cnt { margin-left: auto; color: var(--w-muted); font-size: 11px; }
+  .fr .nums { margin-left: auto; display: flex; gap: 4px; }
+  .fr .ico.blue { color: rgba(96,165,250,.85); width: 12px; height: 12px; }
+  .fr.M span { color: var(--w-amber); } .fr.A span, .fr.U span { color: var(--w-green); } .fr.D span { color: #F87171; }
+  .dr-ph { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px 0 12px; background: rgba(48,48,48,.6); flex: none; font: 500 12px var(--sys); color: var(--w-text); }
+  .dr-ph span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dr-ph button { margin-left: auto; font-size: 12px; color: var(--w-text2); padding: 2px 6px; border-radius: 5px; }
+  .dr-ph button:hover { background: rgba(255,255,255,.08); }
+  .dr-pane { flex: 1; display: flex; flex-direction: column; min-height: 0; background: var(--w-term); }
+  .fr .n { font: 11px var(--mono); }
+  .k.M { color: var(--w-amber); } .k.A, .k.U { color: var(--w-green); } .k.D { color: #F87171; }
+  .fr.del span { text-decoration: line-through; color: var(--w-text2); }
+  .fr .n.add { color: var(--w-green); } .fr .n.del { color: #F87171; }
+  .dr-view { flex: 1; overflow: auto; background: var(--w-term); font: 11.5px/1.55 var(--mono); padding: 6px 0; }
+  .dr-view .mk.p { color: var(--w-green); } .dr-view .mk.m { color: #F87171; }
+  .dr-view .ln.hunk span:last-child { color: #60A5FA; }
+  .dr-view .ln { display: flex; white-space: pre; padding-right: 12px; }
+  .dr-view .ln i { font-style: normal; flex: none; width: 34px; padding-right: 10px; text-align: right; color: #5A5A5A; }
+  .dr-view .ln i + i { width: 30px; }
+  .dr-view .ln.add { background: rgba(73,222,128,.12); }
+  .dr-view .ln.rem { background: rgba(248,113,113,.13); }
+  .dr-view .ln.hunk { background: rgba(96,165,250,.08); }
+  .dr-view .mk { width: 16px; flex: none; text-align: center; }
+  .dr-view .empty { color: var(--w-muted); font: 12px var(--sys); padding: 12px 14px; }
+  .sx-k { color: #FF7B72; } .sx-s { color: #A5D6FF; } .sx-n { color: #79C0FF; } .sx-c { color: #8B949E; font-style: italic; } .sx-f { color: #D2A8FF; } .sx-t { color: #FFA657; } .sx-h { color: #79C0FF; font-weight: 600; }
 
   /* ---------- interactivity ---------- */
   .win > * { transition: opacity .2s; }
@@ -281,6 +341,11 @@
   .overlay .it.on small { color: rgba(255,255,255,.75); }
   .overlay mark { background: none; color: var(--w-green); font-weight: 600; }
   .overlay.usage { padding: 14px; }
+  .overlay.keys { padding: 12px 14px; }
+  .overlay.keys b { display: block; font-size: 13px; margin-bottom: 6px; }
+  .overlay.keys dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; font-size: 12.5px; }
+  .overlay.keys dt { font: 12px var(--mono); color: var(--w-text); text-align: right; }
+  .overlay.keys dd { margin: 0; color: var(--w-text2); }
   .overlay.usage .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .overlay.usage .card { background: #1E1E1E; border-radius: 8px; padding: 10px; }
   .overlay.usage .card small { color: var(--w-text2); font-size: 11px; display: block; }
@@ -289,7 +354,8 @@
   .overlay.usage .bars i { flex: 1; background: var(--accent); border-radius: 3px 3px 0 0; }
 
   .try { color: var(--text2); text-align: center; margin: 28px auto 0; max-width: 40em; font-size: 16px; }
-  .tour { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 24px auto 0; max-width: calc(1072px + 36px); }
+  .tour { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 24px auto 0; max-width: calc(1072px + 36px); }
+  @media (max-width: 1180px) { .tour { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .tour button { all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-start; min-width: 0; padding: 18px 18px 20px; border-radius: 12px; border: 1px solid transparent; }
   .tour button:hover, .tour button:focus-visible { background: var(--surface); border-color: var(--line); }
   .tour button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
@@ -311,6 +377,11 @@
   .steps p { margin: 0; color: var(--text2); font-size: 16px; }
   .cmd { display: block; margin-top: 12px; font: 13px/1.5 var(--mono); background: #101010; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-wrap: anywhere; }
   .steps .btn { margin-top: 14px; font-size: 15px; padding: 11px 16px; }
+  .native .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 32px; margin: 40px 0 0; padding: 0; list-style: none; }
+  .native .facts li { border-top: 1px solid var(--line); padding-top: 18px; min-width: 0; }
+  .native .facts b { display: block; font: 800 clamp(30px, 3.2vw, 40px)/1 var(--body); letter-spacing: -0.03em; color: var(--text); }
+  .native .facts span { display: block; margin-top: 8px; color: var(--text2); font-size: 16px; }
+  @media (max-width: 980px) { .native .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 24px; } }
   .faq { max-width: 760px; }
   details { border-top: 1px solid var(--line); }
   details:last-child { border-bottom: 1px solid var(--line); }
@@ -344,7 +415,7 @@
   .pill .model:hover:not(:disabled) { background: rgba(255,255,255,.08); }
   .pill .model:disabled { opacity: .4; }
   .win.noinsp .insp { display: none; }
-  .win.noinsp { grid-template-columns: var(--side-w, 252px) minmax(0, 1fr) 0; }
+  .win.noinsp { grid-template-columns: var(--side-w, 252px) minmax(0, 1fr) 0 46px; }
   .win.noinsp .term, .win.noinsp .strip { grid-column: 2 / 4; }
 
   .term:focus { outline: none; }
@@ -379,7 +450,7 @@
   .row.act:hover { background: rgba(255,255,255,.06); }
   .row i.m { background: var(--w-amber); } .row i.a { background: var(--w-green); } .row i.c { background: var(--w-blue); }
   .row code { font: 11px var(--mono); background: none; padding: 0; color: var(--w-muted); flex: none; }
-  .ghead { display: flex; align-items: center; gap: 6px; font-weight: 600; padding: 6px 2px 4px; }
+  .ghead { display: flex; align-items: center; gap: 6px; font-weight: 600; padding: 6px 2px 4px; color: #CCCCCC; }
   .ghead .ico { width: 13px; height: 13px; color: var(--w-green); }
   .ghead small { margin-left: auto; color: var(--w-muted); font-weight: 400; font-size: 12px; }
   .empty { color: var(--w-muted); padding: 18px 4px; text-align: center; }
@@ -437,7 +508,7 @@
     .overlay.menu { right: 12px; }
     .overlay.pop { right: 8px; }
     .toast { left: calc(var(--side-w, 236px) + (100% - var(--side-w, 236px)) / 2); }
-    .win.noinsp { grid-template-columns: var(--side-w, 236px) minmax(0, 1fr); }
+    .win.noinsp { grid-template-columns: var(--side-w, 236px) minmax(0, 1fr) 46px; }
     .win.noinsp .term, .win.noinsp .strip { grid-column: 2; }
   }
   @media (max-width: 680px) {
@@ -455,12 +526,13 @@
     summary::after, .win > * { transition: none; }
   }
   @media (max-width: 1100px) {
-    .win { grid-template-columns: var(--side-w, 236px) minmax(0, 1fr); }
+    .win { grid-template-columns: var(--side-w, 236px) minmax(0, 1fr) 46px; }
     .insp { display: none; }
-    .toolbar { grid-column: 2 / 3; }
+    .rail { grid-column: 3; }
+    .toolbar { grid-column: 2 / 4; }
     .pill.icons { display: none; }
     .overlay { left: calc(var(--side-w, 236px) + (100% - var(--side-w, 236px)) / 2); }
-    .win.show-insp .insp { display: block; position: absolute; z-index: 3; right: 0; top: 52px; bottom: 0; width: min(260px, 80%); box-shadow: -20px 0 40px rgba(0,0,0,.5); }
+    .win.show-insp .insp { grid-area: auto; display: block; position: absolute; z-index: 3; right: 46px; top: 52px; bottom: 0; width: min(260px, 80%); box-shadow: -20px 0 40px rgba(0,0,0,.5); }
   }
   @media (max-width: 980px) {
     .tour { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -488,7 +560,8 @@
     .term { grid-row: 3; grid-column: 1; padding: 12px 14px 0; }
     .strip { grid-row: 4; grid-column: 1; }
     .overlay { left: 50%; top: 100px; }
-    .win.show-insp .insp { top: 48px; }
+    .win.show-insp .insp { top: 48px; right: 0; }
+    .rail, .drawer, .drawer.show { display: none; }
     .wtitle.hl { border-radius: 6px; padding: 2px 4px; }
   }
   .wrap.top { padding-top: 20px; padding-bottom: 20px; }
@@ -512,6 +585,12 @@
     <symbol id="i-chev-right" viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></symbol>
     <symbol id="i-chart" viewBox="0 0 16 16"><rect x="2" y="8" width="3" height="5.5" rx=".8"/><rect x="6.5" y="4.5" width="3" height="9" rx=".8"/><rect x="11" y="2.5" width="3" height="11" rx=".8"/></symbol>
     <symbol id="i-inspector" viewBox="0 0 16 16"><rect x="1.5" y="2.5" width="13" height="11" rx="2.5"/><path d="M10 2.5v11M11.7 5.2h1M11.7 7.2h1"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 16 16"><path d="M6.5 2.5l1.1 3.1 3.1 1.1-3.1 1.1-1.1 3.1-1.1-3.1-3.1-1.1 3.1-1.1zM12 9.5l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></symbol>
+    <symbol id="i-gitbranch" viewBox="0 0 16 16"><path d="M5 2.5v6.5M5 9c0 2.5 1.5 3 3.5 3H11M8.5 5.5H11M11 3l2.5 2.5L11 8M11 9.5l2.5 2.5L11 14.5"/></symbol>
+    <symbol id="i-plusminus" viewBox="0 0 16 16"><path d="M5 2.5v5M2.5 5h5M9 11h5M3 14L13 2"/></symbol>
+    <symbol id="i-folder-fill" viewBox="0 0 16 16"><path d="M1.8 4.5a1 1 0 011-1h3.4l1.4 1.5h5.6a1 1 0 011 1v6.5a1 1 0 01-1 1H2.8a1 1 0 01-1-1z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 16 16"><path d="M4 1.8h5l3.2 3.2v9.2H4z"/><path d="M9 1.8V5h3.2"/></symbol>
+    <symbol id="i-xmark" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></symbol>
     <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></symbol>
     <symbol id="i-folder" viewBox="0 0 16 16"><path d="M1.8 4.5a1 1 0 011-1h3.4l1.4 1.5h5.6a1 1 0 011 1v6.5a1 1 0 01-1 1H2.8a1 1 0 01-1-1z"/></symbol>
     <symbol id="i-grid" viewBox="0 0 16 16"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></symbol>
@@ -530,12 +609,12 @@
 <main>
   <div class="wrap hero">
     <h1>Every Claude Code session. <span>One window.</span></h1>
-    <p class="lede">A Mac app for Claude Code: one tab per conversation, and you always see which one needs you.</p>
+    <p class="lede">A native Mac app for Claude Code: one tab per conversation, and you always see which one needs you.</p>
     <div class="get">
       <a class="btn" href="https://github.com/t1nkl/xylem/releases/latest">
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v9m0 0 3.5-3.5M9 11 5.5 7.5M3 14.5h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Download for Mac</a>
-      <small>Free. For macOS 26 or later on Apple silicon (M1 or newer).</small>
+      <small>Free. A 6 MB download for macOS 26 or later on Apple silicon (M1 or newer).</small>
     </div>
   </div>
 
@@ -556,7 +635,8 @@
         <button type="button" class="round" data-act="newtab" aria-label="New Tab"><svg class="ico"><use href="#i-plus"/></svg></button>
         <div class="wtitle"><b></b><span></span></div>
         <div class="pill ctx"><span class="gauge" aria-hidden="true"><i></i></span><span class="pct"></span><span class="sep"></span><button type="button" class="model" data-act="model" aria-haspopup="menu" aria-label="Model"><svg class="ico" aria-hidden="true"><use href="#i-cpu"/></svg><span class="mname">Opus</span><svg class="ico small" aria-hidden="true"><use href="#i-chev-down"/></svg></button></div>
-        <div class="pill icons"><button type="button" class="ib usage" data-act="usage" aria-label="Usage"><svg class="ico"><use href="#i-chart"/></svg></button><button type="button" class="ib" data-act="insp" aria-label="Show or hide the right panel"><svg class="ico"><use href="#i-inspector"/></svg></button></div>
+        <div class="pill icons"><button type="button" class="ib usage" data-act="usage" aria-label="Usage"><svg class="ico"><use href="#i-chart"/></svg></button></div>
+        <div class="pill icons"><button type="button" class="ib" data-act="insp" aria-label="Show or hide the right panel"><svg class="ico"><use href="#i-inspector"/></svg></button></div>
       </div>
 
       <div class="term" tabindex="0" aria-live="polite" aria-label="Terminal"></div>
@@ -577,6 +657,14 @@
       </div>
 
       <aside class="insp" aria-label="Right panel"></aside>
+      <nav class="rail" aria-label="Panels">
+        <button type="button" data-rail="claude" title="Claude: directories, sessions, skills, agents, MCP (⌃⌘1)" aria-label="Claude panel"><svg class="ico" aria-hidden="true"><use href="#i-sparkles"/></svg></button>
+        <button type="button" data-rail="git" title="Git: branches, worktrees, commits (⌃⌘2)" aria-label="Git panel"><svg class="ico" aria-hidden="true"><use href="#i-gitbranch"/></svg></button>
+        <hr>
+        <button type="button" data-rail="files" title="Files: browse the project's folders (⌃⌘3)" aria-label="Files"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg></button>
+        <button type="button" data-rail="changes" title="Changes: modified files and their diffs (⌃⌘4)" aria-label="Changes"><svg class="ico" aria-hidden="true"><use href="#i-plusminus"/></svg></button>
+      </nav>
+      <aside class="drawer" aria-label="Project drawer"></aside>
 
       <div class="overlay palette" role="dialog" aria-label="Command Palette">
         <input class="field" type="text" placeholder="Search commands and past prompts" aria-label="Search commands and past prompts" autocomplete="off" spellcheck="false">
@@ -594,6 +682,10 @@
         <p class="sh-n">New branches start from main. Folder: .claude/worktrees/&lt;branch&gt;</p>
         <div class="sh-b"><button type="button" data-act="close">Cancel</button><button type="submit" class="primary">Create</button></div>
       </form>
+      <div class="overlay keys" role="dialog" aria-label="Keyboard Shortcuts">
+        <b>Keyboard Shortcuts</b>
+        <dl><dt>⌘T</dt><dd>New Tab</dd><dt>⌘O</dt><dd>Open Folder</dd><dt>⌘1-9</dt><dd>Switch to a tab</dd><dt>⌘K</dt><dd>Command Palette and past prompts</dd><dt>⌘U</dt><dd>Usage Dashboard</dd><dt>⌃⌘S</dt><dd>Tab List</dd><dt>⌃⌘I</dt><dd>Claude / Git Panel</dd><dt>⌃⌘1-4</dt><dd>Claude, Git, Files, Changes</dd><dt>⌘F</dt><dd>Find in the terminal</dd><dt>⌘/</dt><dd>All shortcuts</dd></dl>
+      </div>
       <div class="overlay menu" role="menu" aria-label="Model"></div>
       <div class="overlay pop" role="dialog" aria-label="Doctor">
         <div class="pop-h"><span class="ok"></span>Claude Code detected</div>
@@ -607,7 +699,7 @@
       <button type="button" class="banner" data-act="banner"><img src="assets/icon-192.png" width="30" height="30" alt=""><span><b></b><small></small></span></button>
     </div>
 
-    <p class="try">Xylem runs the same <code>claude</code> you use in Terminal and leaves your Claude Code settings alone. Try it: the window above works. Switch tabs, answer Claude's question, open ⌘K, or pick a feature below.</p>
+    <p class="try">Xylem runs the same <code>claude</code> you use in Terminal and leaves your Claude Code settings alone. Try it: the window above works. Switch tabs, answer Claude's question, open ⌘K, browse the project's files and changes from the icons on the right, or pick a feature below.</p>
     <h2 class="sr-only">Features</h2>
     <div class="tour" id="features">
       <button type="button" data-key="attention" aria-pressed="false"><span class="sym"><span class="r"></span></span><h3>See which tab needs you</h3><p>A yellow ring while Claude is working, a blue dot when it has finished, an orange mark when it needs your permission. The Dock badge and notifications point to the same tab.</p></button>
@@ -616,8 +708,23 @@
       <button type="button" data-key="usage" aria-pressed="false"><span class="sym"><kbd>⌘</kbd><kbd>U</kbd></span><h3>Know what you've used</h3><p>Tokens and what they would cost at API prices, by model, project, session and day, subagents included.</p></button>
       <button type="button" data-key="prompts" aria-pressed="false"><span class="sym"><kbd>⌘</kbd><kbd>K</kbd></span><h3>Find any past prompt</h3><p>Search everything you have ever asked Claude, in any project, and jump back into that conversation.</p></button>
       <button type="button" data-key="branch" aria-pressed="false"><span class="sym"><svg class="ico fi" aria-hidden="true"><use href="#i-branch"/></svg></span><h3>A branch per tab</h3><p>Press Worktree to start a new branch in its own folder (a git worktree) and open it in a tab, so two tasks never touch the same files.</p></button>
+      <button type="button" data-key="files" aria-pressed="false"><span class="sym"><svg class="ico fi" aria-hidden="true"><use href="#i-plusminus"/></svg></span><h3>Files and changes, side by side</h3><p>Browse the project and each changed file's diff without leaving Claude. Drag a file into the terminal to hand Claude its path.</p></button>
+      <button type="button" data-key="keys" aria-pressed="false"><span class="sym"><kbd>⌘</kbd><kbd>/</kbd></span><h3>A key for everything</h3><p>Tabs, panels, files and changes all have shortcuts. ⌘/ lists them, and most can be changed in Settings.</p></button>
     </div>
   </div>
+
+  <section id="native" class="native">
+    <div class="wrap">
+      <h2>Native, all the way down.</h2>
+      <p class="intro">Many desktop apps are web pages in a window: a JavaScript interface running in a bundled browser or a web view. Xylem is written in Swift with SwiftUI and AppKit, and its terminal is SwiftTerm, so it looks and behaves like the rest of your Mac and stays light while Claude works.</p>
+      <ul class="facts">
+        <li><b>6 MB</b><span>to download, 12 MB installed.</span></li>
+        <li><b>0.1%</b><span>of the CPU at rest, with a tab open.</span></li>
+        <li><b>~100 MB</b><span>of memory for the app with a tab open.</span></li>
+        <li><b>0</b><span>browser engines inside.</span></li>
+      </ul>
+    </div>
+  </section>
 
   <section id="install">
     <div class="wrap">
@@ -637,7 +744,11 @@
       <div>
         <details>
           <summary>Is Xylem a GUI for Claude Code?</summary>
-          <p>Yes, a desktop app around the real Claude Code CLI. You talk to Claude the same way as in Terminal, and Xylem adds what a terminal window lacks: several sessions in tabs, a mark on the one that is working or waiting for you, past prompts, usage and costs, and your skills, MCP servers and hooks in one panel.</p>
+          <p>Yes, a desktop app around the real Claude Code CLI. You talk to Claude the same way as in Terminal, and Xylem adds what a terminal window lacks: several sessions in tabs, a mark on the one that is working or waiting for you, past prompts, usage and costs, your skills, MCP servers and hooks in one panel, and the project's files and git changes a click away.</p>
+        </details>
+        <details>
+          <summary>Is it built with web technology, like Electron?</summary>
+          <p>No. Many desktop apps run a JavaScript or TypeScript interface inside a bundled browser (Electron) or the system web view. Xylem has no web layer: the interface is Swift with Apple's SwiftUI and AppKit, and the terminal in each tab is SwiftTerm, a native terminal emulator. That is why the download is about 6 MB and the app sits at about 0.1% of the CPU while nothing happens.</p>
         </details>
         <details>
           <summary>Does Xylem change my Claude Code settings?</summary>
@@ -645,7 +756,7 @@
         </details>
         <details>
           <summary>What leaves my Mac?</summary>
-          <p>Nothing about you or your code. Xylem checks status.claude.com for outages, skills.sh for the skills directory, and every few hours this site for a new version of Xylem. If Xylem crashes, it sends a crash report to Sentry with the error, macOS version, Mac model and Xylem version, never your prompts, files or IP address. You can turn crash reports off in Settings &gt; General &gt; Privacy. Claude Code talks to Anthropic as usual.</p>
+          <p>Nothing about you or your code. Xylem checks status.claude.com for outages, skills.sh for the skills directory, and once an hour this site for a new version of Xylem. If Xylem crashes, it sends a crash report to Sentry with the error, macOS version, Mac model and Xylem version, never your prompts, files or IP address. You can turn crash reports off in Settings &gt; Updates &amp; Privacy. Claude Code talks to Anthropic as usual.</p>
         </details>
         <details>
           <summary>Which Macs does it run on?</summary>
@@ -675,7 +786,7 @@
 <footer>
   <div class="wrap">
     <p>Xylem is an independent project and is not affiliated with Anthropic. Claude is a trademark of Anthropic.</p>
-    <p>© 2026 t1nkl. Free to use, all rights reserved. Built with SwiftTerm, Sparkle and the Sentry SDK (MIT).</p>
+    <p>© 2026 t1nkl. Free to use, all rights reserved. Built with SwiftTerm, Sparkle, the Sentry SDK (MIT) and highlight.js (BSD).</p>
   </div>
 </footer>
 
@@ -692,6 +803,10 @@
   const palette = $('.overlay.palette'), palField = palette.querySelector('.field'), palList = palette.querySelector('.results');
   const sheet = $('.overlay.sheet'), menu = $('.overlay.menu'), overview = $('.overlay.overview');
   const toastEl = $('.toast'), banner = $('.banner');
+  const rail = $('.rail'), drawer = $('.drawer');
+  // Under 1100 px the panel slides in over the terminal instead of a column.
+  const wideWin = matchMedia('(min-width: 1101px)');
+  wideWin.addEventListener('change', () => railState());
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const ico = (id, cls = '') => `<svg class="ico ${cls}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
@@ -733,7 +848,7 @@
       work: { label: 'Writing the retry test', start: 0, base: 71 },
       lines: [you('Add retries to the payment webhook, max 3, with backoff'),
         say('I\'ll wrap the delivery in a retry loop with exponential backoff.'),
-        tool('Update', 'src/webhooks/deliver.ts'), res('Updated with 24 additions and 3 removals'),
+        tool('Update', 'src/webhooks/deliver.ts'), res('Updated with 11 additions and 2 removals'),
         tool('Bash', 'npm test -- webhooks'), res('18 passed')] }),
     mk({ name: 'docs-site', path: '~/code/docs-site', branch: 'main', ctx: 21, status: 'needs',
       prompt: 'Rebuild the docs with the new sidebar',
@@ -745,7 +860,7 @@
       prompt: 'Why does the login screen flicker?',
       lines: [you('Why does the login screen flicker?'), tool('Read', 'src/screens/Login.tsx'),
         say('The screen renders twice: <span class="you">useAuth</span> starts as <span class="you">undefined</span>, shows the spinner, then the form. Starting it from the cached session removes the second render.'),
-        tool('Update', 'src/hooks/useAuth.ts'), res('Updated with 6 additions and 2 removals'), note('✻ Worked for 1m 12s')] }),
+        tool('Update', 'src/hooks/useAuth.ts'), res('Updated with 3 additions and 1 removal'), note('✻ Worked for 1m 12s')] }),
     mk({ name: 'infra', path: '~/code/infra', ctx: 12, prompt: 'Bump the staging node pool',
       lines: [you('Bump the staging node pool'), tool('Update', 'terraform/staging/nodes.tf'), res('node_count 3 to 5'),
         say('The plan adds two nodes and changes nothing else. Apply it when you\'re ready.')] }),
@@ -753,7 +868,7 @@
   ];
   let activeId = tabs[0].id;
   const active = () => tabs.find(t => t.id === activeId);
-  const ui = { panel: 'claude', scope: 'project', closed: new Set(['Sessions', 'Agent Teams', 'Agents', 'Plugins', 'Permissions', 'Hooks', 'Worktrees', 'Branches']), query: '' };
+  const ui = { drawer: null, sel: {}, open: new Set(), panel: 'claude', scope: 'project', closed: new Set(['Sessions', 'Agent Teams', 'Agents', 'Plugins', 'Permissions', 'Hooks', 'Worktrees', 'Branches']), query: '' };
 
   // ---------- timers: only while something runs ----------
   let visible = false;
@@ -801,7 +916,7 @@
 
   // ---------- rendering ----------
   function changed(t) { if (t.id === activeId) { renderTerm(); renderTop(); renderStrip(); } renderTabs(); }
-  function renderAll() { renderTabs(); renderTerm(); renderTop(); renderStrip(); renderInsp(); }
+  function renderAll() { renderTabs(); renderTerm(); renderTop(); renderStrip(); renderInsp(); if (ui.drawer) renderDrawer(); railState(); }
 
   function mark(t) {
     if (t.picker) return '';
@@ -887,7 +1002,7 @@
   function renderInsp() {
     const t = active();
     const seg = (key, a, b) => `<div class="seg">${[a, b].map(([v, l]) => `<button type="button" data-${key}="${v}" class="${ui[key] === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
-    let html = seg('panel', ['claude', 'Claude'], ['git', 'Git']);
+    let html = '';
     if (ui.panel === 'claude') {
       const all = ui.scope === 'all' || t.picker;
       html += seg('scope', ['project', 'This project'], ['all', 'All']);
@@ -905,8 +1020,7 @@
     } else if (!t.branch) {
       html += `<div class="empty">${t.picker ? 'No directory' : 'Not a git repository'}${t.picker ? '' : '<button type="button" data-act="gitinit">Initialize Repository</button>'}</div>`;
     } else {
-      const files = t.name === 'checkout-service' ? [['m', 'src/webhooks/deliver.ts', 'M'], ['a', 'tests/webhooks/retry.test.ts', 'A']]
-        : t.name === 'docs-site' ? [['m', '.vitepress/config.ts', 'M']] : t.ctx ? [['m', 'README.md', 'M']] : [];
+      const files = project(t).changes.map(c => [c.k === 'A' ? 'a' : 'm', c.path, c.k]);
       html += `<div class="ghead">${ico('branch')}${esc(t.branch)}<small>${files.length ? '↑1' : 'up to date'}</small></div>`
         + sec('Worktrees', 1, row('', t.name, 'this tab'), 'worktree')
         + sec('Changes', files.length, files.length ? files.map(([d, f, k]) => row(d, f, k)).join('') : '<div class="empty">No changes</div>')
@@ -914,6 +1028,295 @@
         + sec('Commits', 3, [['a1c9e2f', t.prompt || 'Initial commit'], ['7d03b11', 'Update dependencies'], ['e44f0a9', 'Fix the CI cache key']].map(([h, m]) => `<div class="row"><code>${h}</code><span>${esc(m)}</span></div>`).join(''));
     }
     insp.innerHTML = html;
+  }
+
+
+  // ---------- the project drawer: Files and Changes ----------
+  // Each project's tree and changes (sample data). A diff line is
+  // [kind, old no, new no, text]: kind ' ' context, '+' added, '-' removed, '@' hunk.
+  const CODE = {
+    'src/webhooks/deliver.ts': `import { sendWebhook } from './client';
+import type { Delivery } from '../types';
+
+const MAX_ATTEMPTS = 3;
+const BASE_DELAY_MS = 1000;
+
+// Retries 5xx and 429 with backoff; any other 4xx fails at once.
+export async function deliver(delivery: Delivery): Promise<void> {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const res = await sendWebhook(delivery);
+    if (res.ok) return;
+    if (res.status < 500 && res.status !== 429) {
+      throw new Error(\`Rejected with \${res.status}\`);
+    }
+    if (attempt < MAX_ATTEMPTS) await sleep(BASE_DELAY_MS * 2 ** (attempt - 1));
+  }
+  throw new Error('Gave up after 3 attempts');
+}
+
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));`,
+    'tests/webhooks/retry.test.ts': `import { deliver } from '../../src/webhooks/deliver';
+import { mockWebhook } from '../helpers';
+
+describe('deliver', () => {
+  it('retries a 503 up to 3 times', async () => {
+    const hook = mockWebhook([503, 503, 200]);
+    await deliver(hook.delivery);
+    expect(hook.calls).toBe(3);
+  });
+
+  it('fails a 400 at once', async () => {
+    const hook = mockWebhook([400]);
+    await expect(deliver(hook.delivery)).rejects.toThrow('Rejected with 400');
+  });
+});`,
+    'README.md': `# Project
+
+How to run it locally:
+
+    npm install
+    npm run dev
+
+Tests run with \`npm test\`.`,
+    'package.json': `{
+  "name": "sample",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "test": "vitest run"
+  }
+}`,
+  };
+  const PROJECTS = {
+    'checkout-service': {
+      tree: [['src', [['webhooks', ['client.ts', 'deliver.ts']], 'server.ts', 'types.ts']], ['tests', [['webhooks', ['retry.test.ts']], 'helpers.ts']], 'package.json', 'README.md'],
+      open: ['src', 'src/webhooks', 'tests', 'tests/webhooks'],
+      file: 'src/webhooks/deliver.ts',
+      changes: [
+        { path: 'src/webhooks/deliver.ts', k: 'M', add: 11, del: 2, diff: [
+          ['@', '', '', '@@ -4,6 +4,15 @@ import type { Delivery }'],
+          [' ', 4, 4, 'const MAX_ATTEMPTS = 3;'],
+          ['+', '', 5, 'const BASE_DELAY_MS = 1000;'],
+          [' ', 5, 6, ''],
+          ['+', '', 7, '// Retries 5xx and 429 with backoff; any other 4xx fails at once.'],
+          [' ', 6, 8, 'export async function deliver(delivery: Delivery): Promise<void> {'],
+          ['-', 7, '', '  const res = await sendWebhook(delivery);'],
+          ['-', 8, '', "  if (!res.ok) throw new Error('Delivery failed');"],
+          ['+', '', 9, '  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {'],
+          ['+', '', 10, '    const res = await sendWebhook(delivery);'],
+          ['+', '', 11, '    if (res.ok) return;'],
+          ['+', '', 12, '    if (res.status < 500 && res.status !== 429) {'],
+          ['+', '', 13, '      throw new Error(`Rejected with ${res.status}`);'],
+          ['+', '', 14, '    }'],
+          ['+', '', 15, '    if (attempt < MAX_ATTEMPTS) await sleep(BASE_DELAY_MS * 2 ** (attempt - 1));'],
+          ['+', '', 16, '  }'],
+          ['+', '', 17, "  throw new Error('Gave up after 3 attempts');"],
+          [' ', 9, 18, '}']] },
+        { path: 'tests/webhooks/retry.test.ts', k: 'A', add: 15, del: 0 }
+      ]
+    },
+    'docs-site': {
+      tree: [['.vitepress', ['config.ts', 'theme.ts']], ['guide', ['index.md', 'setup.md']], 'package.json', 'README.md'],
+      open: ['.vitepress'], file: '.vitepress/config.ts',
+      code: { '.vitepress/config.ts': `import { defineConfig } from 'vitepress';
+
+export default defineConfig({
+  title: 'Docs',
+  themeConfig: {
+    sidebar: [
+      { text: 'Guide', link: '/guide/' },
+      { text: 'Setup', link: '/guide/setup' },
+    ],
+  },
+});` },
+      changes: [{ path: '.vitepress/config.ts', k: 'M', add: 4, del: 1, diff: [
+        ['@', '', '', '@@ -5,3 +5,6 @@ export default defineConfig({'],
+        [' ', 5, 5, '  themeConfig: {'],
+        ['-', 6, '', "    nav: [{ text: 'Guide', link: '/guide/' }],"],
+        ['+', '', 6, '    sidebar: ['],
+        ['+', '', 7, "      { text: 'Guide', link: '/guide/' },"],
+        ['+', '', 8, "      { text: 'Setup', link: '/guide/setup' },"],
+        ['+', '', 9, '    ],'],
+        [' ', 7, 10, '  },']] }]
+    },
+    'mobile-app': {
+      tree: [['src', [['hooks', ['useAuth.ts']], ['screens', ['Login.tsx']]]], 'package.json', 'README.md'],
+      open: ['src', 'src/hooks'], file: 'src/hooks/useAuth.ts',
+      code: { 'src/hooks/useAuth.ts': `import { useState } from 'react';
+import { cachedSession } from '../auth/cache';
+
+export function useAuth() {
+  // Start from the cached session: no spinner, no second render.
+  const [session, setSession] = useState(() => cachedSession());
+  return { session, signedIn: session != null, setSession };
+}` },
+      changes: [{ path: 'src/hooks/useAuth.ts', k: 'M', add: 3, del: 1, diff: [
+        ['@', '', '', '@@ -1,5 +1,7 @@'],
+        [' ', 1, 1, "import { useState } from 'react';"],
+        ['+', '', 2, "import { cachedSession } from '../auth/cache';"],
+        [' ', 2, 3, ''],
+        [' ', 3, 4, 'export function useAuth() {'],
+        ['-', 4, '', '  const [session, setSession] = useState(undefined);'],
+        ['+', '', 5, '  // Start from the cached session: no spinner, no second render.'],
+        ['+', '', 6, '  const [session, setSession] = useState(() => cachedSession());'],
+        [' ', 5, 7, '  return { session, signedIn: session != null, setSession };']] }]
+    },
+    'infra': {
+      tree: [['terraform', [['staging', ['main.tf', 'nodes.tf']], ['production', ['main.tf']]]], 'README.md'],
+      open: ['terraform', 'terraform/staging'], file: 'terraform/staging/nodes.tf',
+      code: { 'terraform/staging/nodes.tf': `resource "google_container_node_pool" "staging" {
+  name       = "staging-pool"
+  cluster    = google_container_cluster.staging.id
+  node_count = 5
+
+  node_config {
+    machine_type = "e2-standard-4"
+  }
+}` },
+      changes: [{ path: 'terraform/staging/nodes.tf', k: 'M', add: 1, del: 1, diff: [
+        ['@', '', '', '@@ -2,3 +2,3 @@ resource "google_container_node_pool"'],
+        [' ', 2, 2, '  name       = "staging-pool"'],
+        [' ', 3, 3, '  cluster    = google_container_cluster.staging.id'],
+        ['-', 4, '', '  node_count = 3'],
+        ['+', '', 4, '  node_count = 5']] }]
+    }
+  };
+  // Any other project (opened from Recent Projects, a worktree tab).
+  const project = t => PROJECTS[t.name] || PROJECTS[t.name.replace(/-.*/, '')] || {
+    tree: [['src', ['index.ts']], 'package.json', 'README.md'], open: ['src'], file: 'README.md',
+    changes: t.ctx ? [{ path: 'README.md', k: 'M', add: 2, del: 0, diff: [['@', '', '', '@@ -5,1 +5,3 @@'], [' ', 5, 5, '    npm run dev'], ['+', '', 6, ''], ['+', '', 7, 'Tests run with `npm test`.']] }] : []
+  };
+  const codeOf = (t, f) => project(t).code?.[f] ?? CODE[f] ?? `// ${f}`;
+
+  // A small highlighter in the app's GitHub Dark colours (the app runs highlight.js).
+  const KW = /^(import|from|export|default|async|await|function|const|let|var|for|if|else|return|throw|new|type|interface|of|in|true|false|null|undefined|resource|describe|it|expect)$/;
+  function hl(line, file) {
+    if (/\.md$/.test(file)) return /^#/.test(line) ? `<span class="sx-h">${esc(line)}</span>` : esc(line);
+    let out = '', m;
+    const re = /(\/\/.*$|#.*$)|(`(?:[^`\\]|\\.)*`|'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")|\b(\d[\d_]*)\b|([A-Za-z_$][\w$]*)(?=\s*\()|([A-Za-z_$][\w$]*)/g;
+    let last = 0;
+    while ((m = re.exec(line))) {
+      out += esc(line.slice(last, m.index));
+      const [tok, com, str, num, fn, word] = m;
+      const cls = com && !/\.json$/.test(file) ? 'c' : str ? 's' : num ? 'n' : fn && !KW.test(fn) ? 'f' : (fn || word) && KW.test(fn || word) ? 'k' : word && /^[A-Z]/.test(word) ? 't' : '';
+      out += cls ? `<span class="sx-${cls}">${esc(tok)}</span>` : esc(tok);
+      last = m.index + tok.length;
+    }
+    return out + esc(line.slice(last));
+  }
+
+  function railState() {
+    const panelOn = wideWin.matches ? !win.classList.contains('noinsp') : win.classList.contains('show-insp');
+    rail.querySelectorAll('[data-rail]').forEach(b => {
+      const k = b.dataset.rail;
+      const on = k === 'files' || k === 'changes' ? ui.drawer === k : !ui.drawer && panelOn && ui.panel === k;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+      if (k === 'files' || k === 'changes') b.disabled = !!active().picker;
+    });
+  }
+  function setPanel(on) {
+    if (wideWin.matches) win.classList.toggle('noinsp', !on); else win.classList.toggle('show-insp', on);
+    if (on) closeDrawer(true);
+    fitStrip(); railState();
+  }
+  // Claude / Git show that panel tab, or hide the panel when it already shows
+  // it; Files / Changes toggle the drawer (one side thing at a time, as in the app).
+  function railSelect(k) {
+    const t = active();
+    if (k === 'claude' || k === 'git') {
+      const panelOn = wideWin.matches ? !win.classList.contains('noinsp') : win.classList.contains('show-insp');
+      if (panelOn && !ui.drawer && ui.panel === k) { setPanel(false); return; }
+      ui.panel = k; renderInsp(); setPanel(true); return;
+    }
+    if (t.picker) return;
+    if (ui.drawer === k) { closeDrawer(); return; }
+    ui.drawer = k;
+    if (wideWin.matches) win.classList.add('noinsp'); else win.classList.remove('show-insp');
+    closeOverlays(); fitStrip(); renderDrawer();
+  }
+  function closeDrawer(quiet) {
+    if (!ui.drawer) return;
+    ui.drawer = null;
+    drawer.classList.remove('show');
+    railState();
+    if (!quiet) term.focus({ preventScroll: true }); // the keyboard goes back to the terminal
+  }
+  function tree(t, nodes, dir, depth) {
+    return nodes.map(n => {
+      const [name, kids] = Array.isArray(n) ? n : [n, null];
+      const p = dir ? `${dir}/${name}` : name;
+      const pad = `style="padding-left:${6 + depth * 14}px"`;
+      if (kids) {
+        const open = ui.open.has(t.id + ':' + p);
+        return `<button type="button" class="fr" data-dir="${esc(p)}" ${pad} aria-expanded="${open}">${ico('chev-right', 'chev' + (open ? ' open' : ''))}${ico('folder-fill', 'blue')}<span>${esc(name)}</span></button>`
+          + (open ? tree(t, kids, p, depth + 1) : '');
+      }
+      const ch = project(t).changes.find(c => c.path === p);
+      return `<button type="button" class="fr${ch ? ' ' + ch.k : ''}${ui.sel[t.id + 'f'] === p ? ' on' : ''}" data-file="${esc(p)}" ${pad}><i class="nochev"></i>${ico('doc')}<span>${esc(name)}</span>${ch ? `<b class="k ${ch.k}">${ch.k}</b>` : ''}</button>`;
+    }).join('');
+  }
+  // ChangeTree as in the app: folders first, a chain of single folders folded
+  // into one row ("src/webhooks"), each folder with its file count.
+  function changeTree(changes) {
+    const root = { dirs: new Map(), files: [] };
+    changes.forEach(c => {
+      const parts = c.path.split('/'); let n = root;
+      parts.slice(0, -1).forEach(d => { if (!n.dirs.has(d)) n.dirs.set(d, { dirs: new Map(), files: [] }); n = n.dirs.get(d); });
+      n.files.push(c);
+    });
+    const count = n => n.files.length + [...n.dirs.values()].reduce((a, d) => a + count(d), 0);
+    const rows = [];
+    (function walk(n, prefix, depth) {
+      [...n.dirs.keys()].sort().forEach(name => {
+        let d = n.dirs.get(name), label = name;
+        while (!d.files.length && d.dirs.size === 1) { const [k, v] = [...d.dirs][0]; label += '/' + k; d = v; }
+        const path = prefix + label;
+        rows.push({ dir: path, label, depth, n: count(d) });
+        if (!ui.open.has('c:' + path)) walk(d, path + '/', depth + 1);
+      });
+      n.files.sort((a, b) => a.path.localeCompare(b.path)).forEach(c => rows.push({ c, depth }));
+    })(root, '', 0);
+    return rows;
+  }
+  function renderDrawer() {
+    const t = active();
+    if (!ui.drawer || t.picker) { closeDrawer(true); return; }
+    const pr = project(t);
+    if (!ui.sel[t.id + 'init']) {
+      ui.sel[t.id + 'init'] = 1;
+      pr.open.forEach(d => ui.open.add(t.id + ':' + d));
+      ui.sel[t.id + 'f'] = pr.file;
+      ui.sel[t.id + 'c'] = pr.changes[0]?.path;
+    }
+    const files = ui.drawer === 'files';
+    let list, view, head;
+    if (files) {
+      list = tree(t, pr.tree, '', 0);
+      const f = ui.sel[t.id + 'f'];
+      head = f && f.split('/').pop();
+      view = f ? codeOf(t, f).split('\n').map((l, i) => `<div class="ln"><i>${i + 1}</i><span>${hl(l, f) || ' '}</span></div>`).join('') : '<div class="empty">Pick a file to see its contents.</div>';
+    } else {
+      const c = pr.changes.find(x => x.path === ui.sel[t.id + 'c']);
+      head = c?.path;
+      list = pr.changes.length ? `<div class="meta">${pr.changes.length} changed file${pr.changes.length === 1 ? '' : 's'}</div>`
+        + changeTree(pr.changes).map(r => {
+          const pad = `style="padding-left:${4 + r.depth * 14}px"`;
+          if (r.dir) { const open = !ui.open.has('c:' + r.dir); return `<button type="button" class="fr" data-cdir="${esc(r.dir)}" ${pad} aria-expanded="${open}">${ico('chev-right', 'chev' + (open ? ' open' : ''))}${ico('folder-fill', 'blue')}<span>${esc(r.label)}</span><small class="cnt">${r.n}</small></button>`; }
+          const x = r.c;
+          return `<button type="button" class="fr${c === x ? ' on' : ''}" data-change="${esc(x.path)}" title="${esc(x.path)}" ${pad}><i class="nochev"></i><b class="kl k ${x.k}">${x.k}</b><span${x.k === 'D' ? ' style="text-decoration:line-through"' : ''}>${esc(x.path.split('/').pop())}</span><span class="nums">${x.add ? `<b class="n add">+${x.add}</b>` : ''}${x.del ? `<b class="n del">-${x.del}</b>` : ''}</span></button>`;
+        }).join('')
+        : '<div class="meta">No changes. The working tree matches the last commit.</div>';
+      const diff = c && (c.diff || (c.k === 'A' ? [['@', '', '', `@@ -0,0 +1,${codeOf(t, c.path).split('\n').length} @@`], ...codeOf(t, c.path).split('\n').map((l, i) => ['+', '', i + 1, l])] : []));
+      view = c ? diff.map(([k, a, b, l]) => k === '@'
+        ? `<div class="ln hunk"><i></i><i></i><span class="mk"></span><span>${esc(l)}</span></div>`
+        : `<div class="ln${k === '+' ? ' add' : k === '-' ? ' rem' : ''}"><i>${a}</i><i>${b}</i><span class="mk${k === '+' ? ' p' : k === '-' ? ' m' : ''}">${k === ' ' ? '' : k}</span><span>${hl(l, c.path) || ' '}</span></div>`).join('')
+        : '<div class="empty">Pick a file to see its diff.</div>';
+    }
+    drawer.innerHTML = `<div class="dr-h">${ico(files ? 'folder' : 'plusminus')}<b>${files ? 'Files' : 'Changes'}</b><small>${esc(t.path)}</small><button type="button" class="x" data-act="drawerclose" aria-label="Close">${ico('xmark')}</button></div>`
+      + `<div class="dr-list">${list}</div><div class="dr-pane">${head ? `<div class="dr-ph"><span>${esc(head)}</span><button type="button" data-act="openfile">Open</button></div>` : ''}<div class="dr-view" tabindex="0">${view}</div></div>`;
+    drawer.classList.add('show');
+    railState();
   }
 
   // ---------- actions ----------
@@ -967,7 +1370,9 @@
       case 'openfolder': { const i = recent.findIndex(r => !tabs.some(t => t.name === r[0])); openProject(i < 0 ? 0 : i); break; }
       case 'palette': openPalette(''); break;
       case 'usage': toggle($('.overlay.usage')); break;
-      case 'insp': win.classList.toggle('noinsp'); closeOverlays(); fitStrip(); break;
+      case 'insp': closeOverlays(); setPanel(wideWin.matches ? win.classList.contains('noinsp') : !win.classList.contains('show-insp')); break;
+      case 'drawerclose': closeDrawer(); break;
+      case 'openfile': toast('Opens in the editor picked in Settings → Files'); break;
       case 'side': setSide(!win.classList.contains('noside')); break;
       case 'overview': openOverview(); break;
       case 'model': {
@@ -1071,6 +1476,7 @@
       ['Usage Dashboard', 'chart', () => runAction('usage')],
       ['All Sessions', 'grid', () => runAction('overview')],
       ...(t.picker ? [] : [['Claude · Compact', 'compress', () => runAction('compact')], ['Claude · Clear', 'eraser', () => runAction('clear')], ['Claude · Goal', 'flag', () => runAction('goal')]]),
+      ...(t.picker ? [] : [['Files · Show Project Files', 'folder', () => { if (ui.drawer !== 'files') railSelect('files'); }], ['Git · Show Changes', 'plusminus', () => { if (ui.drawer !== 'changes') railSelect('changes'); }]]),
       ...(t.branch ? [['Git · New Worktree Tab…', 'branch', () => runAction('worktree')]] : []),
       ...(t.picker ? [] : MODELS.filter(m => m[0] !== t.model).map(([n, a]) => [`Claude · Switch to ${n}`, 'cpu', () => setModel(t, n)])),
       ...tabs.filter(x => x.id !== t.id).map(x => [`Switch to ${x.name}`, 'sidebar', () => select(x.id)])
@@ -1102,10 +1508,15 @@
 
   // ---------- events: one listener per kind ----------
   win.addEventListener('click', e => {
-    const el = e.target.closest('[data-close],[data-tab],[data-act],[data-open],[data-opt],[data-sec],[data-panel],[data-scope],[data-model],[data-pal],[data-resume]');
+    const el = e.target.closest('[data-close],[data-tab],[data-act],[data-open],[data-opt],[data-sec],[data-panel],[data-scope],[data-model],[data-pal],[data-resume],[data-rail],[data-dir],[data-cdir],[data-file],[data-change]');
     if (!el) { if (!e.target.closest('.overlay')) closeOverlays(); return; }
     const d = el.dataset;
     if (d.close) { e.stopPropagation(); closeTab(+d.close); return; }
+    if (d.rail) { railSelect(d.rail); return; }
+    if (d.dir) { const key = active().id + ':' + d.dir; ui.open.has(key) ? ui.open.delete(key) : ui.open.add(key); renderDrawer(); return; }
+    if (d.cdir) { const key = 'c:' + d.cdir; ui.open.has(key) ? ui.open.delete(key) : ui.open.add(key); renderDrawer(); return; }
+    if (d.file) { ui.sel[active().id + 'f'] = d.file; renderDrawer(); return; }
+    if (d.change) { ui.sel[active().id + 'c'] = d.change; renderDrawer(); return; }
     if (d.act && el.closest('.sec')) { runAction(d.act, el); return; }
     if (d.tab) { select(+d.tab); return; }
     if (d.act) { runAction(d.act, el); return; }
@@ -1144,6 +1555,8 @@
     toast(`Created ${branch} from ${base.branch === 'main' ? 'main' : base.branch}`);
   });
   win.addEventListener('keydown', e => {
+    if (e.metaKey && e.ctrlKey && /^[1-4]$/.test(e.key)) { e.preventDefault(); railSelect(['claude', 'git', 'files', 'changes'][e.key - 1]); return; }
+    if (e.metaKey && e.ctrlKey && e.key.toLowerCase() === 'i') { e.preventDefault(); runAction('insp'); return; }
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openPalette(''); return; }
     if (e.key === 'Escape') {
       if (win.querySelector('.overlay.show')) { closeOverlays(); term.focus({ preventScroll: true }); return; }
@@ -1174,9 +1587,9 @@
       const t = tabs[0];
       t.work.start = performance.now();
       play(t, [
-        [3500, () => { t.lines.push(tool('Write', 'tests/webhooks/retry.test.ts'), res('Wrote 3 tests')); t.work.label = 'Running the tests'; t.ctx = 45; }],
-        [2800, () => { t.lines.push(tool('Bash', 'npm test -- webhooks'), res('21 passed')); t.ctx = 47; }],
-        [2200, () => finish(t, say('Done. Deliveries retry up to 3 times with 1 s, 2 s and 4 s backoff, and a 4xx other than 429 fails at once. Three new tests cover it.'))],
+        [3500, () => { t.lines.push(tool('Write', 'tests/webhooks/retry.test.ts'), res('Wrote 2 tests')); t.work.label = 'Running the tests'; t.ctx = 45; }],
+        [2800, () => { t.lines.push(tool('Bash', 'npm test -- webhooks'), res('20 passed')); t.ctx = 47; }],
+        [2200, () => finish(t, say('Done. A delivery is tried up to 3 times, 1 s and then 2 s apart, and a 4xx other than 429 fails at once. Two new tests cover it.'))],
         [0, () => t.lines.push(note('✻ Worked for 2m 4s'))]
       ]);
     }
@@ -1189,22 +1602,42 @@
   const items = [...document.querySelectorAll('.tour button')];
   const narrow = matchMedia('(max-width: 1100px)');
   const phone = matchMedia('(max-width: 680px)');
-  let pinned = null;
+  let pinned = null, tourDrawer = null;
   // Phones show the tabs as an avatar strip with no collapse button.
   phone.addEventListener('change', e => { if (e.matches && win.classList.contains('noside')) setSide(false); });
   function focus(key) {
     win.classList.remove('focusing', 'focus-attention', 'focus-branch', 'show-insp');
+    railState();
     renderTop();
     win.querySelectorAll('.hl, .hl-parent').forEach(e => e.classList.remove('hl', 'hl-parent'));
     closeOverlays();
     items.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.key === key)));
+    // A drawer the tour opened closes again, and the panel comes back as it was.
+    if (tourDrawer) {
+      const was = tourDrawer; tourDrawer = null;
+      if (was.drawer) railSelect(was.drawer); else { closeDrawer(true); if (was.panel) setPanel(true); }
+    }
     if (!key) return;
+    if (key === 'files') {
+      if (phone.matches) return; // no drawer on phones
+      win.classList.add('focusing');
+      // A New Tab has no project: only point at the icons.
+      if (!active().picker && ui.drawer !== 'changes') {
+        tourDrawer = { drawer: ui.drawer, panel: wideWin.matches && !win.classList.contains('noinsp') };
+        railSelect('changes');
+      }
+      if (ui.drawer) drawer.classList.add('hl');
+      rail.classList.add('hl');
+      return;
+    }
+    if (key === 'keys') { win.classList.add('focusing'); $('.overlay.keys').classList.add('show'); return; }
     win.classList.add('focusing');
     if ((key === 'tabs' || key === 'attention') && win.classList.contains('noside')) setSide(false);
     if (key === 'prompts') { palette.classList.add('show'); palField.value = 'retry'; palSel = 0; renderPalette(); return; }
+    if (key === 'panel' && ui.drawer) closeDrawer(true);
     if (key === 'panel' && (narrow.matches || win.classList.contains('noinsp'))) {
       // The panel is hidden: slide it in over the terminal.
-      win.classList.add('show-insp'); insp.classList.add('hl'); return;
+      win.classList.add('show-insp'); insp.classList.add('hl'); railState(); return;
     }
     if (key === 'branch') {
       win.classList.add('focus-branch');
