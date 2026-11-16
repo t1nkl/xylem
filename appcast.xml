@@ -7,6 +7,32 @@
     <language>en</language>
     <!-- items: newest first -->
     <item>
+      <title>v1.1.0</title>
+      <pubDate>Mon, 16 Nov 2026 10:54:02 GMT</pubDate>
+      <sparkle:version>18</sparkle:version>
+      <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### New
+- **Files and Changes.** A row of icons at the right edge of the window: Claude and Git switch the right panel, Files and Changes open a drawer over the terminal. Browse the project's folders with a read-only preview, or see every changed file in a folder tree with its diff. Drag a file from the drawer or Finder onto the terminal to type its path for Claude.
+- **Syntax highlighting** in file previews and diffs, for about 50 languages.
+- **Open files in your editor.** Settings > Files picks the app the drawer's Open button uses (VS Code, Zed, Xcode, a JetBrains IDE or any other app). The first Open asks once.
+- **More shortcuts.** Ctrl+Cmd+1-4 for Claude, Git, Files and Changes, Cmd+O opens a folder from any tab, Ctrl+Cmd+S shows or hides the tab list. Change them in Settings > Hotkeys; Cmd+/ lists them all.
+
+### Improved
+- **Settings in six tabs:** General, Claude Code, Terminal, Files, Hotkeys, and Updates & Privacy.
+- **Right panel:** opens and closes at once, can be made wider or narrower by dragging its left edge, and keeps its sections open while hidden. Its text is a little softer, so it doesn't outshine the terminal.
+- **Updates are checked every hour** instead of every few hours.
+- **Toolbar:** more room inside the capsules, and Usage and the panel button are now separate.
+- The View menu says "Show Tab List" or "Hide Tab List", whichever it will do.
+
+### Fixed
+- Doctor no longer turns amber for a tab where you answered "No, exit" to Claude Code's "trust this folder?" question.
+- A dropped or inserted path that contains control characters is refused instead of being typed into Claude.
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.1.0/Xylem-v1.1.0.dmg" type="application/octet-stream" sparkle:edSignature="nffap1QDgf8rAUXUnTcb4KlgPquMrwppX8Qn6NlOWorbgOJQ1FPQPFot1QS9pyBjkTb7Iu5qkf3YGCnF9qJ0Ag==" length="5983171"/>
+    </item>
+    <item>
       <title>v1.0.4</title>
       <pubDate>Sun, 15 Nov 2026 18:13:29 GMT</pubDate>
       <sparkle:version>17</sparkle:version>
