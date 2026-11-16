@@ -748,7 +748,7 @@
         </details>
         <details>
           <summary>Is it built with web technology, like Electron?</summary>
-          <p>No. Many desktop apps run a JavaScript or TypeScript interface inside a bundled browser (Electron) or the system web view. Xylem has no web layer: the interface is Swift with Apple's SwiftUI and AppKit, and the terminal in each tab is SwiftTerm, a native terminal emulator. That is why the download is about 6 MB and the app sits at about 0.1% of the CPU while nothing happens.</p>
+          <p>No. Many desktop apps run a JavaScript or TypeScript interface inside a bundled browser (Electron) or the system web view. Xylem has no web layer: the interface is Swift with Apple's SwiftUI and AppKit, and the terminal in each tab is SwiftTerm, a native terminal emulator. That is why the download is about 10 MB and the app sits at about 0.1% of the CPU while nothing happens.</p>
         </details>
         <details>
           <summary>Does Xylem change my Claude Code settings?</summary>
@@ -1673,14 +1673,26 @@ export function useAuth() {
 </script>
 <script>
 // Download buttons: straight to the newest DMG. Release files are named per
-// version (Xylem-v0.10.0.dmg), so ask GitHub which one is newest; without
-// an answer the buttons keep pointing at the latest release's page.
-fetch('https://api.github.com/repos/t1nkl/xylem/releases/latest')
-  .then(r => r.ok ? r.json() : null)
-  .then(release => {
-    const dmg = release && release.assets.find(a => a.name.endsWith('.dmg'));
-    if (!dmg) return;
-    document.querySelectorAll('a[href="https://github.com/t1nkl/xylem/releases/latest"]').forEach(a => { a.href = dmg.browser_download_url; });
+// version (Xylem-v1.2.0.dmg), so read the newest one from the update feed on
+// this same site (the GitHub API allows 60 unauthenticated requests an hour
+// per network and then answers 403); without an answer the buttons keep
+// pointing at the latest release's page.
+fetch('appcast.xml')
+  .then(r => r.ok ? r.text() : null)
+  .then(text => {
+    if (!text) return;
+    const feed = new DOMParser().parseFromString(text, 'application/xml');
+    const SPARKLE = 'http://www.andymatuschak.org/xml-namespaces/sparkle';
+    let newest = null, newestBuild = -1;
+    for (const item of feed.getElementsByTagName('item')) {
+      const build = parseInt(item.getElementsByTagNameNS(SPARKLE, 'version')[0]?.textContent, 10);
+      const url = item.getElementsByTagName('enclosure')[0]?.getAttribute('url') || '';
+      if (build > newestBuild && /^https:\/\/github\.com\/t1nkl\/xylem\/releases\/download\/[^/]+\/[^/]+\.dmg$/.test(url)) {
+        newest = url; newestBuild = build;
+      }
+    }
+    if (!newest) return;
+    document.querySelectorAll('a[href="https://github.com/t1nkl/xylem/releases/latest"]').forEach(a => { a.href = newest; });
   })
   .catch(() => {});
 </script>
