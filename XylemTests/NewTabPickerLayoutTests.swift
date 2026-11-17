@@ -71,8 +71,7 @@ struct NewTabPickerLayoutTests {
         settle(host)
         // Panel shown: the picker takes what is left and drops a column.
         #expect(probe.pickerWidth <= 850)
-        let scroll = scrollWidth(in: host)
-        #expect(scroll != nil && scroll! <= 850)
+        #expect((scrollWidth(in: host) ?? .infinity) <= 850)
         window.close()
     }
 }

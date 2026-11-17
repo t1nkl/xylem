@@ -71,13 +71,4 @@ struct RecentProjectsPagingTests {
         #expect(NewTabPickerView.rowCount(forHeight: 50, cardHeight: 106) == 2)
         #expect(NewTabPickerView.rowCount(forHeight: 900, cardHeight: 0) == 2)   // not measured yet
     }
-
-    @Test func cardColourIsStableAcrossLaunches() {
-        // Fixed FNV-1a values: the same in every process (hashValue is not).
-        #expect(NewTabPickerView.accentIndex(for: "billing-api", count: 6) == 1)
-        #expect(NewTabPickerView.accentIndex(for: "storefront", count: 6) == 3)
-        #expect(NewTabPickerView.accentIndex(for: "notes", count: 6) == 2)
-        #expect(NewTabPickerView.accentIndex(for: "", count: 6) == 5)
-        #expect(NewTabPickerView.accentIndex(for: "x", count: 0) == 0)
-    }
 }

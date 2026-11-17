@@ -28,8 +28,8 @@ struct NewTabPickerView: View {
     /// window's); nil until measured.
     @State private var gridWidth: CGFloat?
 
-    // Card size: variant B from a four-way mock (2026-11-17) - the 180 pt
-    // cards were too small on a full screen (seven columns, paths cut).
+    // Card size (design choice, 2026-11-17): 180-260 pt cards came seven
+    // to a row on a full screen, too small, with their paths cut.
     private static let cardMinWidth: CGFloat = 220
     private static let cardMaxWidth: CGFloat = 320
     private static let gridSpacing: CGFloat = 12
@@ -175,20 +175,6 @@ struct NewTabPickerView: View {
     /// Columns that fit, the way an adaptive grid of 220-320 pt cards
     /// would lay them out; the grid uses exactly this many so the paging
     /// below knows the row length.
-    /// Which palette colour a project's card gets. FNV-1a over the name's
-    /// UTF-8 bytes, so a project keeps its colour across launches - Swift's
-    /// `hashValue` is seeded per process and reshuffled the colours on
-    /// every launch.
-    nonisolated static func accentIndex(for name: String, count: Int) -> Int {
-        guard count > 0 else { return 0 }
-        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
-        for byte in name.utf8 {
-            hash ^= UInt64(byte)
-            hash = hash &* 0x0000_0100_0000_01b3
-        }
-        return Int(hash % UInt64(count))
-    }
-
     static func columnCount(forWidth width: CGFloat) -> Int {
         max(1, Int((width + gridSpacing) / (cardMinWidth + gridSpacing)))
     }
@@ -198,6 +184,27 @@ struct NewTabPickerView: View {
     static func rowCount(forHeight height: CGFloat, cardHeight: CGFloat) -> Int {
         guard cardHeight > 0 else { return 2 }
         return max(2, Int((height + gridSpacing) / (cardHeight + gridSpacing)))
+    }
+
+    /// Which palette colour a project's card gets. FNV-1a over the name's
+    /// UTF-8 bytes, so a project keeps its colour across launches - Swift's
+    /// `hashValue` is seeded per process and reshuffled the colours on
+    /// every launch. FNV's low bit is only the parity of the odd bytes, so
+    /// a final mix (MurmurHash3's fmix64) spreads names evenly over the
+    /// palette.
+    nonisolated static func accentIndex(for name: String, count: Int) -> Int {
+        guard count > 0 else { return 0 }
+        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
+        for byte in name.utf8 {
+            hash ^= UInt64(byte)
+            hash = hash &* 0x0000_0100_0000_01b3
+        }
+        hash ^= hash >> 33
+        hash = hash &* 0xff51_afd7_ed55_8ccd
+        hash ^= hash >> 33
+        hash = hash &* 0xc4ce_b9fe_1a85_ec53
+        hash ^= hash >> 33
+        return Int(hash % UInt64(count))
     }
 
     private func recentGrid(columnCount: Int, rowCount: Int) -> some View {
@@ -269,20 +276,20 @@ private struct RecentCard: View {
     @State private var isHovering = false
 
     var body: some View {
-        Button(action: onSelect) {
-            // Layout F from a mock (2026-11-17), with the date moved up:
-            // icon, name and date on one row, then the path, then the
-            // sessions pill. The old icon row above the name took a third
-            // of the card's height.
+        let accent = Self.accentPalette[NewTabPickerView.accentIndex(for: project.displayName, count: Self.accentPalette.count)]
+        return Button(action: onSelect) {
+            // Icon, name and date on one row, then the path, then the
+            // sessions pill (design choice, 2026-11-17): a row of its own
+            // for the icon and date took a third of the card's height.
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 8) {
                     RoundedRectangle(cornerRadius: 5)
-                        .fill(cardAccentColor.opacity(0.18))
+                        .fill(accent.opacity(0.18))
                         .frame(width: 22, height: 22)
                         .overlay(
                             Image(systemName: "folder.fill")
                                 .font(.system(size: 11))
-                                .foregroundStyle(cardAccentColor)
+                                .foregroundStyle(accent)
                         )
                     Text(project.displayName)
                         .font(.system(size: 14, weight: .semibold))
@@ -341,19 +348,16 @@ private struct RecentCard: View {
         }
     }
 
-    /// Derives a stable accent color from the project name so every card
-    /// in the grid has a small visual signature - helps scan-by-color.
-    private var cardAccentColor: Color {
-        let palette: [Color] = [
-            AppTheme.Colors.accent,
-            AppTheme.Colors.statusBlue,
-            AppTheme.Colors.statusAmber,
-            Color(nsColor: NSColor(srgbRed: 0.80, green: 0.52, blue: 0.95, alpha: 1.0)),
-            Color(nsColor: NSColor(srgbRed: 0.35, green: 0.82, blue: 0.87, alpha: 1.0)),
-            Color(nsColor: NSColor(srgbRed: 0.95, green: 0.60, blue: 0.70, alpha: 1.0))
-        ]
-        return palette[NewTabPickerView.accentIndex(for: project.displayName, count: palette.count)]
-    }
+    /// Card accents: a project's colour comes from its name
+    /// (`NewTabPickerView.accentIndex`), a small signature for scanning.
+    private static let accentPalette: [Color] = [
+        AppTheme.Colors.accent,
+        AppTheme.Colors.statusBlue,
+        AppTheme.Colors.statusAmber,
+        Color(nsColor: NSColor(srgbRed: 0.80, green: 0.52, blue: 0.95, alpha: 1.0)),
+        Color(nsColor: NSColor(srgbRed: 0.35, green: 0.82, blue: 0.87, alpha: 1.0)),
+        Color(nsColor: NSColor(srgbRed: 0.95, green: 0.60, blue: 0.70, alpha: 1.0))
+    ]
 
     private func shortPath(_ path: String) -> String {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
