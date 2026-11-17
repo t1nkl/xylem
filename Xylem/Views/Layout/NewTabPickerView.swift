@@ -175,6 +175,20 @@ struct NewTabPickerView: View {
     /// Columns that fit, the way an adaptive grid of 220-320 pt cards
     /// would lay them out; the grid uses exactly this many so the paging
     /// below knows the row length.
+    /// Which palette colour a project's card gets. FNV-1a over the name's
+    /// UTF-8 bytes, so a project keeps its colour across launches - Swift's
+    /// `hashValue` is seeded per process and reshuffled the colours on
+    /// every launch.
+    nonisolated static func accentIndex(for name: String, count: Int) -> Int {
+        guard count > 0 else { return 0 }
+        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
+        for byte in name.utf8 {
+            hash ^= UInt64(byte)
+            hash = hash &* 0x0000_0100_0000_01b3
+        }
+        return Int(hash % UInt64(count))
+    }
+
     static func columnCount(forWidth width: CGFloat) -> Int {
         max(1, Int((width + gridSpacing) / (cardMinWidth + gridSpacing)))
     }
@@ -338,8 +352,7 @@ private struct RecentCard: View {
             Color(nsColor: NSColor(srgbRed: 0.35, green: 0.82, blue: 0.87, alpha: 1.0)),
             Color(nsColor: NSColor(srgbRed: 0.95, green: 0.60, blue: 0.70, alpha: 1.0))
         ]
-        let hash = abs(project.displayName.hashValue)
-        return palette[hash % palette.count]
+        return palette[NewTabPickerView.accentIndex(for: project.displayName, count: palette.count)]
     }
 
     private func shortPath(_ path: String) -> String {
