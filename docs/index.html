@@ -46,6 +46,8 @@
   "downloadUrl": "https://github.com/t1nkl/xylem/releases/latest",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "isAccessibleForFree": true,
+  "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+  "sameAs": ["https://github.com/t1nkl/xylem"],
   "screenshot": "https://xylem.t1nkl.dev/assets/og-image.png",
   "featureList": [
     "Run several Claude Code sessions side by side, one per tab",
@@ -111,6 +113,9 @@
   .top nav { display: flex; gap: 22px; font-size: 15px; color: var(--text2); }
   .top nav a { text-decoration: none; }
   .top nav a:hover { color: var(--text); }
+  .topr { display: flex; align-items: center; gap: 22px; }
+  .gh { display: inline-flex; align-items: center; gap: 7px; font-size: 15px; color: var(--text2); text-decoration: none; }
+  .gh:hover { color: var(--text); }
 
   .hero { text-align: center; padding-top: 72px; }
   .hero h1 { font: 900 clamp(42px, 6.6vw, 84px)/0.96 var(--body); letter-spacing: -0.04em; margin: 0 auto; max-width: 15ch; }
@@ -574,7 +579,10 @@
     <img src="assets/icon-192.png" width="28" height="28" alt="">
     Xylem
   </a>
-  <nav aria-label="Page"><a href="#features">Features</a><a href="#install">Install</a><a href="#faq">Questions</a></nav>
+  <div class="topr">
+    <nav aria-label="Page"><a href="#features">Features</a><a href="#install">Install</a><a href="#faq">Questions</a></nav>
+    <a class="gh" href="https://github.com/t1nkl/xylem" data-goatcounter-click="github-top" data-goatcounter-title="GitHub (top)"><svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+  </div>
 </header>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -615,7 +623,7 @@
       <a class="btn" href="https://github.com/t1nkl/xylem/releases/latest" data-goatcounter-click="download-hero" data-goatcounter-title="Download for Mac (top)">
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v9m0 0 3.5-3.5M9 11 5.5 7.5M3 14.5h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Download for Mac</a>
-      <small>Free. For Macs with Apple silicon or Intel, on macOS 15 or later.</small>
+      <small>Free and open source. For Macs with Apple silicon or Intel, on macOS 15 or later.</small>
     </div>
   </div>
 
@@ -776,6 +784,10 @@
           <p>Xylem is free to use. Claude Code usage is billed by Anthropic as usual, through your Claude plan or API key.</p>
         </details>
         <details>
+          <summary>Is Xylem open source?</summary>
+          <p>Yes. The code is on <a href="https://github.com/t1nkl/xylem">GitHub</a> under the GNU GPL v3: you can read it, build it yourself and send fixes. From the first open-source version on, every release is tagged with the exact code it was built from.</p>
+        </details>
+        <details>
           <summary>Is Xylem made by Anthropic?</summary>
           <p>No. Xylem is an independent app. Claude and Claude Code are Anthropic's products.</p>
         </details>
@@ -788,7 +800,7 @@
   <div class="wrap">
     <p>Xylem is an independent project and is not affiliated with Anthropic. Claude is a trademark of Anthropic.</p>
     <p>This site counts visits with GoatCounter, without cookies or anything that identifies you.</p>
-    <p>© 2026 t1nkl. Free to use, all rights reserved. Built with SwiftTerm, Sparkle, the Sentry SDK (MIT) and highlight.js (BSD).</p>
+    <p>© 2026 t1nkl. Free and open source under the GNU GPL v3, <a href="https://github.com/t1nkl/xylem" data-goatcounter-click="github-footer" data-goatcounter-title="GitHub (footer)">source code on GitHub</a>. Built with SwiftTerm, Sparkle, the Sentry SDK (MIT) and highlight.js (BSD).</p>
   </div>
 </footer>
 

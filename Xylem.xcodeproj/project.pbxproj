@@ -1,0 +1,678 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		E71FBECD2F97A81E003DA750 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = E71FBECC2F97A81E003DA750 /* SwiftTerm */; };
+		E7A0C0022FB0000000000001 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = E7A0C0012FB0000000000001 /* SwiftTerm */; };
+		E7B5E0032FB1000000000001 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = E7B5E0022FB1000000000001 /* Sentry */; };
+		E7B5E0052FB1000000000001 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = E7B5E0042FB1000000000001 /* Sentry */; };
+		E7C5E0032FB2000000000001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = E7C5E0022FB2000000000001 /* Sparkle */; };
+		E7C5E0052FB2000000000001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = E7C5E0042FB2000000000001 /* Sparkle */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E71FBEB92F97A785003DA750 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E71FBE992F97A783003DA750 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E71FBEA02F97A783003DA750;
+			remoteInfo = Xylem;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		E71FBEA12F97A783003DA750 /* Xylem.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Xylem.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E71FBEAE2F97A785003DA750 /* XylemTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XylemTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E71FBEB82F97A785003DA750 /* XylemUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XylemUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E7A0C0032FB0000000000001 /* Exceptions for "Xylem" folder in "XylemTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				XylemApp.swift,
+			);
+			target = E71FBEAD2F97A785003DA750 /* XylemTests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		E71FBEA32F97A783003DA750 /* Xylem */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E7A0C0032FB0000000000001 /* Exceptions for "Xylem" folder in "XylemTests" target */,
+			);
+			path = Xylem;
+			sourceTree = "<group>";
+		};
+		E71FBEB12F97A785003DA750 /* XylemTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = XylemTests;
+			sourceTree = "<group>";
+		};
+		E71FBEBB2F97A785003DA750 /* XylemUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = XylemUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E71FBE9E2F97A783003DA750 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E71FBECD2F97A81E003DA750 /* SwiftTerm in Frameworks */,
+				E7B5E0032FB1000000000001 /* Sentry in Frameworks */,
+				E7C5E0032FB2000000000001 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E71FBEAB2F97A785003DA750 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E7A0C0022FB0000000000001 /* SwiftTerm in Frameworks */,
+				E7B5E0052FB1000000000001 /* Sentry in Frameworks */,
+				E7C5E0052FB2000000000001 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E71FBEB52F97A785003DA750 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E71FBE982F97A783003DA750 = {
+			isa = PBXGroup;
+			children = (
+				E71FBEA32F97A783003DA750 /* Xylem */,
+				E71FBEB12F97A785003DA750 /* XylemTests */,
+				E71FBEBB2F97A785003DA750 /* XylemUITests */,
+				E71FBEA22F97A783003DA750 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E71FBEA22F97A783003DA750 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E71FBEA12F97A783003DA750 /* Xylem.app */,
+				E71FBEAE2F97A785003DA750 /* XylemTests.xctest */,
+				E71FBEB82F97A785003DA750 /* XylemUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E71FBEA02F97A783003DA750 /* Xylem */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E71FBEC22F97A785003DA750 /* Build configuration list for PBXNativeTarget "Xylem" */;
+			buildPhases = (
+				E71FBE9D2F97A783003DA750 /* Sources */,
+				E71FBE9E2F97A783003DA750 /* Frameworks */,
+				E71FBE9F2F97A783003DA750 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E71FBEA32F97A783003DA750 /* Xylem */,
+			);
+			name = Xylem;
+			packageProductDependencies = (
+				E71FBECC2F97A81E003DA750 /* SwiftTerm */,
+				E7B5E0022FB1000000000001 /* Sentry */,
+				E7C5E0022FB2000000000001 /* Sparkle */,
+			);
+			productName = Xylem;
+			productReference = E71FBEA12F97A783003DA750 /* Xylem.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E71FBEAD2F97A785003DA750 /* XylemTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E71FBEC52F97A785003DA750 /* Build configuration list for PBXNativeTarget "XylemTests" */;
+			buildPhases = (
+				E71FBEAA2F97A785003DA750 /* Sources */,
+				E71FBEAB2F97A785003DA750 /* Frameworks */,
+				E71FBEAC2F97A785003DA750 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E71FBEA32F97A783003DA750 /* Xylem */,
+				E71FBEB12F97A785003DA750 /* XylemTests */,
+			);
+			name = XylemTests;
+			packageProductDependencies = (
+				E7A0C0012FB0000000000001 /* SwiftTerm */,
+				E7B5E0042FB1000000000001 /* Sentry */,
+				E7C5E0042FB2000000000001 /* Sparkle */,
+			);
+			productName = XylemTests;
+			productReference = E71FBEAE2F97A785003DA750 /* XylemTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		E71FBEB72F97A785003DA750 /* XylemUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E71FBEC82F97A785003DA750 /* Build configuration list for PBXNativeTarget "XylemUITests" */;
+			buildPhases = (
+				E71FBEB42F97A785003DA750 /* Sources */,
+				E71FBEB52F97A785003DA750 /* Frameworks */,
+				E71FBEB62F97A785003DA750 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E71FBEBA2F97A785003DA750 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				E71FBEBB2F97A785003DA750 /* XylemUITests */,
+			);
+			name = XylemUITests;
+			packageProductDependencies = (
+			);
+			productName = XylemUITests;
+			productReference = E71FBEB82F97A785003DA750 /* XylemUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E71FBE992F97A783003DA750 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2640;
+				LastUpgradeCheck = 2720;
+				TargetAttributes = {
+					E71FBEA02F97A783003DA750 = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
+					E71FBEAD2F97A785003DA750 = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
+					E71FBEB72F97A785003DA750 = {
+						CreatedOnToolsVersion = 26.4.1;
+						TestTargetID = E71FBEA02F97A783003DA750;
+					};
+				};
+			};
+			buildConfigurationList = E71FBE9C2F97A783003DA750 /* Build configuration list for PBXProject "Xylem" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E71FBE982F97A783003DA750;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E71FBECB2F97A81E003DA750 /* XCRemoteSwiftPackageReference "SwiftTerm" */,
+				E7B5E0012FB1000000000001 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+				E7C5E0012FB2000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = E71FBEA22F97A783003DA750 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E71FBEA02F97A783003DA750 /* Xylem */,
+				E71FBEAD2F97A785003DA750 /* XylemTests */,
+				E71FBEB72F97A785003DA750 /* XylemUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E71FBE9F2F97A783003DA750 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E71FBEAC2F97A785003DA750 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E71FBEB62F97A785003DA750 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E71FBE9D2F97A783003DA750 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E71FBEAA2F97A785003DA750 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E71FBEB42F97A785003DA750 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E71FBEBA2F97A785003DA750 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E71FBEA02F97A783003DA750 /* Xylem */;
+			targetProxy = E71FBEB92F97A785003DA750 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		E71FBEC02F97A785003DA750 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = CSXZ24ZYDY;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		E71FBEC12F97A785003DA750 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = CSXZ24ZYDY;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		E71FBEC32F97A785003DA750 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 21;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = CSXZ24ZYDY;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Xylem-Info.plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 t1nkl";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.2.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.t1nkl.Xylem;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E71FBEC42F97A785003DA750 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 21;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = CSXZ24ZYDY;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Xylem-Info.plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 t1nkl";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.2.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.t1nkl.Xylem;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		E71FBEC62F97A785003DA750 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 21;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = CSXZ24ZYDY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.2.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.t1nkl.XylemTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E71FBEC72F97A785003DA750 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 21;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = CSXZ24ZYDY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.2.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.t1nkl.XylemTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		E71FBEC92F97A785003DA750 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 21;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = CSXZ24ZYDY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.2.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.t1nkl.XylemUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Xylem;
+			};
+			name = Debug;
+		};
+		E71FBECA2F97A785003DA750 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 21;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = CSXZ24ZYDY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.2.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.t1nkl.XylemUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Xylem;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E71FBE9C2F97A783003DA750 /* Build configuration list for PBXProject "Xylem" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E71FBEC02F97A785003DA750 /* Debug */,
+				E71FBEC12F97A785003DA750 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E71FBEC22F97A785003DA750 /* Build configuration list for PBXNativeTarget "Xylem" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E71FBEC32F97A785003DA750 /* Debug */,
+				E71FBEC42F97A785003DA750 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E71FBEC52F97A785003DA750 /* Build configuration list for PBXNativeTarget "XylemTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E71FBEC62F97A785003DA750 /* Debug */,
+				E71FBEC72F97A785003DA750 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E71FBEC82F97A785003DA750 /* Build configuration list for PBXNativeTarget "XylemUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E71FBEC92F97A785003DA750 /* Debug */,
+				E71FBECA2F97A785003DA750 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E71FBECB2F97A81E003DA750 /* XCRemoteSwiftPackageReference "SwiftTerm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/migueldeicaza/SwiftTerm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.99.3;
+			};
+		};
+		E7B5E0012FB1000000000001 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.34.0;
+			};
+		};
+		E7C5E0012FB2000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.10.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E71FBECC2F97A81E003DA750 /* SwiftTerm */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E71FBECB2F97A81E003DA750 /* XCRemoteSwiftPackageReference "SwiftTerm" */;
+			productName = SwiftTerm;
+		};
+		E7A0C0012FB0000000000001 /* SwiftTerm */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E71FBECB2F97A81E003DA750 /* XCRemoteSwiftPackageReference "SwiftTerm" */;
+			productName = SwiftTerm;
+		};
+		E7B5E0022FB1000000000001 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E7B5E0012FB1000000000001 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
+		E7B5E0042FB1000000000001 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E7B5E0012FB1000000000001 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
+		E7C5E0022FB2000000000001 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E7C5E0012FB2000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+		E7C5E0042FB2000000000001 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E7C5E0012FB2000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = E71FBE992F97A783003DA750 /* Project object */;
+}

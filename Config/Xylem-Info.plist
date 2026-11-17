@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Keys Xcode can't generate (GENERATE_INFOPLIST_FILE merges these in).
+  Kept outside the synchronized Xylem/ folder so it isn't copied as a
+  resource. Sparkle: see Xylem/App/AppUpdater.swift.
+
+  The folder usage strings: macOS attributes file access by the shell and
+  claude in a tab to Xylem (their responsible process), so "Xylem would like
+  to access your Desktop folder" appears when a tab first touches it. The
+  string tells the user who actually needs the access.
+-->
+<plist version="1.0">
+<dict>
+	<key>SUFeedURL</key>
+	<string>https://t1nkl.github.io/xylem/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>KDa04zhbHpfFKuaYF5AcTiPesp2NFxNWy3qrbCLfJfU=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>3600</integer>
+	<key>SUAllowsAutomaticUpdates</key>
+	<true/>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>Claude Code and the shell in your tabs need this to work with projects in your Desktop folder.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Claude Code and the shell in your tabs need this to work with projects in your Documents folder.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>Claude Code and the shell in your tabs need this to work with files in your Downloads folder.</string>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>Claude Code and the shell in your tabs need this to work with projects on external drives.</string>
+	<key>NSNetworkVolumesUsageDescription</key>
+	<string>Claude Code and the shell in your tabs need this to work with projects on network drives.</string>
+</dict>
+</plist>

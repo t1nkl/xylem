@@ -1,0 +1,197 @@
+//
+//  ClaudeHookBridge.swift
+//  Xylem
+//
+//  How Xylem learns what the claude in each tab is doing. Every claude a
+//  tab starts gets `--settings ~/.xylem/hooks/settings.json`, which adds
+//  command hooks for the session/turn events. The hook script writes the
+//  event's JSON (Claude Code passes it on stdin) to
+//  `~/.xylem/tab-events/<tab id>.json`, keyed by the `XYLEM_TAB_ID`
+//  variable the tab's shell exports. Only the latest event is kept - the
+//  state needs nothing older - and the write is atomic (temp file + mv),
+//  so a reader never sees half a file.
+//
+//  Verified against Claude Code 2.1.323: hooks from `--settings` fire (also
+//  with -p); every event carries `session_id` and `transcript_path`;
+//  `/clear` sends SessionEnd(reason clear) then SessionStart(source clear)
+//  with a new id; a permission prompt sends Notification(notification_type
+//  permission_prompt); Esc sends nothing (see ClaudeTabState).
+//
+//  A UserPromptSubmit is also kept as `<tab id>.prompt` (its hook passes
+//  the script a `prompt` argument): the event file keeps only the latest
+//  event, so a prompt followed within a second by a tool call or a Stop
+//  would never be seen. The marker's mtime and session tell whether the
+//  human typed a new prompt in the tab's own session (an agent-team
+//  teammate runs under the same tab id) since the last known Stop.
+//
+//  The script is silent and always exits 0: hook stdout can be fed back to
+//  Claude, and a failing hook would show up in the user's session. Without
+//  `XYLEM_TAB_ID` (a claude started by hand in some other terminal that
+//  inherited nothing from us) it does nothing.
+//
+
+import Foundation
+
+nonisolated enum ClaudeHookBridge {
+    /// Events the bridge subscribes to. PreToolUse/PostToolUse mark the
+    /// turn as running again after a permission answer.
+    static let events = [
+        "SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse",
+        "Stop", "Notification", "SessionEnd"
+    ]
+
+    static let environmentKey = "XYLEM_TAB_ID"
+
+    /// On the command line of every claude a Xylem tab starts (`--settings
+    /// …/.xylem/hooks/settings.json`): tells our processes from others.
+    static let settingsFileMarker = "/.xylem/hooks/settings.json"
+
+    static var rootDirectory: URL {
+        FileManager.default.homeDirectoryForCurrentUser.appending(path: ".xylem", directoryHint: .isDirectory)
+    }
+
+    static var eventsDirectory: URL {
+        rootDirectory.appending(path: "tab-events", directoryHint: .isDirectory)
+    }
+
+    static func eventFile(forTab id: UUID, in directory: URL = eventsDirectory) -> URL {
+        directory.appending(path: "\(id.uuidString).json")
+    }
+
+    /// Touched by every UserPromptSubmit of the tab (only its mtime counts).
+    static func promptMarker(forTab id: UUID, in directory: URL = eventsDirectory) -> URL {
+        directory.appending(path: "\(id.uuidString).\(promptMarkerExtension)")
+    }
+
+    static let promptMarkerExtension = "prompt"
+
+    /// The script argument UserPromptSubmit's hook passes.
+    static let promptArgument = "prompt"
+
+    /// The settings path from this launch's `install()`; nil = the files
+    /// could not be written and tabs run without the bridge (Doctor says so).
+    /// Written once per launch: the files only change with the app.
+    static let installedSettingsPath: String? = install()
+
+    /// Writes the hook script and settings file when their content differs
+    /// (first launch, or a template change after an update) and returns the
+    /// settings path for `--settings`; nil if they can't be written, in
+    /// which case tabs simply run without the bridge.
+    @discardableResult
+    static func install(root: URL = rootDirectory) -> String? {
+        let hooksDir = root.appending(path: "hooks", directoryHint: .isDirectory)
+        let eventsDir = root.appending(path: "tab-events", directoryHint: .isDirectory)
+        let script = hooksDir.appending(path: "tab-event.sh")
+        let settings = hooksDir.appending(path: "settings.json")
+        do {
+            try FileManager.default.createDirectory(at: hooksDir, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: eventsDir, withIntermediateDirectories: true)
+            // Events hold prompts: owner-only, also for a folder made by
+            // an older version with the default umask.
+            try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: eventsDir.path)
+            try writeIfChanged(scriptSource(eventsDirectory: eventsDir.path), to: script)
+            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: script.path)
+            try writeIfChanged(settingsSource(scriptPath: script.path), to: settings)
+            return settings.path
+        } catch {
+            return nil
+        }
+    }
+
+    static func scriptSource(eventsDirectory: String) -> String {
+        """
+        #!/bin/sh
+        # Auto-generated by Xylem - rewritten on every launch, don't edit.
+        # Claude Code runs this for each hook event of a claude started in a
+        # Xylem tab; the tab's latest event tells Xylem what Claude is doing.
+        # Owner-only: a UserPromptSubmit event carries the whole prompt.
+        umask 077
+        id="$\(environmentKey)"
+        [ -n "$id" ] || exit 0
+        case "$id" in *[!A-Za-z0-9-]*) exit 0 ;; esac
+        dir=\(shellQuote(eventsDirectory))
+        mkdir -p "$dir" 2>/dev/null
+        tmp="$dir/.$id.$$"
+        if cat > "$tmp" 2>/dev/null; then
+            # The prompt's own copy (written first), so it outlives the event.
+            [ "$1" = \(promptArgument) ] && cp "$tmp" "$tmp.p" 2>/dev/null && mv -f "$tmp.p" "$dir/$id.\(promptMarkerExtension)" 2>/dev/null
+            mv -f "$tmp" "$dir/$id.json" 2>/dev/null
+        fi
+        rm -f "$tmp.p" 2>/dev/null
+        rm -f "$tmp" 2>/dev/null
+        exit 0
+
+        """
+    }
+
+    static func settingsSource(scriptPath: String) -> String {
+        let command = "/bin/sh " + shellQuote(scriptPath)
+        func hook(_ command: String) -> [String: Any] { ["hooks": [["type": "command", "command": command]]] }
+        var hooks: [String: Any] = [:]
+        for event in events {
+            hooks[event] = [hook(event == "UserPromptSubmit" ? command + " " + promptArgument : command)]
+        }
+        let data = (try? JSONSerialization.data(
+            withJSONObject: ["hooks": hooks],
+            options: [.prettyPrinted, .sortedKeys]
+        )) ?? Data()
+        return String(decoding: data, as: UTF8.self) + "\n"
+    }
+
+    /// The tab's latest event, or nil when there is none (yet) or it can't
+    /// be parsed. `modified` is the file's mtime: when the event happened.
+    static func latestEvent(forTab id: UUID, in directory: URL = eventsDirectory) -> ClaudeTabEvent? {
+        let url = eventFile(forTab: id, in: directory)
+        guard let modified = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate,
+              let data = try? Data(contentsOf: url)
+        else { return nil }
+        return ClaudeTabEvent.parse(data, at: modified)
+    }
+
+    /// The newest human prompt under the tab: when, and in which session
+    /// (nil for a marker without one, from a pre-release build).
+    static func lastPrompt(forTab id: UUID, in directory: URL = eventsDirectory) -> (time: Date, sessionID: String?)? {
+        let url = promptMarker(forTab: id, in: directory)
+        guard let time = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+        else { return nil }
+        let object = (try? Data(contentsOf: url)).flatMap { try? JSONSerialization.jsonObject(with: $0) } as? [String: Any]
+        return (time, (object?["session_id"] as? String).flatMap { $0.isEmpty ? nil : $0 })
+    }
+
+    static func modificationDate(forTab id: UUID, in directory: URL = eventsDirectory) -> Date? {
+        (try? eventFile(forTab: id, in: directory).resourceValues(forKeys: [.contentModificationDateKey]))?
+            .contentModificationDate
+    }
+
+    /// A closed tab's event file is never read again.
+    static func removeEvents(forTab id: UUID, in directory: URL = eventsDirectory) {
+        try? FileManager.default.removeItem(at: eventFile(forTab: id, in: directory))
+        try? FileManager.default.removeItem(at: promptMarker(forTab: id, in: directory))
+    }
+
+    /// Drops event files of tabs that no longer exist. Closing a tab
+    /// deletes its file, but the dying claude's SessionEnd hook can write it
+    /// again right after; files untouched for `minimumAge` are safe to go.
+    static func pruneEvents(keeping live: Set<UUID>, in directory: URL = eventsDirectory,
+                            now: Date = Date(), minimumAge: TimeInterval = 30) {
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: directory, includingPropertiesForKeys: [.contentModificationDateKey]
+        ) else { return }
+        for file in files where file.pathExtension == "json" || file.pathExtension == promptMarkerExtension {
+            guard let id = UUID(uuidString: file.deletingPathExtension().lastPathComponent), !live.contains(id),
+                  let modified = (try? file.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate,
+                  now.timeIntervalSince(modified) >= minimumAge
+            else { continue }
+            try? FileManager.default.removeItem(at: file)
+        }
+    }
+
+    private static func writeIfChanged(_ content: String, to url: URL) throws {
+        if let existing = try? String(contentsOf: url, encoding: .utf8), existing == content { return }
+        try content.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    static func shellQuote(_ value: String) -> String {
+        "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+}

@@ -1,0 +1,68 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+Package.pins
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcshareddata/swiftpm/
+
+# Coverage
+*.profraw
+*.profdata
+
+# AI assistant notes and local state (kept on the maintainer's machine only)
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+**/CLAUDE.md
+AGENTS.md
+GEMINI.md
+.cursor/
+.cursorrules
+.windsurfrules
+.github/copilot-instructions.md
+
+# Private working notes
+/notes/
+
+# Editor
+.vscode/
+.idea/
+.superpowers/
+
+# Signing, notarization and other credentials - never commit
+*.p8
+*.p12
+*.cer
+*.mobileprovision
+*.provisionprofile
+.env
+.env.*
+
+# Sentry CLI auth (token for dSYM uploads) - never commit
+.sentryclirc
+.claude-check-last-pass
+
+# Python
+__pycache__/
+*.pyc
