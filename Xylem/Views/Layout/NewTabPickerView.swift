@@ -28,9 +28,11 @@ struct NewTabPickerView: View {
     /// window's); nil until measured.
     @State private var gridWidth: CGFloat?
 
-    private static let cardMinWidth: CGFloat = 180
-    private static let cardMaxWidth: CGFloat = 260
-    private static let gridSpacing: CGFloat = 10
+    // Card size: variant B from a four-way mock (2026-11-17) - the 180 pt
+    // cards were too small on a full screen (seven columns, paths cut).
+    private static let cardMinWidth: CGFloat = 220
+    private static let cardMaxWidth: CGFloat = 320
+    private static let gridSpacing: CGFloat = 12
     private static let horizontalPadding: CGFloat = 32
     private static let verticalPadding: CGFloat = 20
     private static let bottomGap: CGFloat = 20
@@ -170,7 +172,7 @@ struct NewTabPickerView: View {
 
     // MARK: - Recent grid
 
-    /// Columns that fit, the way an adaptive grid of 180-260 pt cards
+    /// Columns that fit, the way an adaptive grid of 220-320 pt cards
     /// would lay them out; the grid uses exactly this many so the paging
     /// below knows the row length.
     static func columnCount(forWidth width: CGFloat) -> Int {
@@ -191,8 +193,13 @@ struct NewTabPickerView: View {
             rows: rowCount,
             cells: recentCells
         )
+        // No minimum on the items: `columnCount` already keeps cards at
+        // least `cardMinWidth` wide. A minimum here made the grid as wide as
+        // its current columns, so it never got narrower when the right panel
+        // opened or the window shrank (the cards went under the panel) and
+        // the measured width kept the old column count.
         let columns = Array(
-            repeating: GridItem(.flexible(minimum: Self.cardMinWidth, maximum: Self.cardMaxWidth), spacing: Self.gridSpacing),
+            repeating: GridItem(.flexible(minimum: 0, maximum: Self.cardMaxWidth), spacing: Self.gridSpacing),
             count: columnCount
         )
         return VStack(alignment: .leading, spacing: 10) {
@@ -249,8 +256,12 @@ private struct RecentCard: View {
 
     var body: some View {
         Button(action: onSelect) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
+            // Layout F from a mock (2026-11-17), with the date moved up:
+            // icon, name and date on one row, then the path, then the
+            // sessions pill. The old icon row above the name took a third
+            // of the card's height.
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
                     RoundedRectangle(cornerRadius: 5)
                         .fill(cardAccentColor.opacity(0.18))
                         .frame(width: 22, height: 22)
@@ -259,39 +270,38 @@ private struct RecentCard: View {
                                 .font(.system(size: 11))
                                 .foregroundStyle(cardAccentColor)
                         )
-                    Spacer(minLength: 0)
-                    RelativeTimeText(date: project.lastModified)
-                        .font(.system(size: 9))
-                        .foregroundStyle(AppTheme.Colors.textMuted)
-                }
-
-                VStack(alignment: .leading, spacing: 2) {
                     Text(project.displayName)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(AppTheme.Colors.textPrimary)
                         .lineLimit(1)
                         .truncationMode(.middle)
-                    Text(shortPath(project.path))
+                    Spacer(minLength: 6)
+                    RelativeTimeText(date: project.lastModified)
                         .font(.system(size: 10))
                         .foregroundStyle(AppTheme.Colors.textMuted)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                        .fixedSize()
                 }
+
+                Text(shortPath(project.path))
+                    .font(.system(size: 11))
+                    .foregroundStyle(AppTheme.Colors.textMuted)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
 
                 // Always present, so every card (and every grid row) has the
                 // same height: LazyVGrid estimates the rows it hasn't built
                 // yet, and mixed heights made scrolling a long list jump.
                 Text(Self.sessionsLabel(project.sessionCount))
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(project.sessionCount > 0 ? AppTheme.Colors.textSecondary : AppTheme.Colors.textMuted)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
-                        .background(
-                            Capsule()
-                                .fill(AppTheme.Colors.tabBackground)
-                        )
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(project.sessionCount > 0 ? AppTheme.Colors.textSecondary : AppTheme.Colors.textMuted)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(
+                        Capsule()
+                            .fill(AppTheme.Colors.tabBackground)
+                    )
             }
-            .padding(12)
+            .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 8)
@@ -382,7 +392,7 @@ private struct ShowMoreCard: View {
                 Image(systemName: "chevron.down")
                     .font(.system(size: 12, weight: .semibold))
                 Text("Show \(count) more")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 13, weight: .medium))
             }
             .foregroundStyle(isHovering ? AppTheme.Colors.textPrimary : AppTheme.Colors.textSecondary)
             .frame(maxWidth: .infinity, maxHeight: .infinity)

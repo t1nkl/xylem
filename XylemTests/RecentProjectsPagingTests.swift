@@ -56,16 +56,18 @@ struct RecentProjectsPagingTests {
     }
 
     @Test func columnCountMatchesTheAdaptiveGrid() {
-        #expect(NewTabPickerView.columnCount(forWidth: 864) == 4)
+        // 220 pt cards, 12 pt gaps.
+        #expect(NewTabPickerView.columnCount(forWidth: 916) == 4)
+        #expect(NewTabPickerView.columnCount(forWidth: 915) == 3)
         #expect(NewTabPickerView.columnCount(forWidth: 100) == 1)
-        #expect(NewTabPickerView.columnCount(forWidth: 550) == 2)
-        #expect(NewTabPickerView.columnCount(forWidth: 570) == 3)
+        #expect(NewTabPickerView.columnCount(forWidth: 451) == 1)
+        #expect(NewTabPickerView.columnCount(forWidth: 452) == 2)
     }
 
     @Test func rowCountIsWholeRowsWithAtLeastTwo() {
-        // 106 pt cards + 10 pt spacing: 5 rows need 5*106 + 4*10 = 570 pt.
-        #expect(NewTabPickerView.rowCount(forHeight: 570, cardHeight: 106) == 5)
-        #expect(NewTabPickerView.rowCount(forHeight: 569, cardHeight: 106) == 4)
+        // 106 pt cards + 12 pt spacing: 5 rows need 5*106 + 4*12 = 578 pt.
+        #expect(NewTabPickerView.rowCount(forHeight: 578, cardHeight: 106) == 5)
+        #expect(NewTabPickerView.rowCount(forHeight: 577, cardHeight: 106) == 4)
         #expect(NewTabPickerView.rowCount(forHeight: 50, cardHeight: 106) == 2)
         #expect(NewTabPickerView.rowCount(forHeight: 900, cardHeight: 0) == 2)   // not measured yet
     }
