@@ -7,6 +7,22 @@
     <language>en</language>
     <!-- items: newest first -->
     <item>
+      <title>v1.2.4</title>
+      <pubDate>Tue, 17 Nov 2026 23:25:50 GMT</pubDate>
+      <sparkle:version>23</sparkle:version>
+      <sparkle:shortVersionString>1.2.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### Improved
+- **Bigger recent project cards.** On the New Tab screen the cards are wider with larger text, so a full screen shows fewer, easier-to-read cards and their paths fit. The icon, name and date now share the top row, which leaves room for one more row of projects.
+
+### Fixed
+- With the Claude or Git panel open on the New Tab screen, the recent project cards no longer go under the panel; the grid now drops a column instead. The same happened when the window was made narrower.
+- Each project's card keeps its colour; the colours used to change on every launch.
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.2.4/Xylem-v1.2.4.dmg" type="application/octet-stream" sparkle:edSignature="X6l8B/C5E1rHpg5lT0WjZNIVCfgH8LbP0oyJdYRcRNvZq2iJkmUApynE1S/U7YoBZH/pn5SOrEnVRaVBLpPGDQ==" length="10066157"/>
+    </item>
+    <item>
       <title>v1.2.3</title>
       <pubDate>Tue, 17 Nov 2026 18:51:50 GMT</pubDate>
       <sparkle:version>22</sparkle:version>
