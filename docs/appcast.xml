@@ -7,6 +7,21 @@
     <language>en</language>
     <!-- items: newest first -->
     <item>
+      <title>v1.2.3</title>
+      <pubDate>Tue, 17 Nov 2026 18:51:50 GMT</pubDate>
+      <sparkle:version>22</sparkle:version>
+      <sparkle:shortVersionString>1.2.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### New
+- **Xylem is open source.** The code is on [GitHub](https://github.com/t1nkl/xylem) under the GNU GPL v3: you can read it, build it yourself and send fixes. The About window and Help > Open-Source Licenses show the license.
+
+### Fixed
+- Installing a skill from the skills.sh directory, and Checkout / Show Diff in the Git panel, now always pass the skill's or branch's name to the shell as plain text. Before, a specially crafted name could run a command of its own when you clicked.
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.2.3/Xylem-v1.2.3.dmg" type="application/octet-stream" sparkle:edSignature="dCmUX7RP/kZjxA902CQMsKooh6spHoyraDYcldz7q+o3BiS38vf+cm9YYXMNnbrG/N1/mH9hAWe9BRx9dC25CQ==" length="10065206"/>
+    </item>
+    <item>
       <title>v1.2.2</title>
       <pubDate>Tue, 17 Nov 2026 14:12:53 GMT</pubDate>
       <sparkle:version>21</sparkle:version>
