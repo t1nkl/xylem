@@ -7,6 +7,23 @@
     <language>en</language>
     <!-- items: newest first -->
     <item>
+      <title>v1.2.2</title>
+      <pubDate>Tue, 17 Nov 2026 14:12:53 GMT</pubDate>
+      <sparkle:version>21</sparkle:version>
+      <sparkle:shortVersionString>1.2.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### New
+- **An update you won't miss.** Once a new version has downloaded, a "New update available" button stays in the toolbar, and "Install Update…" in the Xylem menu, until it's installed. One click shows what's new and installs it. Before, a single notification was easy to miss while Xylem stayed open for days.
+- **What's new after an update.** The first launch after an update installed on quit shows its release notes once.
+
+### Improved
+- The panel button in the toolbar is now as tall as the other buttons.
+- The About window is simpler: no site link, and even spacing.
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.2.2/Xylem-v1.2.2.dmg" type="application/octet-stream" sparkle:edSignature="PeodeaPSi5g0L7itm9P3+CjSOCTt/dgvV2kReyHymccRWKQXcVT+EgVMqJFTYV1wtG+Lgf90Tu9Y/qYqnucXBA==" length="10043702"/>
+    </item>
+    <item>
       <title>v1.2.1</title>
       <pubDate>Tue, 17 Nov 2026 08:42:34 GMT</pubDate>
       <sparkle:version>20</sparkle:version>
