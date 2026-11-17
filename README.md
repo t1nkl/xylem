@@ -8,6 +8,8 @@ Xylem doesn't replace or change Claude Code. Each tab runs the real `claude`
 CLI in a real terminal; Xylem adds what a terminal window lacks when you have
 several sessions going for days.
 
+![Xylem: Claude Code sessions in tabs, one finished, one waiting for permission, one working and one with news; the right panel lists the project's skills, agents, MCP servers and permissions](docs/assets/screenshot.png)
+
 **Download:** https://xylem.t1nkl.dev/ (or the [latest release](https://github.com/t1nkl/xylem/releases/latest)).
 macOS 15 or later, Apple silicon or Intel. Signed and notarized; it updates
 itself (new versions download in the background and install when you quit).
