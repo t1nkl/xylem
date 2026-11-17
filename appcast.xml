@@ -7,6 +7,25 @@
     <language>en</language>
     <!-- items: newest first -->
     <item>
+      <title>v1.2.1</title>
+      <pubDate>Tue, 17 Nov 2026 08:42:34 GMT</pubDate>
+      <sparkle:version>20</sparkle:version>
+      <sparkle:shortVersionString>1.2.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### New
+- **A loader while a tab starts.** A new tab, or Xylem opening with your tabs, shows a small spinner and "Starting Claude Code…" instead of a blank terminal, until Claude draws its first screen. If your shell asks you something while it starts, the terminal shows it right away.
+
+### Improved
+- **One notification per thing Claude does.** Resizing the window or opening a side panel no longer sends the same "Claude finished" again. A turn Claude starts on its own (a background task reporting back) finishes quietly unless you wrote something since; `/goal` still tells you when it's done.
+- The About window is shorter (licenses stay in Help > Open-Source Licenses), and its copyright year follows the calendar.
+
+### Fixed
+- A tab stopped with Esc could be reported as finished about a minute later.
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.2.1/Xylem-v1.2.1.dmg" type="application/octet-stream" sparkle:edSignature="Cf57V0wG04187q+ePvGTzi0JTlaifKMZGbSX7I91UCk9Oq5nON2DSMWfCWP0c2k4fXr6e7HYoySjY5DXI7Z4AA==" length="10006696"/>
+    </item>
+    <item>
       <title>v1.2.0</title>
       <pubDate>Mon, 16 Nov 2026 15:40:56 GMT</pubDate>
       <sparkle:version>19</sparkle:version>
