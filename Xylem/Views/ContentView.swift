@@ -3,9 +3,11 @@
 //  Xylem
 //
 //  Root view. Only composes the native window shell: the tab list as the
-//  NavigationSplitView sidebar, the terminals (plus the bottom bar) as the
-//  detail, then the Claude / Git panel and the panel rail (RightPanel.swift),
-//  the window toolbar, and the sheets. State and work live in AppModel; menu actions arrive via
+//  NavigationSplitView sidebar (or, with the tabs above the terminal, a bar
+//  on top of the detail while the sidebar column stays hidden), the
+//  terminals (plus the bottom bar) as the detail, then the Claude / Git
+//  panel and the panel rail (RightPanel.swift), the window toolbar, and the
+//  sheets. State and work live in AppModel; menu actions arrive via
 //  NotificationCenter so they survive loss of key-window focus.
 //
 //  Performance rule for this file: `body` must not read anything that
@@ -27,10 +29,19 @@ struct ContentView: View {
     let updater: AppUpdater
 
     @State private var activeSheet: ActiveSheet?
+    /// Bumped by ⌘1-9: the top tab bar scrolls the active tab into view even
+    /// when it was already active (scrolled away with the wheel).
+    @State private var tabRevealRequest = 0
     /// The release notes of the version just installed, shown once.
     @State private var whatsNew: WhatsNewStore.Pending?
     @AppStorage(AppSettings.Keys.welcomed) private var hasWelcomed: Bool = false
     @AppStorage(AppSettings.Keys.leftSidebarCollapsed) private var tabSidebarCollapsed: Bool = false
+    @AppStorage(AppSettings.Keys.tabPlacement) private var tabPlacement: TabPlacement = .sidebar
+    /// What the split view shows; follows the two settings above.
+    @State private var splitVisibility: NavigationSplitViewVisibility = Self.visibility(
+        placement: TabPlacement(rawValue: UserDefaults.standard.string(forKey: AppSettings.Keys.tabPlacement) ?? "") ?? .sidebar,
+        collapsed: UserDefaults.standard.bool(forKey: AppSettings.Keys.leftSidebarCollapsed)
+    )
     @AppStorage(AppSettings.Keys.inspectorVisible) private var showsInspector: Bool = true
     /// Claude or Git in the right panel, picked on the rail.
     @AppStorage(AppSettings.Keys.panelTab) private var panelTab: RightSidebarView.SidebarTab = .claude
@@ -55,7 +66,7 @@ struct ContentView: View {
     }
 
     var body: some View {
-        NavigationSplitView(columnVisibility: columnVisibility) {
+        NavigationSplitView(columnVisibility: $splitVisibility) {
             LeftTabSidebar(
                 tabs: tabs.tabs,
                 activeTabID: tabs.activeTabID,
@@ -67,54 +78,80 @@ struct ContentView: View {
                 onMove: { tabs.moveTabs(fromOffsets: $0, toOffset: $1) },
                 onCloseOthers: { tabs.closeOtherTabs(keeping: $0) }
             )
+            // With the tabs on top the hidden column is pinned to its ideal
+            // width: a drag at the window's edge (snapped shut at once) left
+            // it at the minimum for the way back to the sidebar.
             .navigationSplitViewColumnWidth(
-                min: AppTheme.Metrics.tabSidebarMinWidth,
+                min: tabPlacement == .top ? AppTheme.Metrics.tabSidebarIdealWidth : AppTheme.Metrics.tabSidebarMinWidth,
                 ideal: AppTheme.Metrics.tabSidebarIdealWidth,
-                max: AppTheme.Metrics.tabSidebarMaxWidth
+                max: tabPlacement == .top ? AppTheme.Metrics.tabSidebarIdealWidth : AppTheme.Metrics.tabSidebarMaxWidth
             )
         } detail: {
             // Bottom bar in a VStack, not a safe-area inset: the terminal's
             // frame (and so its rows) must end above the bar.
-            GeometryReader { detail in
-            HStack(spacing: 0) {
-                VStack(spacing: 0) {
-                    // The drawer lies over the terminal: the terminal keeps
-                    // its size (no resize, no redraw) while you browse.
-                    TerminalsStackContainer(tabs: tabs, sessionList: app.sessionList)
-                        .overlay(alignment: .trailing) {
-                            ProjectDrawerContainer(drawer: app.drawer, actions: drawerActions)
+            VStack(spacing: 0) {
+                // The split view and this column never change with the tab
+                // placement: only the bar comes and goes, so the terminals (and
+                // their shells) stay.
+                if tabPlacement == .top {
+                    TopTabBar(
+                        tabs: tabs.tabs,
+                        activeTabID: tabs.activeTabID,
+                        revealRequest: tabRevealRequest,
+                        onSelect: { app.selectTab($0) },
+                        onReactivate: { app.focusActiveTerminal() },
+                        onClose: tabs.closeTab,
+                        onRename: { tabs.renameTab(id: $0, to: $1) },
+                        onMoveTab: { tabs.moveTab($0, by: $1) },
+                        onCloseOthers: { tabs.closeOtherTabs(keeping: $0) },
+                        onNewTab: { tabs.openEmptyTab() },
+                        onShowOverview: { activeSheet = .overview }
+                    )
+                }
+                GeometryReader { detail in
+                    HStack(spacing: 0) {
+                        VStack(spacing: 0) {
+                            // The drawer lies over the terminal: the terminal keeps
+                            // its size (no resize, no redraw) while you browse.
+                            TerminalsStackContainer(tabs: tabs, sessionList: app.sessionList)
+                                .overlay(alignment: .trailing) {
+                                    ProjectDrawerContainer(drawer: app.drawer, actions: drawerActions)
+                                }
+                            BottomToolbar(actions: AppCommands.toolbar(app: app, present: { activeSheet = $0 }),
+                                          doctorStatus: { [app] in app.doctorStatus },
+                                          onDoctorOpen: { [app] in app.doctorOpened() },
+                                          onDoctorCheckAgain: { [app] in await app.recheckDoctor() },
+                                          tabsWithoutClaude: { [app] in app.tabsWithoutClaudeCount },
+                                          onRestartTabsWithoutClaude: { [app] in app.restartTabsWithoutClaude() },
+                                          hooks: app.claudeStates, projectDirectory: { [app] in app.activeDirectory },
+                                          canAddWorktree: { [app] in app.worktreeBaseDirectory != nil })
                         }
-                    BottomToolbar(actions: AppCommands.toolbar(app: app, present: { activeSheet = $0 }),
-                                  doctorStatus: { [app] in app.doctorStatus },
-                                  onDoctorOpen: { [app] in app.doctorOpened() },
-                                  onDoctorCheckAgain: { [app] in await app.recheckDoctor() },
-                                  tabsWithoutClaude: { [app] in app.tabsWithoutClaudeCount },
-                                  onRestartTabsWithoutClaude: { [app] in app.restartTabsWithoutClaude() },
-                                  hooks: app.claudeStates, projectDirectory: { [app] in app.activeDirectory },
-                                  canAddWorktree: { [app] in app.worktreeBaseDirectory != nil })
+                        // Our own right panel, not the system `.inspector`: the
+                        // inspector animates its width (the terminal re-laid out every
+                        // frame) and nothing can sit to its right, so the rail had to
+                        // jump between two places on every toggle (it felt jerky).
+                        // Here the panel appears at once and the rail never moves.
+                        RightPanelContainer(isShown: showsInspector,
+                                            maxWidth: RightPanelContainer<RightSidebarView>.maxWidth(detailWidth: detail.size.width)) {
+                                RightSidebarView(
+                                    sessionList: app.sessionList,
+                                    environment: app.environment,
+                                    gitStatus: app.gitStatus,
+                                    agentTeams: app.agentTeams,
+                                    // A tab running claude: `/mcp` and `/plugin` need it.
+                                    hasActiveSession: tabs.activeSession?.launchedClaude == true,
+                                    isPresented: showsInspector,
+                                    actions: sidebarActions,
+                                    tab: panelTab
+                                )
+                        }
+                        rail
+                    }
                 }
-                // Our own right panel, not the system `.inspector`: the
-                // inspector animates its width (the terminal re-laid out every
-                // frame) and nothing can sit to its right, so the rail had to
-                // jump between two places on every toggle (it felt jerky).
-                // Here the panel appears at once and the rail never moves.
-                RightPanelContainer(isShown: showsInspector,
-                                    maxWidth: RightPanelContainer<RightSidebarView>.maxWidth(detailWidth: detail.size.width)) {
-                        RightSidebarView(
-                            sessionList: app.sessionList,
-                            environment: app.environment,
-                            gitStatus: app.gitStatus,
-                            agentTeams: app.agentTeams,
-                            // A tab running claude: `/mcp` and `/plugin` need it.
-                            hasActiveSession: tabs.activeSession?.launchedClaude == true,
-                            isPresented: showsInspector,
-                            actions: sidebarActions,
-                            tab: panelTab
-                        )
-                }
-                rail
             }
-            }
+            .topTabHoverCard(tabs: tabs.tabs)
+            // Tabs on top: no sidebar to toggle.
+            .background(SidebarToggleHider(isHidden: tabPlacement == .top))
             // The panel and the drawer are one at a time (design choice): the
             // toolbar's panel button and ⌃⌘I close the drawer like the rail does.
             .onChange(of: showsInspector) { _, shown in
@@ -127,6 +164,8 @@ struct ContentView: View {
                 app: app,
                 updater: updater,
                 showsInspector: $showsInspector,
+                // The tab bar has its own "+".
+                showsNewTab: tabPlacement == .sidebar,
                 onNewTab: { tabs.openEmptyTab() },
                 onOpenUsage: { activeSheet = .usage }
             )
@@ -182,6 +221,14 @@ struct ContentView: View {
             WhatsNewSheet(version: pending.version, notes: ReleaseNotes(markdown: pending.notes),
                           onClose: { whatsNew = nil })
         }
+        .onChange(of: splitVisibility) { _, visibility in splitVisibilityChanged(to: visibility) }
+        .onChange(of: tabPlacement) { _, placement in
+            splitVisibility = Self.visibility(placement: placement, collapsed: tabSidebarCollapsed)
+        }
+        // View > Show / Hide Tab List writes the stored state.
+        .onChange(of: tabSidebarCollapsed) { _, collapsed in
+            splitVisibility = Self.visibility(placement: tabPlacement, collapsed: collapsed)
+        }
         // Keyed on tab id and directory so it also fires when a picker tab
         // becomes a session (same id, new directory).
         .task(id: activeTaskKey) { await app.activeContextChanged() }
@@ -198,12 +245,23 @@ struct ContentView: View {
         }
     }
 
-    /// The tab list's collapsed state survives relaunches.
-    private var columnVisibility: Binding<NavigationSplitViewVisibility> {
-        Binding(
-            get: { tabSidebarCollapsed ? .detailOnly : .all },
-            set: { tabSidebarCollapsed = ($0 == .detailOnly) }
-        )
+    /// The sidebar column as the split view should show it: hidden while
+    /// the tabs are on top, else the stored collapsed state (it survives
+    /// relaunches and is kept for the way back from the top bar).
+    private static func visibility(placement: TabPlacement, collapsed: Bool) -> NavigationSplitViewVisibility {
+        placement == .top || collapsed ? .detailOnly : .all
+    }
+
+    /// The split view changed the column itself (its button, a drag just
+    /// inside the window's left edge). With the tabs on top it goes straight
+    /// back: a binding that only ignored the change left the column dragged
+    /// open (checked live).
+    private func splitVisibilityChanged(to visibility: NavigationSplitViewVisibility) {
+        if tabPlacement == .top {
+            if visibility != .detailOnly { splitVisibility = .detailOnly }
+        } else {
+            tabSidebarCollapsed = (visibility == .detailOnly)
+        }
     }
 
     private var activeTaskKey: String {
@@ -288,6 +346,7 @@ struct ContentView: View {
         case .switchToTab(let n):
             if tabs.tabs.indices.contains(n - 1) {
                 tabs.select(tabs.tabs[n - 1].id)
+                tabRevealRequest += 1
             }
         }
     }

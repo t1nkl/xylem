@@ -163,12 +163,22 @@ private struct HotkeysSettingsView: View {
 private struct GeneralSettingsView: View {
     @AppStorage(AppSettings.Keys.notifyWhenClaudeWaits) private var notifyWhenClaudeWaits: Bool = true
     @AppStorage(AppSettings.Keys.confirmQuitWhileClaudeWorks) private var confirmQuit: Bool = true
+    @AppStorage(AppSettings.Keys.tabPlacement) private var tabPlacement: TabPlacement = .sidebar
 
     var body: some View {
         Form {
             Section {
                 Toggle("Notify when Claude finishes or needs input in another tab", isOn: $notifyWhenClaudeWaits)
                 Toggle("Ask before quitting while Claude is working", isOn: $confirmQuit)
+            }
+            Section {
+                Picker("Show tabs", selection: $tabPlacement) {
+                    ForEach(TabPlacement.allCases) { Text($0.label).tag($0) }
+                }
+                .pickerStyle(.radioGroup)
+                Text("Above the terminal, the terminal gets the sidebar's width; hover a tab to see its whole prompt.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

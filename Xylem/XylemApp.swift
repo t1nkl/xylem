@@ -197,9 +197,13 @@ private struct RightPanelMenuItem: View {
 /// which the system sidebar item never did.
 private struct TabListMenuItem: View {
     @AppStorage(AppSettings.Keys.leftSidebarCollapsed) private var collapsed: Bool = false
+    @AppStorage(AppSettings.Keys.tabPlacement) private var tabPlacement: TabPlacement = .sidebar
 
     var body: some View {
         Button(collapsed ? "Show Tab List" : "Hide Tab List") { collapsed.toggle() }
             .keyboardShortcut(HotkeyStore.shortcut(for: .toggleTabList))
+            // Tabs on top: there is no sidebar to show or hide, and a
+            // toggle here would only change how it comes back later.
+            .disabled(tabPlacement == .top)
     }
 }

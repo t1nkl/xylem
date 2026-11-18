@@ -213,6 +213,20 @@ final class TabsViewModel {
         tabs = remaining
     }
 
+    /// Moves one tab a step left (`-1`) or right (`+1`), as a drag in the
+    /// top tab bar does each time it crosses a neighbour. Reads the live
+    /// order, so steps arriving before the view re-renders stay correct.
+    /// False at either end (nothing moved).
+    @discardableResult
+    func moveTab(_ id: TerminalTab.ID, by step: Int) -> Bool {
+        guard step == 1 || step == -1,
+              let index = tabs.firstIndex(where: { $0.id == id }),
+              tabs.indices.contains(index + step)
+        else { return false }
+        tabs.swapAt(index, index + step)
+        return true
+    }
+
     // MARK: - Tab configuration
 
     /// Configure a picker tab with a working directory and kick off a Claude

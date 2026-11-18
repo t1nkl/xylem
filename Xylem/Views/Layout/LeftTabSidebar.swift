@@ -141,8 +141,6 @@ private struct TabRow: View {
 
     @State private var isHovering = false
     @State private var isEditing = false
-    @State private var draft = ""
-    @FocusState private var fieldFocused: Bool
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
@@ -188,7 +186,7 @@ private struct TabRow: View {
         .accessibilityLabel(tab.displayTitle)
         .help(pathLabel)
         .contextMenu {
-            Button("Rename…", action: beginEdit)
+            Button("Rename…") { isEditing = true }
             Divider()
             if canClose {
                 Button("Close Tab", action: onClose)
@@ -197,19 +195,9 @@ private struct TabRow: View {
         }
     }
 
-    @ViewBuilder
     private var title: some View {
-        if isEditing {
-            TextField("", text: $draft)
-                .textFieldStyle(.plain)
-                .focused($fieldFocused)
-                .onSubmit(commitEdit)
-                .onExitCommand {
-                    isEditing = false
-                    onReactivate()
-                }
-                .onChange(of: fieldFocused) { _, focused in if !focused { commitEdit() } }
-        } else {
+        TabTitleField(title: tab.displayTitle, isEditing: $isEditing,
+                      onRename: onRename, onFinish: onReactivate) {
             Text(tab.displayTitle)
                 .font(.system(size: 13, weight: .semibold))
                 .lineLimit(1)
@@ -266,21 +254,60 @@ private struct TabRow: View {
         guard let path = tab.liveCwd, !path.isEmpty else { return "No folder selected" }
         return PathDisplay.abbreviatingHome(path)
     }
+}
 
-    private func beginEdit() {
-        // What the row shows (it follows the cwd), not the stored title.
-        draft = tab.displayTitle
-        isEditing = true
-        fieldFocused = true
+/// A tab's title that turns into a text field for Rename (sidebar rows and
+/// top tabs). Starts from what the tab shows (it follows the cwd), not the
+/// stored title. Return or leaving the field renames; Esc cancels. Either
+/// way the keyboard goes back to the terminal (`onFinish`): the field
+/// leaving the window would otherwise leave nothing focused.
+struct TabTitleField<Content: View>: View {
+    let title: String
+    @Binding var isEditing: Bool
+    let onRename: (String) -> Void
+    let onFinish: () -> Void
+    @ViewBuilder let label: () -> Content
+
+    @State private var draft = ""
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        Group {
+            if isEditing {
+                field
+            } else {
+                label()
+            }
+        }
+        // When the edit starts, not when the field appears: a list row
+        // re-appearing mid-edit must not reset what was typed.
+        .onChange(of: isEditing) { _, editing in
+            guard editing else { return }
+            draft = title
+            // On the next turn: in the sidebar's List the field isn't in
+            // the window yet, and the focus request was dropped (typing
+            // went to the terminal).
+            DispatchQueue.main.async { focused = true }
+        }
     }
 
-    /// Ends the edit and hands the keyboard back to the active terminal
-    /// (the field leaving the window would otherwise leave nothing focused).
-    private func commitEdit() {
+    private var field: some View {
+        TextField("", text: $draft)
+            .textFieldStyle(.plain)
+            .focused($focused)
+            .onSubmit(commit)
+            .onExitCommand {
+                isEditing = false
+                onFinish()
+            }
+            .onChange(of: focused) { _, isFocused in if !isFocused { commit() } }
+    }
+
+    private func commit() {
         guard isEditing else { return }
         isEditing = false
         onRename(draft)
-        onReactivate()
+        onFinish()
     }
 }
 
@@ -295,7 +322,8 @@ private struct HoverRowBackground: View {
 }
 
 /// The tab's ×: grey, brighter with a small fill under the pointer.
-private struct CloseTabButtonStyle: ButtonStyle {
+/// Shared with the top tab bar.
+struct CloseTabButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         CloseTabButtonBody(configuration: configuration)
     }
@@ -360,18 +388,22 @@ nonisolated enum PathDisplay {
 struct TabAvatar: View {
     let tab: TerminalTab
     let isActive: Bool
-
-    private let size: CGFloat = 28
-    private let frameSize: CGFloat = 34
+    /// The square's side: 28 in the sidebar, 24 in the top tab bar.
+    var size: CGFloat = 28
+    /// Room around the square for the busy ring and the corner marks.
+    private var frameSize: CGFloat { size + 6 }
+    private var cornerRadius: CGFloat { size * 2 / 7 }
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(backgroundFill)
                 .frame(width: size, height: size)
             glyph
             if tab.isBusy {
-                BusyRing(side: frameSize - 1)
+                BusyRing(side: frameSize - 1, cornerRadius: cornerRadius + 2)
+                    // A click or drag on a working tab's avatar is the row's.
+                    .allowsHitTesting(false)
             } else if tab.needsAttention, case .needsInput = tab.claudeState {
                 AttentionBadge(color: AppTheme.Colors.statusAmber, symbol: "exclamationmark")
                     .frame(width: frameSize, height: frameSize, alignment: .topTrailing)
@@ -393,11 +425,11 @@ struct TabAvatar: View {
     private var glyph: some View {
         if tab.hasAnyRunningSession {
             Text(Self.initial(of: projectName))
-                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .font(.system(size: size * 13 / 28, weight: .bold, design: .rounded))
                 .foregroundStyle(glyphColor)
         } else {
             Image(systemName: "folder")
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: size * 11 / 28, weight: .semibold))
                 .foregroundStyle(glyphColor)
         }
     }
@@ -458,10 +490,11 @@ private struct AttentionBadge: View {
 /// animation state lives only while the tab is busy.
 private struct BusyRing: View {
     let side: CGFloat
+    let cornerRadius: CGFloat
     @State private var animating = false
 
     private var shape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: 10, style: .continuous)
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
     }
 
     var body: some View {

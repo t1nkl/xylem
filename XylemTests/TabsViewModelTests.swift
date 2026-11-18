@@ -211,6 +211,28 @@ struct TabsViewModelTests {
         #expect(vm.tabs.map(\.id) == [b.id, a.id, c.id])
     }
 
+    /// The top tab bar's drag: one step per neighbour crossed, by id, on
+    /// the live order; nothing past either end.
+    @Test func moveTabStepsOneNeighbourAtATime() {
+        let store = StubStore()
+        let vm = TabsViewModel(store: store)
+        let a = vm.tabs[0]
+        let b = vm.appendPickerTab()
+        let c = vm.appendPickerTab()
+
+        #expect(vm.moveTab(a.id, by: 1))
+        #expect(vm.tabs.map(\.id) == [b.id, a.id, c.id])
+        #expect(vm.moveTab(a.id, by: 1))
+        #expect(vm.tabs.map(\.id) == [b.id, c.id, a.id])
+        #expect(!vm.moveTab(a.id, by: 1))   // already last
+        #expect(vm.moveTab(c.id, by: -1))
+        #expect(vm.tabs.map(\.id) == [c.id, b.id, a.id])
+        #expect(!vm.moveTab(c.id, by: -1))  // already first
+        #expect(!vm.moveTab(b.id, by: 2))   // one step at a time only
+        #expect(!vm.moveTab(UUID(), by: 1)) // a closed tab
+        #expect(vm.tabs.map(\.id) == [c.id, b.id, a.id])
+    }
+
     @Test func moveTabsIgnoresNoopsAndBadOffsets() {
         let store = StubStore()
         let vm = TabsViewModel(store: store)

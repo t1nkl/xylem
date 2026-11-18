@@ -18,15 +18,19 @@ struct WindowToolbar: ToolbarContent {
     let app: AppModel
     let updater: AppUpdater
     @Binding var showsInspector: Bool
+    /// Off while the tabs are on top: their bar has its own "+".
+    let showsNewTab: Bool
     let onNewTab: () -> Void
     let onOpenUsage: () -> Void
 
     var body: some ToolbarContent {
-        ToolbarItem(placement: .navigation) {
-            Button(action: onNewTab) {
-                Label("New Tab", systemImage: "plus")
+        if showsNewTab {
+            ToolbarItem(placement: .navigation) {
+                Button(action: onNewTab) {
+                    Label("New Tab", systemImage: "plus")
+                }
+                .help("New Tab (⌘T)")
             }
-            .help("New Tab (⌘T)")
         }
         // An update waiting for a quit, in its own capsule before the
         // context and model one. With the system's shared

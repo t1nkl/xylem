@@ -11,6 +11,22 @@ import Foundation
 import AppKit
 import SwiftUI
 
+/// Where the tab list lives: the sidebar (three-line rows) or a bar above
+/// the terminal (two-line tabs, the terminal gets the sidebar's width).
+nonisolated enum TabPlacement: String, CaseIterable, Identifiable {
+    case sidebar
+    case top
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .sidebar: "In the sidebar"
+        case .top: "Above the terminal"
+        }
+    }
+}
+
 enum AppSettings {
     enum Keys {
         static let autoStartClaude = "autoStartClaude"
@@ -22,6 +38,7 @@ enum AppSettings {
         static let terminalFontFamily = "terminalFontFamily"
         static let terminalFontSize = "terminalFontSize"
         static let leftSidebarCollapsed = "leftSidebarCollapsed"
+        static let tabPlacement = "tabPlacement"   // TabPlacement: "sidebar" / "top"
         static let inspectorVisible = "inspectorVisible"
         static let panelTab = "panelTab"   // "claude" / "git": the right panel's tab
         static let drawerWidth = "drawerWidth"   // Files / Changes drawer, points
@@ -41,6 +58,7 @@ enum AppSettings {
         Keys.terminalFontFamily: defaultTerminalFontFamily,
         Keys.terminalFontSize: 12.0,
         Keys.leftSidebarCollapsed: false,
+        Keys.tabPlacement: TabPlacement.sidebar.rawValue,
         Keys.inspectorVisible: true,
         Keys.welcomed: false
     ]
