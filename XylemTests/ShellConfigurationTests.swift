@@ -38,6 +38,20 @@ struct ShellConfigurationTests {
         }
         #expect(env["COLORTERM"] == "truecolor")
     }
+
+    @Test func aTabWithoutALocaleGetsUTF8() {
+        // Opened from the Finder: no locale at all, so pbcopy read Cyrillic as Mac Roman.
+        #expect(ShellConfiguration.addingUTF8Locale(to: ["HOME": "/Users/dev"])["LANG"] == "C.UTF-8")
+        #expect(ShellConfiguration.addingUTF8Locale(to: ["LANG": ""])["LANG"] == "C.UTF-8")
+    }
+
+    @Test func theUsersOwnLocaleIsKept() {
+        #expect(ShellConfiguration.addingUTF8Locale(to: ["LANG": "uk_UA.UTF-8"])["LANG"] == "uk_UA.UTF-8")
+        let lcAll = ShellConfiguration.addingUTF8Locale(to: ["LC_ALL": "en_GB.UTF-8"])
+        #expect(lcAll["LANG"] == nil)
+        let lcCType = ShellConfiguration.addingUTF8Locale(to: ["LC_CTYPE": "UTF-8"])
+        #expect(lcCType["LANG"] == nil)
+    }
 }
 
 // MARK: - OSC 7 working directory

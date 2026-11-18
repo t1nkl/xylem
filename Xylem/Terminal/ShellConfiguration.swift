@@ -61,6 +61,22 @@ struct ShellConfiguration {
         environment.filter { !parentClaudeSessionKeys.contains($0.key) }
     }
 
+    /// A UTF-8 locale for tabs that would otherwise run without one. An app
+    /// opened from the Finder or the Dock gets no LANG, and macOS 15's
+    /// `/etc/zprofile` sets none (newer releases export `LANG=C.UTF-8` when
+    /// it is unset; bash and fish never do). Without it `pbcopy`, which
+    /// Claude Code copies with, reads its input as Mac Roman: copied
+    /// Cyrillic pasted as "–ü—Ä–∏–≤—ñ—Ç". `C.UTF-8` is what macOS itself now
+    /// picks: UTF-8 text without changing messages, dates or numbers. A
+    /// locale the user set (LANG, LC_ALL or LC_CTYPE) is left alone.
+    nonisolated static func addingUTF8Locale(to environment: [String: String]) -> [String: String] {
+        let localeKeys = ["LANG", "LC_ALL", "LC_CTYPE"]
+        guard localeKeys.allSatisfy({ environment[$0]?.isEmpty ?? true }) else { return environment }
+        var env = environment
+        env["LANG"] = "C.UTF-8"
+        return env
+    }
+
     /// The user's login shell: `$SHELL`, `/bin/zsh` when unset or empty.
     /// What every tab runs and what the Doctor asks.
     nonisolated static func userShell(environment: [String: String] = ProcessInfo.processInfo.environment) -> String {
@@ -77,7 +93,7 @@ struct ShellConfiguration {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         let cwd = workingDirectory ?? home
 
-        var env = Self.removingParentClaudeSession(from: systemEnv)
+        var env = Self.addingUTF8Locale(to: Self.removingParentClaudeSession(from: systemEnv))
         env["HOME"] = env["HOME"] ?? home
 
         // Tell anything that reads TERM_PROGRAM (e.g. custom .zshrc logic)
