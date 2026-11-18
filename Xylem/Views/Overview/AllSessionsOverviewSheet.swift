@@ -40,9 +40,9 @@ struct AllSessionsOverviewSheet: View {
     private let reader = SessionStatsReader()
     private let refreshInterval: Duration = .seconds(6)
 
-    private let columns = [
-        GridItem(.adaptive(minimum: 300, maximum: 420), spacing: 14)
-    ]
+    /// Three columns (design choice): the adaptive 300-420 pt grid gave
+    /// two in the sheet's 720 pt minimum width.
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 14), count: 3)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -64,7 +64,9 @@ struct AllSessionsOverviewSheet: View {
         .padding(20)
         .background(AppTheme.Colors.background)
         .preferredColorScheme(.dark)
-        .frame(minWidth: 720, minHeight: 520)
+        // Three ~310 pt cards plus gaps and padding; fits the window's
+        // 1100 pt minimum width.
+        .frame(minWidth: 1000, minHeight: 520)
         .task {
             // A single long-running loop makes cancellation on dismiss clean.
             await refreshAll()
