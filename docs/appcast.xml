@@ -7,6 +7,18 @@
     <language>en</language>
     <!-- items: newest first -->
     <item>
+      <title>v1.2.5</title>
+      <pubDate>Wed, 18 Nov 2026 11:46:49 GMT</pubDate>
+      <sparkle:version>24</sparkle:version>
+      <sparkle:shortVersionString>1.2.5</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### Fixed
+- Text in Cyrillic and other non-Latin scripts copied from Claude Code in a tab no longer pastes garbled. Tabs now start with a UTF-8 locale when none is set (macOS 15, bash and fish, or Xylem opened from the Finder or the Dock).
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.2.5/Xylem-v1.2.5.dmg" type="application/octet-stream" sparkle:edSignature="rewSOvG5fZc4AQj7Zy6Rz9+ajt4+0p7OswenuWTYSwPkp9Cd2JZyixbtImy+7YuBhtz3j42OFiHSp1WRUjCUCw==" length="10067200"/>
+    </item>
+    <item>
       <title>v1.2.4</title>
       <pubDate>Tue, 17 Nov 2026 23:25:50 GMT</pubDate>
       <sparkle:version>23</sparkle:version>
