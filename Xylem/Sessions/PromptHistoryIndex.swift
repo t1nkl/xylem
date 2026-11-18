@@ -72,8 +72,9 @@ nonisolated struct PromptHistoryStore: PromptHistoryStoring {
     static let formatVersion = 1
     /// Bump when the rule for "human prompt" changes (UserPromptExtractor,
     /// the byte pre-filter, the text cap): every file is read again once.
-    /// 1 already excluded compaction summaries; 2 raised the text cap.
-    static let rulesVersion = 2
+    /// 1 already excluded compaction summaries; 2 raised the text cap;
+    /// 3 dropped agent-team messages (`<teammate-message>`).
+    static let rulesVersion = 3
 
     let url: URL
 

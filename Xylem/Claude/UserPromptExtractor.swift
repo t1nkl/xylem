@@ -54,7 +54,12 @@ nonisolated enum UserPromptExtractor {
         "<bash-",
         "<task-notification",
         "<system-reminder",
-        "[Request interrupted"
+        "[Request interrupted",
+        // Agent teams: a teammate's transcript starts with the lead's
+        // message, and the lead gets each teammate's message as a plain
+        // user record with this line before the `<teammate-message>` block.
+        "<teammate-message",
+        "Another Claude session sent a message:"
     ]
 
     static func clean(_ text: String) -> String? {

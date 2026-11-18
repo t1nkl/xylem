@@ -32,6 +32,10 @@ struct UserPromptExtractorTests {
             #"{"type":"user","message":{"content":"<local-command-stdout>done</local-command-stdout>"}}"#,
             #"{"type":"user","message":{"content":"<task-notification>\n<task-id>1</task-id>"}}"#,
             #"{"type":"user","message":{"content":[{"type":"text","text":"[Request interrupted by user]"}]}}"#,
+            // Agent teams: a teammate's message as the lead receives it, and
+            // the lead's message that starts a teammate's transcript.
+            #"{"type":"user","userType":"external","message":{"content":"Another Claude session sent a message:\n<teammate-message teammate_id=\"reviewer\" summary=\"Review done\">\nAll good.\n</teammate-message>"}}"#,
+            #"{"type":"user","message":{"content":"<teammate-message teammate_id=\"team-lead\" summary=\"Review the API\">\nPlease review.\n</teammate-message>"}}"#,
             #"{"type":"user","message":{"content":[{"type":"tool_result","content":"ok"},{"type":"text","text":"note"}]}}"#,
             #"{"type":"assistant","message":{"content":"hello"}}"#,
             // Compaction summary: not isMeta, but Claude Code wrote it.

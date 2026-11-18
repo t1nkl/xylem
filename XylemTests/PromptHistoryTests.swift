@@ -72,6 +72,8 @@ struct PromptHistoryTests {
               "message": ["content": [["type": "tool_result", "tool_use_id": "t1", "content": "fix the build output"]]]]),
         json(["type": "user", "cwd": "/srv/proj",
               "message": ["content": "<command-name>/clear</command-name>\n<command-args></command-args>"]]),
+        json(["type": "user", "cwd": "/srv/proj", "userType": "external",
+              "message": ["content": "Another Claude session sent a message:\n<teammate-message teammate_id=\"tester\">\nfix the build is done\n</teammate-message>"]]),
         json(["type": "assistant", "cwd": "/srv/proj",
               "message": ["content": [["type": "text", "text": "I will fix the build"]]]]),
         json(["type": "summary", "summary": "fix the build"])
