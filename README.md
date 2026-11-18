@@ -23,6 +23,11 @@ is a trademark of Anthropic.
   your permission - shown on the tab, in the Dock badge and as one macOS
   notification per event. Xylem learns this from Claude Code hooks it passes
   with `--settings`; your own settings files are never modified.
+- **Tabs in the sidebar or above the terminal.** The sidebar shows each tab's
+  latest prompt, branch and folder; above the terminal (Settings > General)
+  the terminal gets the full width, the tabs scroll sideways and reorder by
+  dragging, and hovering a tab shows its whole prompt. All Sessions shows
+  every tab's context, cost and state at a glance.
 - **Sessions survive restarts.** Tabs come back and continue their own
   conversation (`claude --resume`); a restored tab starts only when you open
   it. If the session is already open elsewhere, the tab forks it instead of
