@@ -486,31 +486,127 @@ private struct AttentionBadge: View {
 
 /// Busy pulse: a yellow outline around the avatar that breathes, with a
 /// soft ripple spreading out from it ("busy" reads yellow, apart
-/// from the green "idle"; a spinning arc looked cheap). Its own view so the
-/// animation state lives only while the tab is busy.
-private struct BusyRing: View {
+/// from the green "idle"; a spinning arc looked cheap).
+///
+/// Core Animation, not SwiftUI animations: with `repeatForever` SwiftUI
+/// re-ran its graph and re-stroked both rings on the main thread every
+/// frame - one working tab cost ~23% CPU in a Release build (36% in the top
+/// tab bar). CA animations run in the render server; the look (sizes,
+/// timings, colours, shadow) is the same as the SwiftUI version.
+private struct BusyRing: NSViewRepresentable {
     let side: CGFloat
     let cornerRadius: CGFloat
-    @State private var animating = false
 
-    private var shape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+    func makeNSView(context: Context) -> RingView { RingView() }
+
+    func updateNSView(_ view: RingView, context: Context) {
+        view.cornerRadius = cornerRadius
     }
 
-    var body: some View {
-        ZStack {
-            shape
-                .stroke(AppTheme.Colors.statusBusy, lineWidth: 3)
-                .scaleEffect(animating ? 1.22 : 1)
-                .opacity(animating ? 0 : 0.5)
-                .animation(.easeOut(duration: 1.4).repeatForever(autoreverses: false), value: animating)
-            shape
-                .stroke(AppTheme.Colors.statusBusy, lineWidth: 1.5)
-                .opacity(animating ? 1 : 0.45)
-                .shadow(color: AppTheme.Colors.statusBusy.opacity(animating ? 0.6 : 0), radius: 3)
-                .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: animating)
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: RingView, context: Context) -> CGSize? {
+        CGSize(width: side, height: side)
+    }
+
+    final class RingView: NSView {
+        var cornerRadius: CGFloat = 10 {
+            didSet { if cornerRadius != oldValue { needsLayout = true } }
         }
-        .frame(width: side, height: side)
-        .onAppear { animating = true }
+        private let ripple = CAShapeLayer()
+        private let outline = CAShapeLayer()
+
+        override init(frame: NSRect) {
+            super.init(frame: frame)
+            wantsLayer = true
+            layer?.masksToBounds = false
+            let yellow = NSColor(AppTheme.Colors.statusBusy).cgColor
+            for ring in [ripple, outline] {
+                ring.fillColor = nil
+                ring.strokeColor = yellow
+                layer?.addSublayer(ring)
+            }
+            ripple.lineWidth = 3
+            outline.lineWidth = 1.5
+            outline.shadowColor = yellow
+            outline.shadowRadius = 3
+            outline.shadowOffset = .zero
+            addAnimations()
+        }
+
+        required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+        /// A view moved between windows (or into a reused list row) can come
+        /// back without its layer animations; crisp strokes on any display.
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard let window else { return }
+            for ring in [ripple, outline] { ring.contentsScale = window.backingScaleFactor }
+            if ripple.animation(forKey: "ripple") == nil || outline.animation(forKey: "breathe") == nil {
+                addAnimations()
+            }
+        }
+
+        override func viewDidChangeBackingProperties() {
+            super.viewDidChangeBackingProperties()
+            let scale = window?.backingScaleFactor ?? 2
+            for ring in [ripple, outline] { ring.contentsScale = scale }
+        }
+
+        private var laidOut: (size: CGSize, radius: CGFloat)?
+
+        override func layout() {
+            super.layout()
+            guard laidOut.map({ $0.size != bounds.size || $0.radius != cornerRadius }) ?? true else { return }
+            laidOut = (bounds.size, cornerRadius)
+            let path = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .path(in: CGRect(origin: .zero, size: bounds.size)).cgPath
+            // No implicit animations on geometry (they would morph the ring).
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            for ring in [ripple, outline] {
+                ring.bounds = bounds
+                ring.position = CGPoint(x: bounds.midX, y: bounds.midY)
+                ring.path = path
+            }
+            // A given shadow shape: otherwise Core Animation derives it from
+            // the layer's pixels offscreen on every frame of the animation.
+            outline.shadowPath = path.copy(strokingWithWidth: outline.lineWidth, lineCap: .butt,
+                                           lineJoin: .miter, miterLimit: 10)
+            CATransaction.commit()
+        }
+
+        private func addAnimations() {
+            let grow = CABasicAnimation(keyPath: "transform.scale")
+            grow.fromValue = 1
+            grow.toValue = 1.22
+            let fade = CABasicAnimation(keyPath: "opacity")
+            fade.fromValue = 0.5
+            fade.toValue = 0
+            let spread = CAAnimationGroup()
+            spread.animations = [grow, fade]
+            spread.duration = 1.4
+            spread.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            spread.repeatCount = .infinity
+            spread.isRemovedOnCompletion = false
+            ripple.opacity = 0
+            ripple.add(spread, forKey: "ripple")
+
+            let glow = CABasicAnimation(keyPath: "opacity")
+            glow.fromValue = 0.45
+            glow.toValue = 1
+            let shine = CABasicAnimation(keyPath: "shadowOpacity")
+            shine.fromValue = 0
+            shine.toValue = 0.6
+            let breathe = CAAnimationGroup()
+            breathe.animations = [glow, shine]
+            breathe.duration = 0.7
+            breathe.autoreverses = true
+            breathe.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            breathe.repeatCount = .infinity
+            breathe.isRemovedOnCompletion = false
+            outline.opacity = 0.45
+            outline.add(breathe, forKey: "breathe")
+        }
     }
 }
