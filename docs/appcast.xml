@@ -7,6 +7,25 @@
     <language>en</language>
     <!-- items: newest first -->
     <item>
+      <title>v1.2.6</title>
+      <pubDate>Wed, 18 Nov 2026 23:41:57 GMT</pubDate>
+      <sparkle:version>25</sparkle:version>
+      <sparkle:shortVersionString>1.2.6</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### New
+- **Tabs above the terminal.** Settings > General > Show tabs: "Above the terminal" puts the tabs in a bar over the terminal, which then gets the full window width. Each tab shows the project and its latest prompt (or the permission question), the bar scrolls sideways (a mouse wheel works too), tabs reorder by dragging, and hovering a tab shows a card with the whole prompt, branch and path. The sidebar stays the default; switching keeps every session running.
+
+### Improved
+- **Much lower CPU while Claude works.** The yellow pulse around a working tab's icon used about a quarter of a CPU core per working tab (more on Intel Macs); it now uses almost none, with the same look.
+- **All Sessions in three columns.** The overview fits three cards per row.
+
+### Fixed
+- Messages between agent-team teammates no longer show up as your own prompts in the Cmd-K prompt search.
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.2.6/Xylem-v1.2.6.dmg" type="application/octet-stream" sparkle:edSignature="ky+Tlh2LyWVJlcrcUkmgZcOgsEV0xee1hJdDpfvINpnyKWZG47VWHzQFXhxBbu4AOTe+rh7OlmHsRrK1qNweAQ==" length="10200592"/>
+    </item>
+    <item>
       <title>v1.2.5</title>
       <pubDate>Wed, 18 Nov 2026 11:46:49 GMT</pubDate>
       <sparkle:version>24</sparkle:version>
