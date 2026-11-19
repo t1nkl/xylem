@@ -285,8 +285,7 @@ struct TabTitleField<Content: View>: View {
             guard editing else { return }
             draft = title
             // On the next turn: in the sidebar's List the field isn't in
-            // the window yet, and the focus request was dropped (typing
-            // went to the terminal).
+            // the window yet, and the focus request would be dropped.
             DispatchQueue.main.async { focused = true }
         }
     }
@@ -463,8 +462,7 @@ struct TabAvatar: View {
 }
 
 /// Top-right mark on the avatar: blue dot = Claude finished and the tab
-/// hasn't been looked at, orange "!" = Claude asks for permission (picked
-/// from attention mock-ups). A dark ring keeps it apart from the
+/// hasn't been looked at, orange "!" = Claude asks for permission. A dark ring keeps it apart from the
 /// square on any row background.
 private struct AttentionBadge: View {
     let color: Color

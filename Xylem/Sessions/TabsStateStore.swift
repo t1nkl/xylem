@@ -9,7 +9,7 @@
 //
 //  Encoding and the atomic write run on a private serial queue: saves fire
 //  on every tab mutation (debounced by TabsViewModel), and a synchronous
-//  write on main showed up as a hitch while dragging tabs. The queue being
+//  write on main shows up as a hitch while dragging tabs. The queue being
 //  serial is what keeps "newest write wins" - saves land in call order.
 //
 
@@ -19,8 +19,8 @@ nonisolated struct PersistedTab: Codable, Sendable {
     let id: UUID
     let title: String
     let workingDirectory: String?
-    /// True once the user renamed the tab. Without it a restored tab went
-    /// back to tracking its cwd and the custom name was lost on relaunch.
+    /// True once the user renamed the tab. Without it a restored tab would go
+    /// back to tracking its cwd and lose the custom name on relaunch.
     let hasCustomTitle: Bool
     /// The Claude session the tab was bound to; a relaunch resumes it.
     let claudeSessionID: String?

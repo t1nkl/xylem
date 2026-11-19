@@ -5,7 +5,7 @@
 //  Collapsible section of the right panel (inspector): a disclosure chevron
 //  leading, the Title Case header in semibold primary text, the count after
 //  it in tertiary, and an optional action (e.g. "+") revealed on hover at
-//  the right edge (picked from a landing-page mock-up, 2026-11-14).
+//  the right edge.
 //  Compact density: the whole header is one hit target that toggles the
 //  section.
 //
@@ -175,9 +175,8 @@ struct SidebarRow<Content: View>: View {
 
 /// Full-width two-or-more-way switch for the panel's top rows (Claude/Git,
 /// This project/All). A system segmented `Picker` on macOS keeps its
-/// intrinsic width and centres itself, so the two rows came out different
-/// widths; equal full-width segments were picked from a landing-page
-/// mock-up (2026-11-14). Exposed to accessibility as a group of selectable
+/// intrinsic width and centres itself, so the two rows would differ in
+/// width; these segments are equal and full-width. Exposed to accessibility as a group of selectable
 /// buttons.
 struct PanelSegmentedControl<Value: Hashable>: View {
     let options: [Value]

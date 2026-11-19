@@ -40,8 +40,8 @@ struct AllSessionsOverviewSheet: View {
     private let reader = SessionStatsReader()
     private let refreshInterval: Duration = .seconds(6)
 
-    /// Three columns (design choice): the adaptive 300-420 pt grid gave
-    /// two in the sheet's 720 pt minimum width.
+    /// Three columns: an adaptive 300-420 pt grid fits only two in a
+    /// 720 pt sheet.
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 14), count: 3)
 
     var body: some View {

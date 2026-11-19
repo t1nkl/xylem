@@ -3,7 +3,7 @@
 //  XylemTests
 //
 //  Hook events + pty output -> what the tab shows. Event payloads are the
-//  shapes captured from Claude Code 2.1.323 (pty driver, 2026-11-13).
+//  shapes captured from Claude Code 2.1.323 (pty driver).
 //
 
 import Testing
@@ -495,7 +495,7 @@ struct ClaudeTabStateTrackerTests {
         #expect(notifier.withdrawn == [tabID])
     }
 
-    /// Double banners seen live: one Stop must never announce twice - not
+    /// No double banners: one Stop must never announce twice - not
     /// after the mark was seen and the tab left, not after a redraw flipped
     /// it to working and back; `idle_prompt` never re-announces; a Stop with
     /// no human prompt since the last banner is silent; a new prompt (its
@@ -741,8 +741,7 @@ struct ClaudeTabStateTrackerTests {
     }
 
     /// Closing a tab ends what runs in it even when the program ignores
-    /// SIGHUP and SIGTERM (seen on an Intel Mac: processes of closed tabs
-    /// stayed alive). Not only the shell is signalled but the foreground
+    /// SIGHUP and SIGTERM. Not only the shell is signalled but the foreground
     /// process group, and whatever survives is killed after a grace period.
     @Test func closingATabEndsAProgramThatIgnoresHangup() async throws {
         let dir = FileManager.default.temporaryDirectory.appending(path: "xylem-stubborn-\(UUID().uuidString)")

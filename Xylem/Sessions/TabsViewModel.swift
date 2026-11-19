@@ -83,8 +83,7 @@ final class TabsViewModel {
     }
 
     /// New Tab (Cmd-T, "+", palette). A tab still waiting for a folder is
-    /// reused instead of stacking another empty one (design choice: repeated
-    /// Cmd-T used to pile up "New Tab" rows): the active one if it is a
+    /// reused instead of stacking another empty one: the active one if it is a
     /// picker, else the first picker in the list.
     @discardableResult
     func openEmptyTab() -> TerminalTab {
@@ -265,8 +264,8 @@ final class TabsViewModel {
     func openDirectory(_ directory: String, title: String? = nil, autoStartClaude: Bool = true) -> TerminalTab {
         let name = title ?? (directory as NSString).lastPathComponent
         // Same folder, however it is spelled: the Git panel lists worktrees
-        // as `/tmp/…` while git reported `/private/tmp/…` when the tab was
-        // made (seen live - a second tab opened).
+        // as `/tmp/…` while git may report `/private/tmp/…` when the tab
+        // is made.
         let target = Self.canonical(directory)
         if let existing = tabs.first(where: { $0.workingDirectory.map(Self.canonical) == target }) {
             activeTabID = existing.id
@@ -398,9 +397,9 @@ final class TabsViewModel {
     private func restoreTab(_ persisted: PersistedTab, sessionID: String?) -> TerminalTab {
         let state: TerminalTabState
         if let cwd = persisted.workingDirectory {
-            // Started when first shown (see `activeTabID`): with ten saved
-            // tabs a relaunch used to load ten sessions - and run ten
-            // claude processes - before the user looked at any of them.
+            // Started when first shown (see `activeTabID`), so a relaunch
+            // doesn't load every saved session and run every claude before
+            // the user looks at any of them.
             state = .session(sessionFactory.makeRestoredSession(
                 tabID: persisted.id,
                 title: persisted.title,

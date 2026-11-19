@@ -70,8 +70,8 @@ struct NewWorktreeSheet: View {
         }
         .padding(20)
         .frame(width: 420)
-        // Next turn: set in onAppear itself, the focus was lost while the
-        // sheet replaced the palette (seen live - no ring, typing went nowhere).
+        // Next turn: set in onAppear itself, the focus is lost while the
+        // sheet replaces the palette.
         .onAppear { DispatchQueue.main.async { fieldFocused = true } }
     }
 

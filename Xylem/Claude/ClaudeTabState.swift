@@ -84,9 +84,9 @@ nonisolated struct ClaudeTabEvent: Equatable, Sendable {
     }
 
     /// Whether the event replaces the tab's stored event. `idle_prompt`
-    /// (~60 s at the prompt after a turn) says nothing new: kept, it turned
-    /// an idle tab (Esc, a denied permission) into "finished" and announced
-    /// it again.
+    /// (~60 s at the prompt after a turn) says nothing new: kept, it would
+    /// turn an idle tab (Esc, a denied permission) into "finished" and
+    /// announce it again.
     var carriesState: Bool {
         switch kind {
         case .other, .idlePrompt: return false
@@ -223,8 +223,8 @@ nonisolated enum ClaudeTabState: Equatable, Sendable {
 /// re-enter "finished" on output alone (a redraw, `/goal` evaluating) or
 /// lose and regain its mark (seen, then left); none of that is a new event.
 /// "Claude finished" also needs a human prompt since the last Stop the user
-/// already knows about - one that got a banner, or that they watched land
-/// (design choice): a turn Claude starts on its own after that (a background
+/// already knows about - one that got a banner, or that they watched land:
+/// a turn Claude starts on its own after that (a background
 /// task reporting back) stays silent, while `/goal`, whose in-between Stops
 /// nobody saw settle, still announces its end. A permission question always
 /// notifies, once per event.

@@ -6,9 +6,8 @@
 //  for every date range in one pass.
 //
 //  Subagent transcripts (`<session id>/subagents/agent-*.jsonl`) are read
-//  too and folded into their parent session: they were ~40% of all
-//  transcript bytes on a heavy machine, and leaving them out undercounted
-//  spend accordingly. Forks start with a copy of their parent's messages,
+//  too and folded into their parent session: they can be ~40% of all
+//  transcript bytes, and leaving them out undercounts spend accordingly. Forks start with a copy of their parent's messages,
 //  which is skipped (SubagentTranscript.swift).
 //
 //  Incremental, backed by UsageFileCache:

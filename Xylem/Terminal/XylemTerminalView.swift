@@ -214,9 +214,9 @@ final class XylemTerminalView: LocalProcessTerminalView {
     /// Command+letter on a Cyrillic (or any non-Latin) layout arrives with
     /// `characters == "c"` but `charactersIgnoringModifiers == "с"`. With
     /// Claude Code running (kitty keyboard mode) SwiftTerm reports the key
-    /// from the latter, as super+"с", which Claude Code didn't take as its
-    /// shortcut and typed as the letter: ⌘С copied *and* put "с" in the
-    /// prompt (seen 2026-11-16). Relabelled with the US letter of the
+    /// from the latter, as super+"с", which Claude Code doesn't take as its
+    /// shortcut and types as the letter: ⌘С would copy *and* put "с" in the
+    /// prompt. Relabelled with the US letter of the
     /// physical key, the press is exactly what the US layout sends - for the
     /// menus (⌘C, ⌘V, ⌘K…) and for the program - as macOS shortcuts work by
     /// key position on every layout.

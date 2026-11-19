@@ -2,10 +2,10 @@
 //  PanelRail.swift
 //  Xylem
 //
-//  The icon column at the window's right edge, never moving (the four-item
-//  rail of mock-up A, 2026-11-16): Claude and Git switch the right
-//  panel (and show it, or hide it when already showing that), Files and
-//  Changes open the drawer over the terminal (mock-up C). Icons only, each with
+//  The icon column at the window's right edge, never moving: Claude and
+//  Git switch the right panel (and show it, or hide it when already
+//  showing that), Files and Changes open the drawer over the terminal.
+//  Icons only, each with
 //  a tooltip. Wiring: PanelRailContainer in RightPanel.swift.
 //
 

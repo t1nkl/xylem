@@ -4,8 +4,8 @@
 //
 //  Doctor's "not on your PATH" fix: one command the user runs once in
 //  Terminal that adds the folder to the startup file their login shell
-//  really reads. Only the `export` line used to be shown; pasted into a
-//  terminal it changes that window alone, so nothing seemed to happen.
+//  really reads. A bare `export` line, pasted into a terminal, would change
+//  that window alone.
 //
 //  Which file, by shell (a tab runs `$SHELL -l -i`):
 //  - zsh: `.zshrc` in `$ZDOTDIR` (most people: the home folder).

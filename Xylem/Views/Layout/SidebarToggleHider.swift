@@ -4,8 +4,8 @@
 //
 //  Hides the split view's sidebar button while the tabs are on top (there
 //  is no sidebar to show then). SwiftUI's `.toolbar(removing: .sidebarToggle)`
-//  left the button in place in this window wherever it was applied (the
-//  split view, its sidebar or its detail; checked live), so the window's
+//  leaves the button in place in this window wherever it is applied (the
+//  split view, its sidebar or its detail), so the window's
 //  NSToolbarItem is hidden directly. The item is matched by identifier;
 //  SwiftUI names it `com.apple.SwiftUI.navigationSplitView.toggleSidebar`.
 //  An item the toolbar adds later (SwiftUI rebuilds the toolbar when its

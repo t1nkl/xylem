@@ -2,9 +2,9 @@
 //  RightPanel.swift
 //  Xylem
 //
-//  The right side of the window (2026-11-16): the Claude / Git panel, the
-//  panel rail at the window's edge and the Files / Changes drawer over the
-//  terminal. One of panel and drawer at a time (design choice). Each is its
+//  The right side of the window: the Claude / Git panel, the panel rail at
+//  the window's edge and the Files / Changes drawer over the terminal. One
+//  of panel and drawer at a time. Each is its
 //  own view reading only its own state, so opening one re-renders it, not
 //  ContentView.
 //
@@ -22,7 +22,7 @@ struct PanelRailContainer: View {
     @Binding var panelTab: RightSidebarView.SidebarTab
     let directory: () -> String?
     /// The drawer closed (any way): the keyboard goes back to the terminal -
-    /// a click in the preview or diff (selectable text) took it.
+    /// a click in the preview or diff (selectable text) may have taken it.
     var onDrawerClosed: () -> Void = {}
 
     var body: some View {
@@ -97,7 +97,7 @@ struct RightPanelContainer<Content: View>: View {
 
     /// The panel never squeezes the terminal under `minTerminalWidth`: the
     /// rail takes 56 pt, so in a narrow window with a wide tab list the
-    /// terminal would otherwise drop to ~240 pt (review).
+    /// terminal would otherwise drop to ~240 pt.
     static func maxWidth(detailWidth: CGFloat) -> CGFloat {
         let room = detailWidth - AppTheme.Metrics.panelRailWidth - AppTheme.Metrics.minTerminalWidth
         return min(AppTheme.Metrics.inspectorMaxWidth, max(AppTheme.Metrics.inspectorMinWidth, room))
@@ -155,8 +155,8 @@ struct ProjectDrawerContainer: View {
 /// An invisible strip on a right-anchored column's left edge: dragging left
 /// widens the column. `liveWidth` follows the drag; `onCommit` gets the final
 /// width once. The system's column-resize pointer, not NSCursor push/pop (a
-/// column closed under the pointer never got the hover exit, and the cursor
-/// stayed pushed).
+/// column closed under the pointer never gets the hover exit, and the cursor
+/// would stay pushed).
 struct ColumnResizeHandle: View {
     let width: CGFloat
     let range: ClosedRange<CGFloat>

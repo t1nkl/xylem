@@ -3,7 +3,7 @@
 //  XylemTests
 //
 //  "4d ago" for the last week, then the day in English ("Oct 28", with the
-//  year for earlier years) - the old "dd/MM/yy" read like a year.
+//  year for earlier years) - not "dd/MM/yy", which reads like a year.
 //
 
 import Testing

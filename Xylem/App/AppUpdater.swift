@@ -12,7 +12,7 @@
 //  is ready, a notification says so, and it stays visible in the window
 //  (a "New update available" toolbar capsule, `readyVersion`) and as the first
 //  item of the Xylem menu: Xylem stays open for days, and one missed
-//  banner left an update waiting unseen. A click on
+//  banner would leave an update waiting unseen. A click on
 //  any of them, or Check for Updates…, opens Sparkle's window with the
 //  release notes and Install and Relaunch / Install on Quit. A relaunch
 //  goes through applicationShouldTerminate, so the quit confirmation still
@@ -21,7 +21,7 @@
 //  The delegate lets Sparkle end its session once the update is staged
 //  (returns false from willInstallUpdateOnQuit): keeping it open, to call
 //  the immediate-install block ourselves, disables Check for Updates… and
-//  with it the window (seen live with a test feed).
+//  with it the window.
 //
 //  Starts only in Release builds: a Debug run would offer the published
 //  version over the one being developed. `defaults write <bundle id>
@@ -41,7 +41,7 @@ final class AppUpdater: NSObject {
     private(set) var canCheckForUpdates = false
     /// The Settings toggle: automatic checks only. Background downloading is
     /// Sparkle's own checkbox in its update window; setting it here too
-    /// re-enabled it on every launch (caught live). A stored copy, so the
+    /// would re-enable it on every launch. A stored copy, so the
     /// toggle re-renders when it changes.
     var automaticallyChecks = false {
         didSet {
@@ -110,7 +110,7 @@ extension AppUpdater: SPUUpdaterDelegate {
         WhatsNewStore.forget()
     }
 
-    /// Skip This Version drops the staged update: nothing waits any more.
+    /// Skip This Version drops the staged update: nothing waits.
     /// Sparkle calls its delegate on the main thread.
     nonisolated func updater(
         _ updater: SPUUpdater,

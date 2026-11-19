@@ -3,9 +3,8 @@
 //  Xylem
 //
 //  Centralises "find the newest jsonl for a given project cwd" - the
-//  folder-name encoding and the by-mtime sort were copy-pasted into
-//  TabActivityViewModel, SessionStatsViewModel and AllSessionsOverviewSheet.
-//  Now they all call one place.
+//  folder-name encoding and the by-mtime sort - for TabActivityViewModel,
+//  SessionStatsViewModel and AllSessionsOverviewSheet.
 //
 
 import Foundation
@@ -55,8 +54,8 @@ nonisolated enum SessionFileLocator {
     /// `projects/` of the Claude config folder (`~/.claude`, or
     /// CLAUDE_CONFIG_DIR) with symlinks resolved: a `~/.claude` kept in a
     /// dotfiles repo and linked in is common, and Foundation's
-    /// `contentsOfDirectory` does not follow a symlinked directory (ENOTDIR,
-    /// seen on macOS 27) - every list below it came back empty. Usage, the
+    /// `contentsOfDirectory` does not follow a symlinked directory (ENOTDIR
+    /// on macOS 27) - every list below it would come back empty. Usage, the
     /// project list and the prompt index use it too. Resolved once per
     /// change in ClaudeConfigDirectory, not per read.
     static var defaultProjectsDirectory: URL { ClaudeConfigDirectory.projects }

@@ -4,8 +4,8 @@
 //
 //  Is a Claude session already open somewhere else? A restored tab resumes
 //  its own session, but the same session may be running in another app
-//  (another Claude Code GUI, a terminal) by then - seen on 2026-11-14: two claude processes
-//  appended to one transcript. Then the tab forks it instead
+//  (another Claude Code GUI, a terminal) by then, and two claude processes
+//  would append to one transcript. Then the tab forks it instead
 //  (TerminalSessionFactory.forkLaunch): same conversation, new session id,
 //  nothing written to the other process's file.
 //

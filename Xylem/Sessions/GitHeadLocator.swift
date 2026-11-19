@@ -17,9 +17,9 @@ nonisolated enum GitHeadLocator {
     ///
     /// Walks path strings, not `URL`s: on macOS 15 `URL.deletingLastPathComponent()`
     /// of `file:///` is `/..`, then `/../..`, so a folder outside any
-    /// repository (the home folder) never reached a fixed point - an
-    /// endless loop at 100% CPU with memory growing by gigabytes (seen on
-    /// an Intel Mac, 2026-11-16). `parent(of:)` stops at `/` on every
+    /// repository (the home folder) never reaches a fixed point - an
+    /// endless loop at 100% CPU with memory growing by gigabytes.
+    /// `parent(of:)` stops at `/` on every
     /// system, and the depth cap makes any other surprise finite.
     static func headPath(forDirectory directory: String) -> String? {
         let fm = FileManager.default

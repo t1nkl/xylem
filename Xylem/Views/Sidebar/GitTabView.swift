@@ -98,8 +98,8 @@ struct GitTabView: View {
         SidebarSection(
             title: "Worktrees",
             count: status.worktrees.count,
-            // Typing `git worktree add` into the tab used to land in Claude's
-            // prompt when claude was running there.
+            // A sheet, not `git worktree add` typed into the tab: that would
+            // land in Claude's prompt while claude runs there.
             trailingAction: .plus(
                 tooltip: "New worktree tab - a branch in its own checkout, with its own Claude",
                 action: onNewWorktree

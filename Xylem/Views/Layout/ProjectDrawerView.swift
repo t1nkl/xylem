@@ -2,7 +2,7 @@
 //  ProjectDrawerView.swift
 //  Xylem
 //
-//  The drawer over the terminal (mock-up C of three, 2026-11-16):
+//  The drawer over the terminal:
 //  Files = the project tree on top, the selected file's text below;
 //  Changes = git's changed files on top, the selected file's diff below.
 //  The terminal keeps its size underneath (no SIGWINCH while browsing).

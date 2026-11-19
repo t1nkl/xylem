@@ -5,7 +5,7 @@
 //  Scans every tab's latest session jsonl file on a slow poll and flips
 //  `tab.isBusy` when the mtime advances. The busy flag lives on the tab
 //  itself (per-instance @Observable property) so only the card whose flag
-//  changed has to re-render - a central busy-by-id dict used to invalidate
+//  changed has to re-render - a central busy-by-id dict would invalidate
 //  the whole sidebar every tick.
 //
 //  Tabs bound to a Claude session read their own transcript; unbound tabs
@@ -16,10 +16,8 @@
 //  the attention mark and the session binding; the transcript mtime is
 //  then only used for the prompt preview.
 //
-//  The same tick keeps `tab.gitBranch` current. That lookup used to be a
-//  `.task(id: liveCwd)` inside the sidebar card - a view doing I/O and
-//  writing to the model, re-run whenever SwiftUI recreated the card. Here it
-//  stats the repo's HEAD file each tick and spawns `git` only when the live
+//  The same tick keeps `tab.gitBranch` current, not a view (a `.task` in
+//  the card would re-run whenever SwiftUI recreates it). It stats the repo's HEAD file each tick and spawns `git` only when the live
 //  cwd or HEAD's mtime changed (checkout, branch switch), all off main.
 //
 

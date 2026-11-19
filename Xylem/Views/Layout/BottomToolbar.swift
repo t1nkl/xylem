@@ -155,7 +155,7 @@ private struct DoctorIndicator: View {
 
     var body: some View {
         // Read here, not only inside the popover's closure: a state read
-        // only there didn't update the open popover (seen live).
+        // only there doesn't update the open popover.
         let offer = restartOffer
         Button {
             isShowingPopover.toggle()
@@ -378,9 +378,9 @@ private struct DoctorHealthyPopover: View {
 /// Typical after Anthropic's installer when `~/.local/bin` never made it
 /// into the shell's PATH: the binary exists, the tab says "command not
 /// found". Shows one command for the user's own shell that writes the line
-/// into the startup file the tabs' login shell reads (`ShellPathFix`) - the
-/// bare `export` line it used to show, pasted into Terminal, changed only
-/// that window. When the file already names the folder, says so instead.
+/// into the startup file the tabs' login shell reads (`ShellPathFix`) - a
+/// bare `export` line, pasted into Terminal, would change only that window.
+/// When the file already names the folder, says so instead.
 private struct DoctorNotOnPathPopover: View {
     let path: String
     let onCheckAgain: () async -> Void

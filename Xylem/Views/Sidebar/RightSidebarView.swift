@@ -46,8 +46,8 @@ struct RightSidebarView: View {
     /// stop git work.
     var isPresented: Bool = true
     var actions = RightSidebarActions()
-    /// Claude or Git, picked on the panel rail (`PanelRail`) - the panel
-    /// has no switcher of its own any more (2026-11-16).
+    /// Claude or Git, picked on the panel rail (`PanelRail`); the panel
+    /// has no switcher of its own.
     var tab: SidebarTab = .claude
 
     var body: some View {
@@ -59,7 +59,7 @@ struct RightSidebarView: View {
                 GitPanel(gitStatus: gitStatus, isPresented: isPresented, actions: actions)
             }
         }
-        // The Claude/Git switcher used to sit here; keep its breathing room.
+        // Breathing room above the first row.
         .padding(.top, 6)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
@@ -69,7 +69,7 @@ struct RightSidebarView: View {
             VStack(alignment: .leading, spacing: 0) {
                 SidebarScopeBanner(environment: environment, onScopeChanged: actions.scopeChanged)
                 // Directories first and the only section open by default;
-                // everything else starts collapsed (design choice).
+                // everything else starts collapsed.
                 DirectoriesSection(sessionList: sessionList, onSelectProject: actions.selectProject)
                 SessionsSection(sessionList: sessionList, environment: environment, onSelect: actions.selectSession)
                 AgentTeamsSection(store: agentTeams)
@@ -107,8 +107,7 @@ private struct SidebarScopeBanner: View {
 
     var body: some View {
         // With a project open, its name is already the window title: the
-        // switch gets the full width (a label next to it was truncated to
-        // "Proj…r-api"). Without one everything is global.
+        // switch gets the full width (a label next to it would be truncated). Without one everything is global.
         Group {
             if environment.currentDirectory != nil {
                 PanelSegmentedControl(

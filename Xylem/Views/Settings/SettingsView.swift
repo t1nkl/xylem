@@ -16,8 +16,7 @@ struct SettingsView: View {
     let updater: AppUpdater
 
     var body: some View {
-        // One topic per tab (2026-11-16: General had grown to four crowded
-        // sections).
+        // One topic per tab.
         TabView {
             GeneralSettingsView()
                 .tabItem { Label("General", systemImage: "gearshape") }
@@ -34,8 +33,8 @@ struct SettingsView: View {
         }
         .frame(width: 560, height: 480)
         .tint(AppTheme.Colors.accent)
-        // Design choice: the window opens centred on the screen (it used to
-        // keep the system's spot and run low once it grew taller).
+        // The window opens centred on the screen (the system's spot runs
+        // low for a tall window).
         .background(CenterWindowOnOpen())
     }
 }

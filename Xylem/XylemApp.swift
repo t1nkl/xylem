@@ -13,7 +13,7 @@ import SwiftUI
 @main
 struct XylemApp: App {
     /// The composition root, built once for the app's lifetime. (As `@State`
-    /// in ContentView it was rebuilt on every ContentView init.)
+    /// in ContentView it would be rebuilt on every ContentView init.)
     @State private var app: AppModel
     /// Sparkle (Release builds only).
     @State private var updater: AppUpdater
@@ -62,12 +62,12 @@ struct XylemApp: App {
         }
         .windowResizability(.contentMinSize)
         .defaultSize(width: 1400, height: 860)
-        // Compact density everywhere but the tab list (design choice).
+        // Compact density everywhere but the tab list.
         .windowToolbarStyle(.unifiedCompact)
         .commands {
             // Our own items, not SidebarCommands / InspectorCommands: the
-            // system sidebar item always read "Show Sidebar", and the
-            // inspector one went dead with the custom right panel.
+            // system sidebar item always reads "Show Sidebar", and the
+            // inspector one does nothing with the custom right panel.
             CommandGroup(replacing: .sidebar) {
                 TabListMenuItem()
                 RightPanelMenuItem()

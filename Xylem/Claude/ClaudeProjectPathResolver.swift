@@ -86,8 +86,8 @@ nonisolated enum ClaudeProjectPathResolver {
     /// of the name (followed by `-`, the encoded `/`, or the end) is the
     /// next component. Used when the folder has no transcript to read a
     /// `cwd` from - Claude Code leaves such empty project folders behind,
-    /// and the dash-for-slash guess turned `~/Code/acme/billing-api`
-    /// into `.../billing/api` (seen on a real machine).
+    /// and the dash-for-slash guess turns `~/Code/acme/billing-api`
+    /// into `.../billing/api`.
     ///
     /// Any folder names work: the rule is Claude Code's own encoding, so
     /// dashes, dots, underscores, spaces and non-Latin letters all match.
@@ -163,9 +163,8 @@ nonisolated enum ClaudeProjectPathResolver {
     }
 
     /// Last resort when no session file exists and the folder isn't on
-    /// disk any more: replace all dashes with slashes. Known to be wrong for any directory name that contained a
-    /// dash, dot, underscore, space or non-ASCII letter (all of which were
-    /// encoded as `-`), but it's the best we can do without extra data.
+    /// disk: replace all dashes with slashes. Wrong for any directory name that contains a
+    /// dash, dot, underscore, space or non-ASCII letter (all encoded as `-`), but it's the best we can do without extra data.
     static func naiveDecode(_ folderName: String) -> String {
         guard folderName.hasPrefix("-") else { return folderName }
         return "/" + folderName.dropFirst().replacingOccurrences(of: "-", with: "/")

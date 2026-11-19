@@ -28,8 +28,8 @@ struct NewTabPickerView: View {
     /// window's); nil until measured.
     @State private var gridWidth: CGFloat?
 
-    // Card size (design choice, 2026-11-17): 180-260 pt cards came seven
-    // to a row on a full screen, too small, with their paths cut.
+    // Card size: smaller cards come seven to a row on a full screen, with
+    // their paths cut.
     private static let cardMinWidth: CGFloat = 220
     private static let cardMaxWidth: CGFloat = 320
     private static let gridSpacing: CGFloat = 12
@@ -92,8 +92,7 @@ struct NewTabPickerView: View {
                     .foregroundStyle(AppTheme.Colors.accent)
             }
 
-            // No app name here (design choice, 2026-11-15): the window
-            // already says Xylem; the screen is about picking a folder.
+            // No app name here: the window already says Xylem; the screen is about picking a folder.
             Text("Pick a project folder to spin up Claude Code.")
                 .font(.system(size: 12))
                 .foregroundStyle(AppTheme.Colors.textSecondary)
@@ -215,10 +214,9 @@ struct NewTabPickerView: View {
             cells: recentCells
         )
         // No minimum on the items: `columnCount` already keeps cards at
-        // least `cardMinWidth` wide. A minimum here made the grid as wide as
-        // its current columns, so it never got narrower when the right panel
-        // opened or the window shrank (the cards went under the panel) and
-        // the measured width kept the old column count.
+        // least `cardMinWidth` wide. A minimum here would make the grid as
+        // wide as its current columns, so it would never get narrower when
+        // the right panel opens or the window shrinks.
         let columns = Array(
             repeating: GridItem(.flexible(minimum: 0, maximum: Self.cardMaxWidth), spacing: Self.gridSpacing),
             count: columnCount
@@ -279,8 +277,8 @@ private struct RecentCard: View {
         let accent = Self.accentPalette[NewTabPickerView.accentIndex(for: project.displayName, count: Self.accentPalette.count)]
         return Button(action: onSelect) {
             // Icon, name and date on one row, then the path, then the
-            // sessions pill (design choice, 2026-11-17): a row of its own
-            // for the icon and date took a third of the card's height.
+            // sessions pill: a row of its own for the icon and date would
+            // take a third of the card's height.
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 8) {
                     RoundedRectangle(cornerRadius: 5)
@@ -366,8 +364,7 @@ private struct RecentCard: View {
     }
 }
 
-/// Recent Projects paging (2026-11-15): a page is the whole
-/// rows of cards that fit on screen (at least two). When more projects
+/// Recent Projects paging: a page is the whole rows of cards that fit on screen (at least two). When more projects
 /// remain, the page's last cell is the "Show more" tile, so the grid ends
 /// on a full row and its last card is never alone (e.g. 5 x 5 = 24 cards +
 /// the tile). Each "Show more" adds a page.

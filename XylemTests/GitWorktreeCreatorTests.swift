@@ -68,7 +68,7 @@ struct GitWorktreeCreatorTests {
 
     /// A post-checkout hook that prints far more than a pipe buffer (an
     /// `npm install`): git sends it to stderr, and reading stdout first
-    /// used to deadlock - the sheet spun forever.
+    /// would deadlock - the sheet would spin forever.
     @Test func aChattyHookDoesNotDeadlock() async throws {
         let repo = try makeRepo()
         defer { try? FileManager.default.removeItem(at: repo.deletingLastPathComponent()) }

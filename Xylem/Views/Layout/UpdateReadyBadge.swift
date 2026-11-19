@@ -3,9 +3,9 @@
 //  Xylem
 //
 //  "New update available" in the window toolbar while a downloaded update
-//  waits to install on quit (variant A of three mock-ups; placed before
-//  the context and model capsule). One macOS
-//  notification was easy to miss, and Xylem stays open for days. A click
+//  waits to install on quit, placed before the context and model capsule.
+//  A single macOS notification is easy to miss, and Xylem stays open for
+//  days. A click
 //  opens Sparkle's window: Install and Relaunch / Install on Quit.
 //
 
@@ -22,8 +22,8 @@ struct UpdateReadyBadge: View {
     var body: some View {
         Button(action: onShow) {
             HStack(spacing: 6) {
-                // No pulse: on the toolbar glass even a periodic one kept
-                // Core Animation busy at 15-30% CPU (measured, so it was dropped).
+                // No pulse: on the toolbar glass even a periodic one keeps
+                // Core Animation busy at 15-30% CPU.
                 Image(systemName: "arrow.down.circle")
                 Text("New update available")
                     .lineLimit(1)

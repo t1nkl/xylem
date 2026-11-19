@@ -2,8 +2,7 @@
 //  TerminalStartingOverlay.swift
 //  Xylem
 //
-//  The loader over a terminal that is still starting (variant A of three
-//  mock-ups): a small spinner and "Starting Claude Code…" on the
+//  The loader over a terminal that is still starting: a small spinner and "Starting Claude Code…" on the
 //  terminal background, until claude draws its first screen
 //  (`TerminalSession.isStarting`). It goes at once, no fade, and covers the
 //  user's shell start-up output on the way.

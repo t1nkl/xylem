@@ -13,7 +13,7 @@
 //
 //  Overrides are read from disk once and kept in memory (XylemApp asks for
 //  nine shortcuts at launch and the cheatsheet resolves all of them on
-//  open - each used to be a separate read + decode). `set` / `reset`
+//  open). `set` / `reset`
 //  re-read the file before writing so hand edits to keybindings.json are
 //  never clobbered by a stale in-memory copy; `reload()` drops the cache.
 //

@@ -6,8 +6,7 @@
 //  highlight.js 11.9 (BSD-3, `highlight.min.js` next to this file, 51
 //  languages) run in JavaScriptCore.
 //
-//  Not the HighlightSwift package (considered and measured first,
-//  2026-11-16): it turns highlight.js' HTML into text through the HTML
+//  Not the HighlightSwift package: it turns highlight.js' HTML into text through the HTML
 //  importer, which trimmed leading/trailing lines and the first line's
 //  indent (8 lines in, 4 out - our line numbers would be wrong) and took
 //  1.1 s for 6000 lines. Here highlight.js' `<span class="hljs-…">` output
@@ -17,8 +16,7 @@
 //  `FilePreview.Loader.maxBytes`, 1 MB - a 10 000-line class is ~0.5 s,
 //  measured worst cases 911 KB JSON 1.5 s, 301 KB minified JS 0.5 s). It
 //  runs off main and never blocks: the plain text shows at once and the
-//  colours replace it when ready (a 200 KB / 2000-char cut-off was
-//  too strict). Lines over `maxLineLength` are cut after highlighting, as
+//  colours replace it when ready. Lines over `maxLineLength` are cut after highlighting, as
 //  the plain preview cuts them. The language comes from the file name; no
 //  auto-detection (slow, and it called TypeScript JavaScript).
 //

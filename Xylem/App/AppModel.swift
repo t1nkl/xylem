@@ -3,7 +3,7 @@
 //  Xylem
 //
 //  Composition root. Builds every view model exactly once (in XylemApp) and
-//  owns the work that used to live in ContentView:
+//  owns the work that stays out of ContentView:
 //
 //    · the polling loop (tab activity every 2 s, active-session stats every
 //      4 s, status.claude.com every 60 s), skipped while no Xylem window is
@@ -13,10 +13,10 @@
 //    · reacting to the active tab / directory changing;
 //    · actions on the active session (screenshot, attachments, model).
 //
-//  View models used to be `@State` initial values inside ContentView, and
-//  SwiftUI evaluates those expressions on every ContentView init - each
-//  extra TabsViewModel restored the saved tabs and spawned shells that were
-//  then thrown away. Building them here, once, removes that.
+//  View models are not `@State` initial values inside ContentView: SwiftUI
+//  evaluates those expressions on every ContentView init, and each extra
+//  TabsViewModel would restore the saved tabs and spawn shells that are
+//  then thrown away.
 //
 
 import AppKit
@@ -245,7 +245,7 @@ final class AppModel {
     }
 
     /// Window screenshot to the clipboard. `screencapture` runs off the main
-    /// actor (it used to block the UI in `waitUntilExit`).
+    /// actor, so `waitUntilExit` doesn't block the UI.
     func captureScreenshot() {
         Task { await Self.runScreencapture() }
     }

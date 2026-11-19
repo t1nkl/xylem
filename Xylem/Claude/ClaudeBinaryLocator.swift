@@ -11,7 +11,6 @@
 //  and what tells apart a claude the tab can't reach: Anthropic's installer
 //  puts it in `~/.local/bin`, which isn't always on PATH - the folder alone
 //  would say "found" for a tab that fails with "command not found".
-//  Before, the Doctor checked three fixed folders and ignored the setting.
 //
 //  The usual install folders still matter: when the name isn't on PATH but
 //  sits in one of them, the Doctor says where (and how to fix PATH); when

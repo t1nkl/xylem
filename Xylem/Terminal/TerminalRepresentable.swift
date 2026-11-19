@@ -40,8 +40,8 @@ final class TerminalContainerView: NSView {
     /// The first time this terminal is shown (app launch with this tab
     /// active, or a project just opened into it) it takes the keyboard
     /// unconditionally. Otherwise AppKit's initial first responder - the
-    /// tab sidebar's "Search tabs…" field - kept it, and the first thing
-    /// typed after launch went into the search box instead of Claude.
+    /// tab sidebar's "Search tabs…" field - keeps it, and the first thing
+    /// typed after launch goes into the search box instead of Claude.
     private var hasHadInitialFocus = false
 
     init(terminal: NSView) {
@@ -70,9 +70,8 @@ final class TerminalContainerView: NSView {
         needsLayout = true
         // Another terminal in this container (a restarted tab's new
         // session): forget the old state so the next `setActive` hides it
-        // in a background tab, or focuses it in the active one. Before, a
-        // restarted background terminal stayed unhidden and drew every
-        // frame.
+        // in a background tab (else it stays unhidden and draws every
+        // frame), or focuses it in the active one.
         if replaced { isActive = nil }
     }
 

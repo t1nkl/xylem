@@ -122,7 +122,7 @@ struct McpSection: View {
             title: "MCP",
             count: servers.count,
             // Only with claude running in the active tab: on a picker tab
-            // the command had nowhere to go and was silently dropped.
+            // the command has nowhere to go.
             trailingAction: hasActiveSession
                 ? .plus(tooltip: "Add MCP server via `/mcp` in the active tab", action: { onRunInActiveTab("/mcp") })
                 : nil
@@ -158,7 +158,7 @@ struct PluginsSection: View {
             title: "Plugins",
             count: plugins.count,
             // Only with claude running in the active tab: on a picker tab
-            // the command had nowhere to go and was silently dropped.
+            // the command has nowhere to go.
             trailingAction: hasActiveSession
                 ? .plus(tooltip: "Install plugin via `/plugin` in the active tab", action: { onRunInActiveTab("/plugin") })
                 : nil

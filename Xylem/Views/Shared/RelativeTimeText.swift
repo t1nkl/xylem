@@ -2,15 +2,13 @@
 //  RelativeTimeText.swift
 //  Xylem
 //
-//  "Updated 3m ago"-style label that ticks on its own. The Usage Dashboard
-//  and the Skills Directory used to keep a 30 s `now` @State at the sheet
-//  root, so every tick re-ran the whole sheet body (charts, long lists,
-//  filtering). A `TimelineView` scoped to this leaf re-renders only the
-//  text.
+//  "Updated 3m ago"-style label that ticks on its own. A `TimelineView`
+//  scoped to this leaf re-renders only the text, not the whole sheet body
+//  (charts, long lists, filtering) as a `now` @State at the sheet root
+//  would.
 //
 //  Also used for the "5m ago" column of the sidebar Sessions list and the
-//  new-tab picker's recent projects: those used to refresh only as a side
-//  effect of the whole window re-rendering on every stats tick.
+//  new-tab picker's recent projects.
 //
 
 import SwiftUI
@@ -30,8 +28,8 @@ struct RelativeTimeText: View {
     }
 
     /// "just now", "5m ago", "3h ago", "4d ago" for the last week, then the
-    /// day: "Oct 28" this year, "Oct 28, 2025" before (the
-    /// old "dd/MM/yy" read like a year and jumped in after "29d ago").
+    /// day: "Oct 28" this year, "Oct 28, 2025" before (not "dd/MM/yy",
+    /// which reads like a year).
     static func relative(from date: Date, now: Date) -> String {
         let seconds = max(0, now.timeIntervalSince(date))
         if seconds < 45 { return "just now" }

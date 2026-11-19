@@ -60,9 +60,8 @@ struct GitHeadLocatorTests {
 
     // MARK: - Walking up stops at the root
 
-    /// On macOS 15 `URL.deletingLastPathComponent()` of `/` gave `/..`
-    /// forever (100% CPU, gigabytes of memory for a home-folder tab). The
-    /// walk now uses path strings with an explicit root.
+    /// On macOS 15 `URL.deletingLastPathComponent()` of `/` gives `/..`
+    /// forever, so the walk uses path strings with an explicit root.
     @Test func parentStopsAtTheRoot() {
         #expect(GitHeadLocator.parent(of: "/") == nil)
         #expect(GitHeadLocator.parent(of: "") == nil)

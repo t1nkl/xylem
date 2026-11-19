@@ -3,9 +3,7 @@
 //  Xylem
 //
 //  Observable tab. One tab = one terminal pane (picker until the user
-//  picks a folder, then a live shell session). Pane-tree splits used to
-//  live here but were removed - the use case was thin (tmux audience
-//  already had tmux) and they kept producing edge cases on restore.
+//  picks a folder, then a live shell session). No splits.
 //
 
 import Foundation
@@ -138,14 +136,13 @@ final class TerminalTab: Identifiable {
 
     /// A closed tab lets go of its session (terminal, buffers). SwiftUI keeps
     /// closed rows of the tab list cached and they hold the tab, so without
-    /// this every closed tab kept its whole terminal in memory (measured:
-    /// 8 opened, 7 closed, all 8 sessions alive).
+    /// this every closed tab would keep its whole terminal in memory.
     func releaseSession() {
         if case .session = state { state = .picker }
     }
 
     /// Replaces the picker with a live session - used by TabsViewModel when
-    /// resuming a session or attaching to a freshly-picked folder. Today the
+    /// resuming a session or attaching to a freshly-picked folder. The
     /// previous state is always a picker; if it ever is a session, that
     /// shell is closed here so a replaced state can't leak a zsh.
     func attach(session: TerminalSession, title: String) {

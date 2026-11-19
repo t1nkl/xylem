@@ -147,7 +147,7 @@ nonisolated struct ClaudeEnvironmentLoader {
             additionalMcpBindings: mcpReader.mcpBindings(projectDirectory: projectDirectory)
         )
         // installed_plugins.json is read once and handed to the skill and
-        // agent registries (they used to re-read it each).
+        // agent registries.
         let enabled = pluginsReader.loadInstalledPlugins()
             .filter { effective.enabledPluginIDs.contains($0.id) }
 

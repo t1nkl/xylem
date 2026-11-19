@@ -3,8 +3,8 @@
 //  XylemTests
 //
 //  A project folder with no transcript has only its encoded name. The
-//  dash-for-slash guess showed `~/Code/acme/billing-api` as
-//  `.../billing/api` (seen on a real machine); the path is now found by walking
+//  dash-for-slash guess shows `~/Code/acme/billing-api` as
+//  `.../billing/api`; the path is found by walking
 //  the disk with Claude Code's own encoding, so any folder names work.
 //
 

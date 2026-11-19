@@ -19,7 +19,7 @@
 //  The same goes for mouse reporting: Claude Code turns on any-motion
 //  tracking (DECSET 1003, SGR 1006), so merely moving the pointer across a
 //  tab's terminal sends a stream of reports. Motion and wheel reports are
-//  not input (seen live: hovering cleared "needs permission" and kept
+//  not input (else hovering would clear "needs permission" and keep
 //  Doctor's hook check waiting); button presses still are - a click can
 //  pick an option in Claude's dialogs.
 //

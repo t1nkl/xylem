@@ -4,8 +4,8 @@
 //
 //  Read-only code for the drawer: the Files preview and the Changes diff.
 //  A native NSTextView, so text selects like in an editor - drag across
-//  lines, double-click a word, ⌘A, ⌘C (2026-11-16; the SwiftUI rows
-//  it replaces could only select inside one line). Line numbers, the
+//  lines, double-click a word, ⌘A, ⌘C (SwiftUI text rows select only
+//  inside one line). Line numbers, the
 //  diff's +/- and the green / red line backgrounds are drawn beside the
 //  text, not in it, so they are never selected or copied. Hunk headers
 //  and notes are shown but left out of a copy: a copy is just the code.

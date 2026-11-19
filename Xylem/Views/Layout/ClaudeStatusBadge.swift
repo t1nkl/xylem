@@ -72,8 +72,7 @@ private struct ClaudeStatusDetails: View {
                         .frame(width: 7, height: 7)
                         .padding(.top, 5)
                     VStack(alignment: .leading, spacing: 2) {
-                        // Own sizes: the right panel's tokens grew by 1 pt
-                        // (design choice), the popover stays as it was.
+                        // Own sizes, independent of the right panel's tokens.
                         Text(incident.name)
                             .font(.system(size: 13))
                             .foregroundStyle(AppTheme.Colors.textPrimary)

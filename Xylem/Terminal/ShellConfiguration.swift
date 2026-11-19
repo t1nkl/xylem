@@ -140,15 +140,15 @@ struct ShellConfiguration {
 
     /// Keeps `~/.xylem/zdotdir/.zshenv` in sync with the template below.
     /// It is the only file zsh reads from our dir: it restores the user's
-    /// ZDOTDIR first, so the user's `.zshenv` (it used to be skipped - zsh
-    /// looks for it in ZDOTDIR), `.zprofile`, `.zshrc` and `.zlogin` load as
+    /// ZDOTDIR first, so the user's `.zshenv` (zsh looks for it in ZDOTDIR),
+    /// `.zprofile`, `.zshrc` and `.zlogin` load as
     /// in any terminal. In interactive shells it then adds a precmd hook that
     /// emits OSC 7 with the cwd - what SwiftTerm's
     /// `hostCurrentDirectoryUpdate` delegate turns into the tab title.
     ///
     /// Runs on main for every new session, so it only writes when the
-    /// content differs; the `.zshrc` / `.zprofile` of older versions are
-    /// removed (nothing reads them any more).
+    /// content differs; stale `.zshrc` / `.zprofile` files there are
+    /// removed (nothing reads them).
     static func ensureZDotDir(home: String) -> String {
         let dir = home + "/.xylem/zdotdir"
         let fm = FileManager.default

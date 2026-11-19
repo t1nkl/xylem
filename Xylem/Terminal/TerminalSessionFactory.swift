@@ -2,17 +2,16 @@
 //  TerminalSessionFactory.swift
 //  Xylem
 //
-//  Builds the ShellConfiguration + TerminalSession for a tab. TabsViewModel
-//  used to assemble the `initialCommand` inline in five places (configure,
-//  open project, resume, restore, seed), each re-reading AppSettings; one
-//  copy drifting from the others would mean, e.g., restored tabs ignoring
-//  the "auto-start Claude" switch. This type owns that decision and nothing
-//  else - it doesn't know about tabs, selection or persistence.
+//  Builds the ShellConfiguration + TerminalSession for a tab, for every
+//  path (configure, open project, resume, restore, seed), so none of them
+//  can drift from the others (e.g. restored tabs ignoring the "auto-start
+//  Claude" switch). This type owns that decision and nothing else - it
+//  doesn't know about tabs, selection or persistence.
 //
 //  Every claude it starts is bound to its tab:
 //  · a fresh start gets `--session-id <new uuid>`, so the tab knows which
 //    transcript is its own from the first second (two tabs in one folder
-//    used to share the newest jsonl);
+//    don't share the newest jsonl);
 //  · `--settings <hooks>` reports the session's events back to the tab
 //    (ClaudeHookBridge), which follows `/clear` and `/resume` to new ids;
 //  · the shell exports `XYLEM_TAB_ID`, the key the hook writes under.
@@ -142,7 +141,7 @@ struct TerminalSessionFactory {
 
     /// A tab coming back after a relaunch continues its own session when
     /// its transcript exists (and the "continue" setting is on), so quitting
-    /// Xylem no longer throws the conversation away. `startsImmediately:
+    /// Xylem doesn't throw the conversation away. `startsImmediately:
     /// false` leaves the shell for `TerminalSession.start()` - the tab
     /// starts when the user first opens it.
     func makeRestoredSession(

@@ -145,7 +145,7 @@ struct ProjectSessionListingTests {
         #expect(reader.loadSessions(limit: 50).count == 3)
     }
 
-    /// Throwaway `claude -p` runs in temp folders (seen: hundreds of
+    /// Throwaway `claude -p` runs in temp folders (possibly hundreds of
     /// `/private/var/folders/.../cwd/<random>`) stay out of Directories,
     /// Recent Projects and the global Sessions list.
     @Test func temporaryFolderRunsAreHiddenFromProjectsAndSessions() throws {

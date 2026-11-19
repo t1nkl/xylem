@@ -6,8 +6,8 @@
 //    · `~/.claude.json` → top-level `mcpServers`            (user scope)
 //    · `~/.claude.json` → `projects[<dir>].mcpServers`      (local scope)
 //    · `<dir>/.mcp.json` → `mcpServers`                     (project scope)
-//  Reading only settings.json (as the sidebar used to) missed most of
-//  them. This reader returns all three as scope-labelled bindings.
+//  Reading only settings.json misses most of them. This reader returns
+//  all three as scope-labelled bindings.
 //
 //  `~/.claude.json` is rewritten by Claude Code on every session, so it is
 //  read on demand (environment reload), never watched.

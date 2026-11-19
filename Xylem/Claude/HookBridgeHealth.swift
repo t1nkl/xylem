@@ -7,7 +7,7 @@
 //  binding all stand on them, and when they stop - `disableAllHooks` in
 //  someone's settings, a managed policy that allows only its own hooks,
 //  `~/.xylem` not writable, a Claude Code release that changes hooks -
-//  everything quietly falls back to the old transcript-mtime guess. Doctor
+//  everything quietly falls back to the transcript-mtime guess. Doctor
 //  shows this so the fallback is never silent.
 //
 //  The test is behavioural, not a config parse: every claude a tab starts

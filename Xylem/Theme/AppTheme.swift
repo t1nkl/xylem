@@ -5,7 +5,7 @@
 //  Centralised colours, fonts, and metrics. The app ships dark-only - the
 //  terminal (SwiftTerm) is always dark regardless of system appearance, and
 //  macOS Tahoe's Liquid Glass re-tints sidebar/top-bar materials anyway, so
-//  a light palette was half-working and not worth maintaining.
+//  a light palette would be half-working.
 //
 
 import SwiftUI
@@ -13,9 +13,7 @@ import SwiftUI
 enum AppTheme {
     static var Colors: Palette { ColorsHolder.current }
     enum Fonts {
-        // Compact density (design choice): everything but the tab list.
-        // Right-panel type is 1 pt above the first Compact pass (a bit
-        // bigger reads better, 2026-11-13).
+        // Compact density: everything but the tab list.
         static let sectionHeader = Font.system(size: 13, weight: .semibold, design: .default)
         static let sectionItem = Font.system(size: 13, weight: .regular, design: .default)
         static let sectionMeta = Font.system(size: 12, weight: .regular, design: .default)
@@ -79,8 +77,7 @@ struct Palette {
     // Text
     let textPrimary: Color
     /// Rows and headers of the right panel (Claude / Git): a step below
-    /// `textPrimary` so the panel doesn't outshine the terminal
-    /// (2026-11-16). Same grey as the terminal's text.
+    /// `textPrimary` so the panel doesn't outshine the terminal. Same grey as the terminal's text.
     let panelText: Color
     let textSecondary: Color
     let textMuted: Color
@@ -132,8 +129,7 @@ extension Palette {
         panelText: Color(hex: 0xCCCCCC),
         textSecondary: Color(hex: 0xA0A0A0),
         textMuted: Color(hex: 0x6B6B6B),
-        // Design choice: every green is the darker brand green (was #49DE80)
-        // except status dots, which keep `statusGreen`.
+        // Every green is the darker brand green except status dots, which keep `statusGreen`.
         accent: Color(hex: 0x16A34A),
         accentStrong: Color(hex: 0x22C55E),
         segmentTint: Color(hex: 0x108E3F),

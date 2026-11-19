@@ -9,8 +9,8 @@
 //  from Claude Code 2.1.325: `globalConfig = join(CLAUDE_CONFIG_DIR ||
 //  homedir(), ".claude.json")`, `userSettings = join(CLAUDE_CONFIG_DIR ||
 //  ~/.claude, "settings.json")`). People set it to keep separate accounts;
-//  before, Xylem always read `~/.claude` - empty panels and usage for them,
-//  and a relaunch couldn't find a tab's transcript to resume it.
+//  reading `~/.claude` regardless would leave their panels and usage empty
+//  and a relaunch unable to find a tab's transcript to resume it.
 //
 //  The value that matters is the one the tabs' claude sees, i.e. the login
 //  shell's (LoginShellEnvironment). It is saved, so launches start with the

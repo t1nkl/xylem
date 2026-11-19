@@ -8,8 +8,8 @@
 //  numbers are.
 //
 //  The "last updated" text ticks inside its own TimelineView leaf
-//  (RelativeTimeText) - a clock at the sheet root used to rebuild the chart
-//  and every table row every 30 s.
+//  (RelativeTimeText), so a tick doesn't rebuild the chart and every
+//  table row.
 //
 
 import SwiftUI

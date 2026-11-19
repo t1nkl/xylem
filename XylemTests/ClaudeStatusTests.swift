@@ -3,8 +3,8 @@
 //  XylemTests
 //
 //  status.claude.com parsing and the badge's lifecycle. The fixture mirrors
-//  the real summary.json shape from the 2026-11-13 incident ("Elevated
-//  errors on claude.ai, the Claude API, and Claude Code").
+//  the real summary.json shape of an incident ("Elevated errors on
+//  claude.ai, the Claude API, and Claude Code").
 //
 
 import Testing

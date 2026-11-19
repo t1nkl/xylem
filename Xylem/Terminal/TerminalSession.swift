@@ -6,8 +6,8 @@
 //  which is reused across tab switches so state (scrollback, running
 //  processes) persists. All input/output actions go through this type -
 //  views never poke the NSView directly. `close()` is the one teardown
-//  path: removing a tab must kill its shell explicitly, ARC alone never
-//  guaranteed the pty child went away.
+//  path: removing a tab must kill its shell explicitly, ARC alone doesn't
+//  guarantee the pty child goes away.
 //
 
 import Foundation
@@ -333,7 +333,7 @@ final class TerminalSession: Identifiable {
     /// on `kill -HUP` and HUPs its foreground job - claude - on the way
     /// out). That is also what a real terminal does when a window closes.
     /// SIGKILL escalation exists only in `LocalProcess.deinit`, which is
-    /// why relying on ARC was not enough. `terminate()` still runs so
+    /// why relying on ARC is not enough. `terminate()` still runs so
     /// SwiftTerm's own state machine moves to `.terminating`.
     func close() {
         guard !isClosed else { return }
@@ -361,14 +361,13 @@ final class TerminalSession: Identifiable {
         Self.shutDownUI(of: terminalView, attemptsLeft: 10)
         // A full reset (RIS) replaces the buffers, scrollback included (up
         // to 10 000 lines). Something may still hold this closed session for
-        // a while - SwiftUI keeps closed tab rows cached (measured: every
-        // closed tab stayed in memory) - and then it holds an empty
+        // a while - SwiftUI keeps closed tab rows cached - and then it holds an empty
         // terminal, not the whole conversation.
         terminalView.feed(text: "\u{1b}c")
     }
 
-    /// A closed tab's programs end even when they ignore SIGHUP and SIGTERM
-    /// (a test program that did kept running after its tab closed). Each
+    /// A closed tab's programs end even when they ignore SIGHUP and SIGTERM.
+    /// Each
     /// group gets SIGHUP, as a closed terminal sends, and whatever is still
     /// alive after a grace period gets SIGKILL (5 s: claude's SessionEnd
     /// hook and its last transcript write run after the SIGHUP). Never our
@@ -414,7 +413,7 @@ final class TerminalSession: Identifiable {
         // When an `initialCommand` is present, we run it from inside the
         // login shell (so it sees the user's `.zshrc` env) and then re-exec
         // the shell so the session stays alive after the command returns.
-        // This avoids the old race between zshrc and a post-hoc send.
+        // This avoids a race between zshrc and a post-hoc send.
         let shell = configuration.executablePath
         let argv0 = Self.shellQuote(configuration.execName)
         let cdSegment = configuration.workingDirectory.map {

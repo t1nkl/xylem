@@ -3,9 +3,8 @@
 //  XylemTests
 //
 //  The New Tab screen gets narrower when the right panel opens or the
-//  window shrinks. The Recent Projects grid used to keep the width of its
-//  current columns (each with a minimum card width), so it stayed wide and the
-//  cards went under the panel.
+//  window shrinks. The Recent Projects grid must follow, not keep the width
+//  of its current columns and leave cards under the panel.
 //
 
 import Testing
