@@ -58,14 +58,14 @@ nonisolated enum EffortPicker {
     static let cancel = "\u{1B}"
 
     static func isOpen(onScreen screen: String) -> Bool {
-        let text = normalized(screen)
+        let text = ScreenText.flattened(screen)
         return text.contains("stousethissessiononly") && text.contains("esctocancel")
     }
 
     /// The levels of the "this session only" confirmations on screen, top
     /// to bottom.
     static func confirmations(onScreen screen: String) -> [String] {
-        normalized(screen).matches(of: /seteffortlevelto([a-z]+)\(thissessiononly\)/).map { String($0.1) }
+        ScreenText.flattened(screen).matches(of: /seteffortlevelto([a-z]+)\(thissessiononly\)/).map { String($0.1) }
     }
 
     /// The slider's stops, left to right, from its label row ("low medium
@@ -73,13 +73,8 @@ nonisolated enum EffortPicker {
     /// whitespace gone, so a row split or padded by the terminal still
     /// matches. Nil when no such row is on screen.
     static func stops(onScreen screen: String) -> [String]? {
-        guard let row = normalized(screen).firstMatch(of: /lowmedium(high)?(xhigh)?(max)?/) else { return nil }
+        let row = ScreenText.flattened(screen).firstMatch(of: /lowmedium(high)?(xhigh)?(max)?/)
+        guard let row else { return nil }
         return ["low", "medium"] + [row.1, row.2, row.3].compactMap { $0.map(String.init) }
-    }
-
-    private static func normalized(_ screen: String) -> String {
-        String(screen.lowercased().unicodeScalars
-            .filter { !CharacterSet.whitespacesAndNewlines.contains($0) }
-            .map(Character.init))
     }
 }

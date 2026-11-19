@@ -109,4 +109,10 @@ struct EffortChoiceTests {
         #expect(EffortPicker.confirmations(onScreen: screen) == ["low", "max"])
         #expect(EffortPicker.confirmations(onScreen: "nothing here").isEmpty)
     }
+
+    @Test func stashedDraftIsSeenOnScreen() {
+        #expect(ClaudePromptDraft.isStashed(onScreen: "  ◐ medium · /effort · draft stashed\n"))
+        #expect(ClaudePromptDraft.isStashed(onScreen: "· draft\nstashed"))
+        #expect(!ClaudePromptDraft.isStashed(onScreen: "❯ my draft\n  draft restored"))
+    }
 }

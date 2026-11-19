@@ -283,6 +283,19 @@ final class TerminalSession: Identifiable {
         return snapshot.rows.map(\.text).joined(separator: "\n")
     }
 
+    /// Polls the screen every 50 ms; the screen text once `found` holds, nil
+    /// after `timeout` or when the task is cancelled.
+    func waitForScreen(timeout: TimeInterval, _ found: (String) -> Bool) async -> String? {
+        let end = Date().addingTimeInterval(timeout)
+        while !Task.isCancelled {
+            let screen = visibleText()
+            if found(screen) { return screen }
+            guard Date() < end else { return nil }
+            try? await Task.sleep(for: .milliseconds(50))
+        }
+        return nil
+    }
+
     // MARK: - Find in scrollback
 
     // Backed by SwiftTerm's own find bar (`TerminalFindBarView`, a subview

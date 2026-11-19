@@ -235,8 +235,15 @@ final class AppModel {
         selectTab(tabs.openDirectory(path).id)
     }
 
+    /// Types a command into the active session and presses Return, with
+    /// the user's draft in Claude's prompt put away first (it comes back
+    /// after the command).
     func runInActiveSession(_ command: String) {
-        activeSession?.runCommand(command)
+        guard let session = activeSession else { return }
+        Task {
+            await ClaudePromptDraft.stash(in: session)
+            session.runCommand(command)
+        }
     }
 
     /// Types `/goal ` into Claude's prompt WITHOUT Enter: the command needs
@@ -244,9 +251,13 @@ final class AppModel {
     /// to the terminal so typing can continue right away.
     func startGoal() {
         guard let session = activeSession else { return }
-        session.send(text: "/goal ")
         let view = session.terminalView
         view.window?.makeFirstResponder(view)
+        // A draft is put away; Claude brings it back once the goal is sent.
+        Task {
+            await ClaudePromptDraft.stash(in: session)
+            session.send(text: "/goal ")
+        }
     }
 
     func copySelection() {
@@ -298,8 +309,8 @@ final class AppModel {
     /// Runs a skill's install command in the active tab, or copies it when
     /// no session is open.
     func installSkill(_ skill: MarketplaceSkill) {
-        if let session = activeSession {
-            session.runCommand(skill.installCommand)
+        if activeSession != nil {
+            runInActiveSession(skill.installCommand)
         } else {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(skill.installCommand, forType: .string)
