@@ -47,19 +47,31 @@ nonisolated struct ClaudeEffortChoice: Identifiable, Hashable, Sendable {
     }
 }
 
-/// Claude Code's `/effort` picker as it appears on screen (2.1.328):
-/// "←/→ to adjust · s to use this session only · Enter to save · Esc to
-/// cancel", then "Set effort level to high (this session only): …".
-/// Matching ignores whitespace and case: the terminal may wrap or pad it.
+/// Claude Code's `/effort` picker as it appears on screen (2.1.329). Its
+/// hint depends on where the slider is: "←/→ to adjust · s to use this
+/// session only · Enter to save · Esc to cancel" on every stop but the last
+/// (max), "←/→ to adjust · Enter to use this session only · Esc to cancel"
+/// there. Then "Set effort level to high (this session only): …". Matching
+/// ignores whitespace and case: the terminal may wrap or pad it.
 nonisolated enum EffortPicker {
     static let left = "\u{1B}[D"
     static let right = "\u{1B}[C"
-    static let thisSessionOnly = "s"
     static let cancel = "\u{1B}"
+    static let sessionKey = "s"
+    static let enter = "\r"
+
+    /// The key the picker on screen names for "this session only"; nil when
+    /// no picker is open. Never the Enter that saves a default.
+    static func sessionOnlyKey(onScreen screen: String) -> String? {
+        let text = ScreenText.flattened(screen)
+        guard text.contains("esctocancel") else { return nil }
+        if text.contains("entertousethissessiononly") { return enter }
+        if text.contains("stousethissessiononly") { return sessionKey }
+        return nil
+    }
 
     static func isOpen(onScreen screen: String) -> Bool {
-        let text = ScreenText.flattened(screen)
-        return text.contains("stousethissessiononly") && text.contains("esctocancel")
+        sessionOnlyKey(onScreen: screen) != nil
     }
 
     /// The levels of the "this session only" confirmations on screen, top

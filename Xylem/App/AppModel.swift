@@ -252,9 +252,10 @@ final class AppModel {
     func startGoal() {
         guard let session = activeSession else { return }
         // A draft is put away; Claude brings it back once the goal is sent.
-        promptInput.type("/goal ", in: session)
-        let view = session.terminalView
-        view.window?.makeFirstResponder(view)
+        promptInput.type("/goal ", in: session) {
+            let view = session.terminalView
+            view.window?.makeFirstResponder(view)
+        }
     }
 
     func copySelection() {

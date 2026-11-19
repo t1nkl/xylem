@@ -287,10 +287,14 @@ final class TerminalSession: Identifiable {
         send(text: command + "\r")
     }
 
+    /// The live screen's rows, top to bottom, with their cells' attributes.
+    func visibleRows() -> [TerminalContentRowSnapshot] {
+        terminalView.terminalContentSnapshot(region: .history(maximumScrollbackRows: -1))?.rows ?? []
+    }
+
     /// The live screen's rows as text, top to bottom (no attributes).
     func visibleText() -> String {
-        guard let snapshot = terminalView.terminalContentSnapshot(region: .history(maximumScrollbackRows: -1)) else { return "" }
-        return snapshot.rows.map(\.text).joined(separator: "\n")
+        visibleRows().map(\.text).joined(separator: "\n")
     }
 
     /// Polls the screen every 50 ms; the screen text once `found` holds, nil

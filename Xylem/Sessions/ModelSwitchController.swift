@@ -67,9 +67,11 @@ final class ModelSwitchController {
     /// Sets the effort of this session only, through Claude Code's `/effort`
     /// picker: `/effort <level>` typed with an argument also saves the level
     /// as the model's default for new sessions, the picker's "s" does not
-    /// (Claude Code 2.1.328). The picker is a slider over the levels the
+    /// (Claude Code 2.1.329). The picker is a slider over the levels the
     /// model has, read off the screen: left until it stops at the first,
-    /// right to the pick, "s". Keys go out only while the picker is on
+    /// right to the pick, then the key the picker names there for "this
+    /// session only": "s", or Enter on the last stop (max), where Enter means
+    /// that rather than "save" (2.1.329). Keys go out only while the picker is on
     /// screen; a picker already open is closed with Esc first (its Enter
     /// would save a default), and the user's draft is put away
     /// (ClaudePromptDraft). Runs after the tab's earlier commands
@@ -101,7 +103,7 @@ final class ModelSwitchController {
             let closed = await session.waitForScreen(timeout: 2) { !EffortPicker.isOpen(onScreen: $0) }
             guard closed != nil else { return false }
         }
-        ClaudePromptDraft.stash(in: session)
+        await ClaudePromptDraft.stash(in: session)
         session.send(text: "/effort\r")
         guard let open = await session.waitForScreen(timeout: 3, { EffortPicker.isOpen(onScreen: $0) }) else { return false }
         let stops = EffortPicker.stops(onScreen: open) ?? ClaudeEffortChoice.levels.map(\.level)
@@ -111,8 +113,16 @@ final class ModelSwitchController {
         }
         let earlier = EffortPicker.confirmations(onScreen: open).count
         session.send(text: String(repeating: EffortPicker.left, count: stops.count)
-                     + String(repeating: EffortPicker.right, count: index)
-                     + EffortPicker.thisSessionOnly)
+                     + String(repeating: EffortPicker.right, count: index))
+        // The key is read off the screen once the slider is there: Enter
+        // means "this session only" on the last stop only, and "save as the
+        // default" everywhere else, so Enter goes out only for the last stop.
+        let key = index == stops.count - 1 ? EffortPicker.enter : EffortPicker.sessionKey
+        guard await session.waitForScreen(timeout: 1.5, { EffortPicker.sessionOnlyKey(onScreen: $0) == key }) != nil else {
+            session.send(text: EffortPicker.cancel)
+            return false
+        }
+        session.send(text: key)
         // A new confirmation below the earlier ones is this pick's answer.
         if let screen = await session.waitForScreen(timeout: 3, {
                !EffortPicker.isOpen(onScreen: $0) && EffortPicker.confirmations(onScreen: $0).count > earlier
@@ -160,3 +170,4 @@ final class ModelSwitchController {
         return true
     }
 }
+

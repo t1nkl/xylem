@@ -101,10 +101,16 @@ private struct CompatibilityJudge {
         }
         guard EffortPicker.isOpen(onScreen: open) else {
             fail("tui.effortPicker", feature: feature,
-                 "the /effort picker no longer says \"s to use this session only … Esc to cancel\": the menu would only beep")
+                 "the /effort picker no longer offers \"s\" or \"Enter to use this session only\": the menu would only beep")
             return
         }
-        if EffortPicker.stops(onScreen: open) == nil {
+        // The capture is the raw stream, which redraws only the changed
+        // letters ("Enertousethisessiononly"): a loose match.
+        if let atMax = manifest["effortPickerAtMax"].map({ ScreenText.flattened($0 as? String ?? "") }),
+           !(atMax.contains("tousethis") && atMax.contains("essiononly") && !atMax.contains("entertosave")) {
+            fail("tui.effortPicker", feature: feature,
+                 "on the last stop the /effort picker no longer says \"Enter to use this session only\": Max would fail with a beep")
+        } else if EffortPicker.stops(onScreen: open) == nil {
             fail("tui.effortPicker", feature: feature,
                  "the /effort picker's row of levels (\"low medium high …\") wasn't found: the menu can't tell its stops")
         } else if let level = EffortPicker.confirmations(onScreen: done).last, level == "high" {
