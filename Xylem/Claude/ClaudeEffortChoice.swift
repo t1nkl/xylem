@@ -3,9 +3,9 @@
 //  Xylem
 //
 //  The effort levels the toolbar's effort menu offers, and how a pick
-//  reaches Claude Code: its `/effort` picker, set for this session only
-//  (see `ModelSwitchController.switchEffort`; Claude Code 2.1.328 levels:
-//  low, medium, high, xhigh, max).
+//  reaches Claude Code, for this session only (see
+//  `ModelSwitchController.switchEffort`; Claude Code 2.1.329 levels: low,
+//  medium, high, xhigh, max).
 //
 //  What a session runs at is read from its transcript: every assistant line
 //  carries the level its request was sent with (`"effort":"medium"`), and
@@ -57,21 +57,14 @@ nonisolated enum EffortPicker {
     static let left = "\u{1B}[D"
     static let right = "\u{1B}[C"
     static let cancel = "\u{1B}"
+    /// "this session only" on every stop but max.
     static let sessionKey = "s"
-    static let enter = "\r"
 
-    /// The key the picker on screen names for "this session only"; nil when
-    /// no picker is open. Never the Enter that saves a default.
-    static func sessionOnlyKey(onScreen screen: String) -> String? {
-        let text = flattened(screen)
-        guard text.contains("esctocancel") else { return nil }
-        if text.contains("entertousethissessiononly") { return enter }
-        if text.contains("stousethissessiononly") { return sessionKey }
-        return nil
-    }
-
+    /// The picker is on screen: its hint names "this session only" (as "s",
+    /// or as Enter on the max stop) and Esc.
     static func isOpen(onScreen screen: String) -> Bool {
-        sessionOnlyKey(onScreen: screen) != nil
+        let text = flattened(screen)
+        return text.contains("esctocancel") && text.contains("tousethissessiononly")
     }
 
     /// The levels of the "this session only" confirmations on screen, top

@@ -101,7 +101,7 @@ private struct CompatibilityJudge {
         }
         guard EffortPicker.isOpen(onScreen: open) else {
             fail("tui.effortPicker", feature: feature,
-                 "the /effort picker no longer offers \"s\" or \"Enter to use this session only\": the menu would only beep")
+                 "the /effort picker no longer says \"to use this session only … Esc to cancel\": the menu would only beep")
             return
         }
         if let typed = manifest["effortTypedMax"].map({ EffortPicker.flattened($0 as? String ?? "") }),

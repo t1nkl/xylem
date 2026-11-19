@@ -286,7 +286,9 @@ private struct EffortToolbarItem: View {
 
     private static func help(canSwitch: Bool, shown: ClaudeEffortChoice?) -> String {
         guard canSwitch else { return "Open a Claude session to set its effort" }
-        guard shown != nil else { return "Effort: shown after Claude's first reply. Pick a level to set it for this session" }
+        guard shown != nil else {
+            return "Effort: shown after Claude's first reply. Pick a level to set it for this session"
+        }
         return "Set the effort of this Claude session only (/effort)"
     }
 }

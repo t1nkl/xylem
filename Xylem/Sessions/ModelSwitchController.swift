@@ -58,35 +58,30 @@ final class ModelSwitchController {
         picks[session.id] = Pick(choice: choice, at: Date())
     }
 
-    /// Sets the effort of this session only, through Claude Code's `/effort`
-    /// picker: `/effort <level>` typed with an argument also saves the level
-    /// as the model's default for new sessions, the picker's "this session
-    /// only" key does not (Claude Code 2.1.329). The picker is a slider over
-    /// the levels the model has, read off the screen: left until it stops at
-    /// the first, right to the pick, then "s", which is "this session only"
-    /// on every stop but max (EffortPicker); max is typed as `/effort max`,
-    /// session-only by itself. Keys go out only while the picker is on
-    /// screen; a picker already open is closed with Esc first (its Enter
-    /// would save a default). The confirmation Claude Code prints replaces
-    /// the pick.
+    /// Sets the effort of this session only. `/effort <level>` typed with an
+    /// argument also saves the level as the model's default for new
+    /// sessions, except for max, which can't be a saved default (Claude Code
+    /// 2.1.329): max is typed that way. The other levels go through the
+    /// `/effort` picker, a slider over the levels the model has: left until
+    /// it stops at low, right to the pick, then "s", "this session only" on
+    /// every stop but max (where Enter saves a default; Enter is never sent).
+    /// Picks for one session run one after another, and each first closes a
+    /// picker left open with Esc, so no text lands in a picker. The
+    /// confirmation Claude Code prints replaces the pick.
     func switchEffort(of session: TerminalSession, to choice: ClaudeEffortChoice) {
         // Claude has exited: `/effort` would go to the shell as a command.
         guard !session.shellIsInForeground else { NSSound.beep(); return }
-        effortTasks[session.id]?.cancel()
-        effortPicks[session.id] = EffortPick(choice: choice, at: Date())
-        // Max can't be a saved default, so `/effort max` typed with the
-        // argument is session-only already and needs no picker on screen.
-        if choice == ClaudeEffortChoice.levels.last {
-            effortTasks[session.id] = nil
-            session.runCommand("/effort \(choice.level)")
-            return
-        }
+        let pick = EffortPick(choice: choice, at: Date())
+        effortPicks[session.id] = pick
+        let previous = effortTasks[session.id]
         effortTasks[session.id] = Task { [weak self] in
-            let succeeded = await Self.runEffortPicker(in: session, to: choice) { confirmed in
-                self?.effortPicks[session.id] = EffortPick(choice: confirmed, at: Date())
+            await previous?.value
+            let succeeded = await Self.runEffort(in: session, to: choice) { confirmed in
+                guard self?.effortPicks[session.id] == pick else { return }
+                self?.effortPicks[session.id] = EffortPick(choice: confirmed, at: pick.at)
             }
-            // A newer pick cancelled this one and owns the state now.
-            guard !Task.isCancelled, !succeeded else { return }
+            // A later pick owns the label now.
+            guard !succeeded, self?.effortPicks[session.id] == pick else { return }
             self?.effortPicks[session.id] = nil
             NSSound.beep()
         }
@@ -94,28 +89,34 @@ final class ModelSwitchController {
 
     @ObservationIgnored private var effortTasks: [UUID: Task<Void, Never>] = [:]
 
-    /// The key sequence of `switchEffort`. False when the picker never came
-    /// up or the model has no such level (nothing set).
-    private static func runEffortPicker(in session: TerminalSession, to choice: ClaudeEffortChoice,
-                                        confirmed: (ClaudeEffortChoice) -> Void) async -> Bool {
+    /// The key sequence of `switchEffort`. False when a picker left open
+    /// didn't close, the picker never came up or the model has no such
+    /// level (nothing set).
+    private static func runEffort(in session: TerminalSession, to choice: ClaudeEffortChoice,
+                                  confirmed: (ClaudeEffortChoice) -> Void) async -> Bool {
         if EffortPicker.isOpen(onScreen: session.visibleText()) {
             session.send(text: EffortPicker.cancel)
             let closed = await waitFor(session, timeout: 2) { !EffortPicker.isOpen(onScreen: $0) }
             guard closed != nil else { return false }
         }
+        if choice == ClaudeEffortChoice.levels.last {
+            session.runCommand("/effort \(choice.level)")
+            return true
+        }
         session.send(text: "/effort\r")
         guard let open = await waitFor(session, timeout: 3, { EffortPicker.isOpen(onScreen: $0) }) else { return false }
+        // The stops are always the first levels in order (a lower cap cuts
+        // the top), so the index works for any model the pick exists on.
         let stops = EffortPicker.stops(onScreen: open) ?? ClaudeEffortChoice.levels.map(\.level)
         guard let index = stops.firstIndex(of: choice.level) else {
             session.send(text: EffortPicker.cancel)
             return false
         }
         let earlier = EffortPicker.confirmations(onScreen: open).count
-        // Arrows and "s" in one write, as soon as the picker is up: "s" is
-        // "this session only" on every stop but max (never "save"), and
-        // max goes through `/effort max` instead. Keeps the picker on screen
-        // as briefly as Claude Code allows.
-        session.send(text: String(repeating: EffortPicker.left, count: stops.count)
+        // Arrows and "s" in one write as soon as the picker is up, so it
+        // stays on screen as briefly as Claude Code allows; left as many
+        // times as there are levels at all reaches low from any stop.
+        session.send(text: String(repeating: EffortPicker.left, count: ClaudeEffortChoice.levels.count)
                      + String(repeating: EffortPicker.right, count: index)
                      + EffortPicker.sessionKey)
         // A new confirmation below the earlier ones is this pick's answer.
