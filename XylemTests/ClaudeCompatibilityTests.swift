@@ -104,11 +104,14 @@ private struct CompatibilityJudge {
                  "the /effort picker no longer says \"s to use this session only … Esc to cancel\": the menu would only beep")
             return
         }
-        if let level = EffortPicker.confirmedLevel(onScreen: done), ClaudeEffortChoice.matching(level: level) != nil {
-            ok("tui.effortPicker", feature: feature, "the picker set \(level) for this session only")
+        if EffortPicker.stops(onScreen: open) == nil {
+            fail("tui.effortPicker", feature: feature,
+                 "the /effort picker's row of levels (\"low medium high …\") wasn't found: the menu can't tell its stops")
+        } else if let level = EffortPicker.confirmations(onScreen: done).last, level == "high" {
+            ok("tui.effortPicker", feature: feature, "the picker set \(level) for this session only, with the keys sent as Xylem sends them")
         } else {
             fail("tui.effortPicker", feature: feature,
-                 "after \"s\" no \"Set effort level to … (this session only)\" appeared: the menu can't confirm a pick")
+                 "after left x5, right x2, \"s\" no \"Set effort level to high (this session only)\" appeared: the menu would set the wrong level or none")
         }
     }
 

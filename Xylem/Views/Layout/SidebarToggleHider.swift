@@ -76,15 +76,14 @@ struct SidebarToggleHider: NSViewRepresentable {
         private weak var observedSplit: NSSplitView?
 
         /// A collapsed sidebar column can come back without the split view's
-        /// visibility asking for it: in full screen AppKit slides it in over
-        /// the content when the pointer touches the screen's left edge, or on
-        /// a drag from there (seen on macOS 15; the visibility changes only
-        /// after that slide, so the column showed fully before it snapped
-        /// back). While the tabs are on top the collapsed column is marked as
-        /// not collapsible, which turns that off; it is collapsible again
-        /// before the sidebar comes back. Checked on every update and every
-        /// resize of the split view, so it also holds once the column has
-        /// collapsed (a launch with the tabs on top).
+        /// visibility asking for it: in full screen on macOS 15 AppKit slides
+        /// it in over the content when the pointer touches the screen's left
+        /// edge, or on a drag from there, and the visibility changes only
+        /// after that slide. While the tabs are on top the collapsed column is
+        /// marked as not collapsible, which turns that off; it is collapsible
+        /// again before the sidebar comes back. Checked on every update and
+        /// every resize of the split view, so it also holds once the column
+        /// has collapsed (a launch with the tabs on top).
         private func watchSplitView() {
             guard let split = enclosingSplitView() else { return }
             pinSidebar(in: split)
@@ -92,7 +91,7 @@ struct SidebarToggleHider: NSViewRepresentable {
             if let splitObserver { NotificationCenter.default.removeObserver(splitObserver) }
             observedSplit = split
             splitObserver = NotificationCenter.default.addObserver(
-                forName: NSSplitView.didResizeSubviewsNotification, object: split, queue: nil
+                forName: NSSplitView.didResizeSubviewsNotification, object: split, queue: .main
             ) { [weak self] _ in
                 MainActor.assumeIsolated {
                     guard let self, let split = self.observedSplit else { return }

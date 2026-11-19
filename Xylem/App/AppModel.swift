@@ -172,6 +172,11 @@ final class AppModel {
 
     func switchEffort(to choice: ClaudeEffortChoice) {
         guard let session = activeSession, session.launchedClaude else { return }
+        // The keys would answer Claude's question, or go nowhere.
+        switch tabs.activeTab?.claudeState {
+        case .needsInput, .notRunning: NSSound.beep(); return
+        default: break
+        }
         modelSwitcher.switchEffort(of: session, to: choice)
     }
 

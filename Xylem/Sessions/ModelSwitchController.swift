@@ -61,38 +61,60 @@ final class ModelSwitchController {
     /// Sets the effort of this session only, through Claude Code's `/effort`
     /// picker: `/effort <level>` typed with an argument also saves the level
     /// as the model's default for new sessions, the picker's "s" does not
-    /// (Claude Code 2.1.328). The picker is a slider from low to the model's
-    /// highest level: left until it stops at low, right `index` times, "s".
-    /// Keys go out only once the picker is on screen (else nothing more is
-    /// sent), and the level Claude Code confirms replaces the pick (a model
-    /// without some levels has fewer stops).
+    /// (Claude Code 2.1.328). The picker is a slider over the levels the
+    /// model has, read off the screen: left until it stops at the first,
+    /// right to the pick, "s". Keys go out only while the picker is on
+    /// screen; a picker already open is closed with Esc first (its Enter
+    /// would save a default). The confirmation Claude Code prints replaces
+    /// the pick.
     func switchEffort(of session: TerminalSession, to choice: ClaudeEffortChoice) {
-        guard let index = ClaudeEffortChoice.levels.firstIndex(of: choice) else { return }
         // Claude has exited: `/effort` would go to the shell as a command.
         guard !session.shellIsInForeground else { NSSound.beep(); return }
         effortTasks[session.id]?.cancel()
         effortPicks[session.id] = EffortPick(choice: choice, at: Date())
         effortTasks[session.id] = Task { [weak self] in
-            session.send(text: "/effort\r")
-            guard await Self.waitFor(session, timeout: 3, { EffortPicker.isOpen(onScreen: $0) }) != nil else {
-                self?.effortPicks[session.id] = nil
-                NSSound.beep()
-                return
-            }
-            session.send(text: String(repeating: EffortPicker.left, count: ClaudeEffortChoice.levels.count)
-                         + String(repeating: EffortPicker.right, count: index)
-                         + EffortPicker.thisSessionOnly)
-            // Closed = Claude Code has printed its answer; the newest one on
-            // screen is this pick's.
-            if let screen = await Self.waitFor(session, timeout: 3, { !EffortPicker.isOpen(onScreen: $0) }),
-               let level = EffortPicker.confirmedLevel(onScreen: screen),
-               let confirmed = ClaudeEffortChoice.matching(level: level), confirmed != choice {
+            let succeeded = await Self.runEffortPicker(in: session, to: choice) { confirmed in
                 self?.effortPicks[session.id] = EffortPick(choice: confirmed, at: Date())
             }
+            // A newer pick cancelled this one and owns the state now.
+            guard !Task.isCancelled, !succeeded else { return }
+            self?.effortPicks[session.id] = nil
+            NSSound.beep()
         }
     }
 
     @ObservationIgnored private var effortTasks: [UUID: Task<Void, Never>] = [:]
+
+    /// The key sequence of `switchEffort`. False when the picker never came
+    /// up or the model has no such level (nothing set).
+    private static func runEffortPicker(in session: TerminalSession, to choice: ClaudeEffortChoice,
+                                        confirmed: (ClaudeEffortChoice) -> Void) async -> Bool {
+        if EffortPicker.isOpen(onScreen: session.visibleText()) {
+            session.send(text: EffortPicker.cancel)
+            let closed = await waitFor(session, timeout: 2) { !EffortPicker.isOpen(onScreen: $0) }
+            guard closed != nil else { return false }
+        }
+        session.send(text: "/effort\r")
+        guard let open = await waitFor(session, timeout: 3, { EffortPicker.isOpen(onScreen: $0) }) else { return false }
+        let stops = EffortPicker.stops(onScreen: open) ?? ClaudeEffortChoice.levels.map(\.level)
+        guard let index = stops.firstIndex(of: choice.level) else {
+            session.send(text: EffortPicker.cancel)
+            return false
+        }
+        let earlier = EffortPicker.confirmations(onScreen: open).count
+        session.send(text: String(repeating: EffortPicker.left, count: stops.count)
+                     + String(repeating: EffortPicker.right, count: index)
+                     + EffortPicker.thisSessionOnly)
+        // A new confirmation below the earlier ones is this pick's answer.
+        if let screen = await waitFor(session, timeout: 3, {
+               !EffortPicker.isOpen(onScreen: $0) && EffortPicker.confirmations(onScreen: $0).count > earlier
+           }),
+           let level = EffortPicker.confirmations(onScreen: screen).last,
+           let answer = ClaudeEffortChoice.matching(level: level), answer != choice {
+            confirmed(answer)
+        }
+        return true
+    }
 
     /// Polls the screen every 100 ms; the screen text once `found` holds.
     private static func waitFor(_ session: TerminalSession, timeout: TimeInterval,

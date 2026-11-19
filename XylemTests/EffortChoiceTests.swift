@@ -89,7 +89,14 @@ struct EffortChoiceTests {
         #expect(!EffortPicker.isOpen(onScreen: "❯ /effort\n  ⎿  Set effort level to low (this session only): Quick"))
     }
 
-    @Test func confirmationGivesTheNewestLevel() {
+    @Test func slidersStopsComeFromItsLabelRow() {
+        #expect(EffortPicker.stops(onScreen: "Effort\n   low     medium    high    xhigh    max\n") == ["low", "medium", "high", "xhigh", "max"])
+        #expect(EffortPicker.stops(onScreen: "  low   medium   high\n") == ["low", "medium", "high"])
+        #expect(EffortPicker.stops(onScreen: "lowmediumhighxhighmaxTabtoggle") == ["low", "medium", "high", "xhigh", "max"])
+        #expect(EffortPicker.stops(onScreen: "Set effort level to low (this session only)") == nil)
+    }
+
+    @Test func confirmationsAreListedInScreenOrder() {
         let screen = """
         ❯ /effort
           ⎿  Set effort level to low (this session only): Quick, straightforward
@@ -99,7 +106,7 @@ struct EffortChoiceTests {
         ❯ /effort high
           ⎿  Set effort level to high (saved as your default for new sessions)
         """
-        #expect(EffortPicker.confirmedLevel(onScreen: screen) == "max")
-        #expect(EffortPicker.confirmedLevel(onScreen: "nothing here") == nil)
+        #expect(EffortPicker.confirmations(onScreen: screen) == ["low", "max"])
+        #expect(EffortPicker.confirmations(onScreen: "nothing here").isEmpty)
     }
 }

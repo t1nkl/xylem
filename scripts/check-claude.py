@@ -578,9 +578,8 @@ def interactive(claude, cwd, settings, work, manifest):
         term.type("/effort")
         term.pump(2)
         manifest["effortPickerOpen"] = term.screen_text(3000)
-        for key in [b"\x1b[D"] * 5 + [b"\x1b[C"] * 2 + [b"s"]:
-            term.reply(key)
-            term.pump(0.1)
+        # One write, the way the app sends it.
+        term.reply(b"\x1b[D" * 5 + b"\x1b[C" * 2 + b"s")
         term.pump(2)
         manifest["effortPickerDone"] = term.screen_text(3000)
 
