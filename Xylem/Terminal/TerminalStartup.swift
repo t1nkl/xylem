@@ -7,7 +7,7 @@
 //  feeds it what the terminal shows, every 100 ms while starting.
 //
 //  claude, once it starts drawing, turns on the kitty keyboard protocol or
-//  bracketed paste (checked live: before the folder trust question);
+//  bracketed paste (before the folder trust question);
 //  output before that is the user's shell start-up, which the loader
 //  covers. A plain shell is ready with its first output. Nothing waiting
 //  for the user stays hidden: a key typed, or start-up output that went

@@ -16,9 +16,10 @@
 //  the attention mark and the session binding; the transcript mtime is
 //  then only used for the prompt preview.
 //
-//  The same tick keeps `tab.gitBranch` current, not a view (a `.task` in
-//  the card would re-run whenever SwiftUI recreates it). It stats the repo's HEAD file each tick and spawns `git` only when the live
-//  cwd or HEAD's mtime changed (checkout, branch switch), all off main.
+//  The same tick keeps `tab.gitBranch` current, not a view (a `.task` in the
+//  card would re-run whenever SwiftUI recreates it). It stats the repo's HEAD
+//  file each tick and spawns `git` only when the live cwd or HEAD's mtime
+//  changed (checkout, branch switch), all off main.
 //
 
 import Foundation

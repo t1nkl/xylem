@@ -359,20 +359,19 @@ final class TerminalSession: Identifiable {
         terminalView.terminate()
         Self.endProcessGroups(groups)
         Self.shutDownUI(of: terminalView, attemptsLeft: 10)
-        // A full reset (RIS) replaces the buffers, scrollback included (up
-        // to 10 000 lines). Something may still hold this closed session for
-        // a while - SwiftUI keeps closed tab rows cached - and then it holds an empty
-        // terminal, not the whole conversation.
+        // A full reset (RIS) replaces the buffers, scrollback included (up to
+        // 10 000 lines). Something may still hold this closed session for a
+        // while - SwiftUI keeps closed tab rows cached - and then it holds an
+        // empty terminal, not the whole conversation.
         terminalView.feed(text: "\u{1b}c")
     }
 
     /// A closed tab's programs end even when they ignore SIGHUP and SIGTERM.
-    /// Each
-    /// group gets SIGHUP, as a closed terminal sends, and whatever is still
-    /// alive after a grace period gets SIGKILL (5 s: claude's SessionEnd
-    /// hook and its last transcript write run after the SIGHUP). Never our
-    /// own group, never pid 0 or 1 (`kill(-0, …)` / `kill(-1, …)` would
-    /// reach far more).
+    /// Each group gets SIGHUP, as a closed terminal sends, and whatever is
+    /// still alive after a grace period gets SIGKILL (5 s: claude's SessionEnd
+    /// hook and its last transcript write run after the SIGHUP). Never our own
+    /// group, never pid 0 or 1 (`kill(-0, …)` / `kill(-1, …)` would reach far
+    /// more).
     nonisolated static func endProcessGroups(_ groups: [pid_t], grace: TimeInterval = 5) {
         let ours = getpgrp()
         let targets = Array(Set(groups.filter { $0 > 1 && $0 != ours }))

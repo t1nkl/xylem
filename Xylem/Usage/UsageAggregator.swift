@@ -5,10 +5,11 @@
 //  Scans all Claude Code session jsonl files and produces a UsageDataset
 //  for every date range in one pass.
 //
-//  Subagent transcripts (`<session id>/subagents/agent-*.jsonl`) are read
-//  too and folded into their parent session: they can be ~40% of all
-//  transcript bytes, and leaving them out undercounts spend accordingly. Forks start with a copy of their parent's messages,
-//  which is skipped (SubagentTranscript.swift).
+//  Subagent transcripts (`<session id>/subagents/agent-*.jsonl`) are read too
+//  and folded into their parent session: they can be ~40% of all transcript
+//  bytes, and leaving them out undercounts spend accordingly. Forks start with
+//  a copy of their parent's messages, which is skipped
+//  (SubagentTranscript.swift).
 //
 //  Incremental, backed by UsageFileCache:
 //    · a file whose `FileStamp` (size + nanosecond mtime + inode) is

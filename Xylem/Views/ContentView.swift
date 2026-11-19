@@ -127,9 +127,11 @@ struct ContentView: View {
                                           canAddWorktree: { [app] in app.worktreeBaseDirectory != nil })
                         }
                         // Our own right panel, not the system `.inspector`: the
-                        // inspector animates its width (the terminal re-lays out every
-                        // frame) and nothing can sit to its right, so the rail would
-                        // jump between two places on every toggle. Here the panel appears at once and the rail never moves.
+                        // inspector animates its width (the terminal re-lays
+                        // out every frame) and nothing can sit to its right, so
+                        // the rail would jump between two places on every
+                        // toggle. Here the panel appears at once and the rail
+                        // never moves.
                         RightPanelContainer(isShown: showsInspector,
                                             maxWidth: RightPanelContainer<RightSidebarView>.maxWidth(detailWidth: detail.size.width)) {
                                 RightSidebarView(
@@ -151,7 +153,8 @@ struct ContentView: View {
             .topTabHoverCard(tabs: tabs.tabs)
             // Tabs on top: no sidebar to toggle.
             .background(SidebarToggleHider(isHidden: tabPlacement == .top))
-            // The panel and the drawer are one at a time: the toolbar's panel button and ⌃⌘I close the drawer like the rail does.
+            // The panel and the drawer are one at a time: the toolbar's panel
+            // button and ⌃⌘I close the drawer like the rail does.
             .onChange(of: showsInspector) { _, shown in
                 if shown { app.drawer.close() }
             }

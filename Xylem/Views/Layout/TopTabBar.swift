@@ -2,12 +2,11 @@
 //  TopTabBar.swift
 //  Xylem
 //
-//  The tab list above the terminal, for Settings > General > Tabs "Above
-//  the terminal" (the sidebar is the default). Picked from a mock of three
-//  top layouts: two-line tabs of a fixed width (avatar with the same status
-//  marks as the sidebar, title, the latest prompt or "Needs your
-//  permission…"), scrolling sideways when they don't fit, and a card with
-//  the whole prompt, branch and path after a moment's hover.
+//  The tab list above the terminal, for Settings > General > Tabs "Above the
+//  terminal" (the sidebar is the default): two-line tabs of a fixed width
+//  (avatar with the same status marks as the sidebar, title, the latest prompt
+//  or "Needs your permission…"), scrolling sideways when they don't fit, and a
+//  card with the whole prompt, branch and path after a moment's hover.
 //
 //  Reordering is a drag gesture, not drag and drop: tabs have one width,
 //  so each neighbour crossed is one `moveTab(by:)` step on the live order.

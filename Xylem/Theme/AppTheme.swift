@@ -77,7 +77,8 @@ struct Palette {
     // Text
     let textPrimary: Color
     /// Rows and headers of the right panel (Claude / Git): a step below
-    /// `textPrimary` so the panel doesn't outshine the terminal. Same grey as the terminal's text.
+    /// `textPrimary` so the panel doesn't outshine the terminal. Same grey as
+    /// the terminal's text.
     let panelText: Color
     let textSecondary: Color
     let textMuted: Color
@@ -129,7 +130,8 @@ extension Palette {
         panelText: Color(hex: 0xCCCCCC),
         textSecondary: Color(hex: 0xA0A0A0),
         textMuted: Color(hex: 0x6B6B6B),
-        // Every green is the darker brand green except status dots, which keep `statusGreen`.
+        // Every green is the darker brand green except status dots, which keep
+        // `statusGreen`.
         accent: Color(hex: 0x16A34A),
         accentStrong: Color(hex: 0x22C55E),
         segmentTint: Color(hex: 0x108E3F),

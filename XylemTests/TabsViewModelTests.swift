@@ -472,7 +472,7 @@ struct OpenSessionDetectorTests {
     }
 
     @Test func shellWrappersCount() {
-        // How another Claude Code GUI starts it (seen live): the id ends
+        // How another Claude Code GUI starts it: the id ends
         // with `;`.
         let otherApp = "5512 /bin/zsh -l -i -c claude --resume \(id); exec $SHELL -l -i"
         #expect(OpenSessionDetector.mentions(sessionID: id, in: otherApp))

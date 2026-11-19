@@ -461,9 +461,9 @@ struct TabAvatar: View {
     }
 }
 
-/// Top-right mark on the avatar: blue dot = Claude finished and the tab
-/// hasn't been looked at, orange "!" = Claude asks for permission. A dark ring keeps it apart from the
-/// square on any row background.
+/// Top-right mark on the avatar: blue dot = Claude finished and the tab hasn't
+/// been looked at, orange "!" = Claude asks for permission. A dark ring keeps
+/// it apart from the square on any row background.
 private struct AttentionBadge: View {
     let color: Color
     let symbol: String?

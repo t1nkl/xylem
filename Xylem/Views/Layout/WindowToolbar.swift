@@ -33,17 +33,16 @@ struct WindowToolbar: ToolbarContent {
             }
         }
         // An update waiting for a quit, in its own capsule before the
-        // context and model one. With the system's shared
-        // glass it merged into that capsule, so it draws its own, like the
-        // panel toggle. Read here like the status badge: it changes at most
-        // once per release.
+        // context and model one (the system's shared glass would merge it
+        // into that capsule). Read here like the status badge: it changes at
+        // most once per release.
         if let version = updater.readyVersion {
             ToolbarItem(placement: .primaryAction) {
                 UpdateReadyBadge(version: version) { updater.checkForUpdates() }
                     .buttonStyle(.plain)
                     .frame(height: UpdateReadyBadge.height)
                     .contentShape(.capsule)
-                    .modifier(PanelToggleGlass())
+                    .modifier(OwnCapsuleGlass())
             }
             .sharedBackgroundHiddenIfAvailable()
         }
@@ -64,14 +63,25 @@ struct WindowToolbar: ToolbarContent {
         // context and model one when no status badge sits between them),
         // and ToolbarSpacer(.fixed) adds no gap here in any placement.
         // Hiding the shared background puts an item in its own grouping
-        // (Apple's docs); it draws its own capsule instead.
+        // (Apple's docs); it draws its own capsule instead. macOS 15 has no
+        // shared capsules, so Usage stays a system toolbar button there.
         ToolbarItem(placement: .primaryAction) {
-            ToolbarIconCapsule(title: "Usage", systemImage: "chart.bar", action: onOpenUsage)
-                .help("Usage Dashboard (⌘U)")
+            Group {
+                if #available(macOS 26, *) {
+                    ToolbarIconCapsule(title: "Usage", systemImage: "chart.bar", action: onOpenUsage)
+                } else {
+                    Button(action: onOpenUsage) {
+                        Label("Usage", systemImage: "chart.bar")
+                    }
+                }
+            }
+            .help("Usage Dashboard (⌘U)")
         }
         .sharedBackgroundHiddenIfAvailable()
         ToolbarItem(placement: .primaryAction) {
-            ToolbarIconCapsule(title: "Inspector", systemImage: "sidebar.right") {
+            // Two own capsules side by side get half the system's gap
+            // between groups; the extra room evens it out.
+            ToolbarIconCapsule(title: "Inspector", systemImage: "sidebar.right", leadingGap: 4) {
                 showsInspector.toggle()
             }
             .help(showsInspector ? "Hide the Claude / Git panel" : "Show the Claude / Git panel")
@@ -85,28 +95,34 @@ struct WindowToolbar: ToolbarContent {
 private struct ToolbarIconCapsule: View {
     let title: String
     let systemImage: String
+    /// Extra room before the capsule, on macOS 26 only.
+    var leadingGap: CGFloat = 0
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Label(title, systemImage: systemImage)
                 .labelStyle(.iconOnly)
-                // The system capsules' height (24 pt); 30 stood out.
+                // The system capsules' height.
                 .frame(width: 36, height: UpdateReadyBadge.height)
                 .contentShape(.capsule)
         }
         .buttonStyle(.plain)
-        .modifier(PanelToggleGlass())
+        .modifier(OwnCapsuleGlass(leadingGap: leadingGap))
     }
 }
 
-/// The own glass capsule of the panel toggle and the update item (macOS
-/// 26). macOS 15 has no Liquid Glass and draws toolbar items without shared
-/// capsules, so the button stays plain there.
-private struct PanelToggleGlass: ViewModifier {
+/// The own glass capsule of the items that hide the shared background (macOS
+/// 26), with optional room before it. macOS 15 has no Liquid Glass and draws
+/// toolbar items without shared capsules, so the button stays plain there.
+private struct OwnCapsuleGlass: ViewModifier {
+    var leadingGap: CGFloat = 0
+
     func body(content: Content) -> some View {
         if #available(macOS 26, *) {
-            content.glassEffect(.regular.interactive(), in: .capsule)
+            content
+                .glassEffect(.regular.interactive(), in: .capsule)
+                .padding(.leading, leadingGap)
         } else {
             content
         }

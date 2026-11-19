@@ -106,8 +106,9 @@ private struct SidebarScopeBanner: View {
     let onScopeChanged: () -> Void
 
     var body: some View {
-        // With a project open, its name is already the window title: the
-        // switch gets the full width (a label next to it would be truncated). Without one everything is global.
+        // With a project open, its name is already the window title: the switch
+        // gets the full width (a label next to it would be truncated). Without
+        // one everything is global.
         Group {
             if environment.currentDirectory != nil {
                 PanelSegmentedControl(

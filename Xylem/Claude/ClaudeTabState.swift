@@ -12,16 +12,16 @@
 //    per 1.5 s also in a background tab) and the screen is silent at the
 //    prompt.
 //
-//  Hooks alone are not enough: Esc interrupts a turn without any hook, so
-//  a tab that goes silent mid-turn is idle (and stays idle for that turn -
-//  `interrupted`; checked live: Esc, then switching tabs at once); and with
+//  Hooks alone are not enough: Esc interrupts a turn without any hook, so a tab
+//  that goes silent mid-turn is idle (and stays idle for that turn -
+//  `interrupted`, also when the user switches tabs right after Esc); and with
 //  `/goal` the turn goes on after a Stop event (the goal's own Stop hook
-//  evaluates for ~3 s with the spinner on, then Claude continues), so a
-//  Stop is "finished" only once the spinner stays quiet. Output alone is
-//  not enough either: a permission prompt keeps redrawing (~1.6 batches per
-//  second), so "needs input" ends when the user answers in that tab
-//  (keyboard input) or the next hook event arrives. A question dialog
-//  (AskUserQuestion) arrives as a permission prompt too.
+//  evaluates for ~3 s with the spinner on, then Claude continues), so a Stop is
+//  "finished" only once the spinner stays quiet. Output alone is not enough
+//  either: a permission prompt keeps redrawing (~1.6 batches per second), so
+//  "needs input" ends when the user answers in that tab (keyboard input) or the
+//  next hook event arrives. A question dialog (AskUserQuestion) arrives as a
+//  permission prompt too.
 //
 //  Everything here is pure; the view model feeds it times and events.
 //

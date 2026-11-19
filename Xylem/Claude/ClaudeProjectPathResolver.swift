@@ -162,9 +162,10 @@ nonisolated enum ClaudeProjectPathResolver {
         return ((try? FileManager.default.attributesOfItem(atPath: path))?[.modificationDate] as? Date) ?? .distantPast
     }
 
-    /// Last resort when no session file exists and the folder isn't on
-    /// disk: replace all dashes with slashes. Wrong for any directory name that contains a
-    /// dash, dot, underscore, space or non-ASCII letter (all encoded as `-`), but it's the best we can do without extra data.
+    /// Last resort when no session file exists and the folder isn't on disk:
+    /// replace all dashes with slashes. Wrong for any directory name that
+    /// contains a dash, dot, underscore, space or non-ASCII letter (all encoded
+    /// as `-`), but it's the best we can do without extra data.
     static func naiveDecode(_ folderName: String) -> String {
         guard folderName.hasPrefix("-") else { return folderName }
         return "/" + folderName.dropFirst().replacingOccurrences(of: "-", with: "/")

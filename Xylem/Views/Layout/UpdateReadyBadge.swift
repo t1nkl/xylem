@@ -2,10 +2,9 @@
 //  UpdateReadyBadge.swift
 //  Xylem
 //
-//  "New update available" in the window toolbar while a downloaded update
-//  waits to install on quit, placed before the context and model capsule.
-//  A single macOS notification is easy to miss, and Xylem stays open for
-//  days. A click
+//  "New update available" in the window toolbar while a downloaded update waits
+//  to install on quit, placed before the context and model capsule. A single
+//  macOS notification is easy to miss, and Xylem stays open for days. A click
 //  opens Sparkle's window: Install and Relaunch / Install on Quit.
 //
 

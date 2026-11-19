@@ -173,10 +173,10 @@ struct SidebarRow<Content: View>: View {
     }
 }
 
-/// Full-width two-or-more-way switch for the panel's top rows (Claude/Git,
-/// This project/All). A system segmented `Picker` on macOS keeps its
-/// intrinsic width and centres itself, so the two rows would differ in
-/// width; these segments are equal and full-width. Exposed to accessibility as a group of selectable
+/// Full-width two-or-more-way switch for the panel's top rows (Claude/Git, This
+/// project/All). A system segmented `Picker` on macOS keeps its intrinsic width
+/// and centres itself, so the two rows would differ in width; these segments
+/// are equal and full-width. Exposed to accessibility as a group of selectable
 /// buttons.
 struct PanelSegmentedControl<Value: Hashable>: View {
     let options: [Value]

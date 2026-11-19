@@ -92,7 +92,8 @@ struct NewTabPickerView: View {
                     .foregroundStyle(AppTheme.Colors.accent)
             }
 
-            // No app name here: the window already says Xylem; the screen is about picking a folder.
+            // No app name here: the window already says Xylem; the screen is
+            // about picking a folder.
             Text("Pick a project folder to spin up Claude Code.")
                 .font(.system(size: 12))
                 .foregroundStyle(AppTheme.Colors.textSecondary)
@@ -364,10 +365,10 @@ private struct RecentCard: View {
     }
 }
 
-/// Recent Projects paging: a page is the whole rows of cards that fit on screen (at least two). When more projects
-/// remain, the page's last cell is the "Show more" tile, so the grid ends
-/// on a full row and its last card is never alone (e.g. 5 x 5 = 24 cards +
-/// the tile). Each "Show more" adds a page.
+/// Recent Projects paging: a page is the whole rows of cards that fit on screen
+/// (at least two). When more projects remain, the page's last cell is the "Show
+/// more" tile, so the grid ends on a full row and its last card is never alone
+/// (e.g. 5 x 5 = 24 cards + the tile). Each "Show more" adds a page.
 nonisolated struct RecentProjectsPaging: Equatable {
     let total: Int
     let page: Int
