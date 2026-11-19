@@ -51,6 +51,7 @@
   "screenshot": "https://xylem.t1nkl.dev/assets/og-image.png",
   "featureList": [
     "Run several Claude Code sessions side by side, one per tab",
+    "Tabs in a sidebar or in a row above the terminal, like a browser",
     "See which session is working, finished or waiting for your permission",
     "Tabs reopen with their own conversation after a restart",
     "Skills, agents, MCP servers, plugins, permissions and hooks of the current project in one panel",
@@ -117,7 +118,7 @@
   .gh { display: inline-flex; align-items: center; gap: 7px; font-size: 15px; color: var(--text2); text-decoration: none; }
   .gh:hover { color: var(--text); }
 
-  .hero { text-align: center; padding-top: 72px; }
+  .hero { text-align: center; padding-top: 84px; }
   .hero h1 { font: 900 clamp(42px, 6.6vw, 84px)/0.96 var(--body); letter-spacing: -0.04em; margin: 0 auto; max-width: 15ch; }
   .hero h1 span { display: block; color: var(--text2); }
   .lede { font-size: 20px; color: var(--text2); max-width: 32em; margin: 24px auto 0; }
@@ -547,7 +548,7 @@
     body { font-size: 17px; }
     .wrap, .stage { padding: 0 16px; }
     .top nav { display: none; }
-    .hero { padding-top: 36px; }
+    .hero { padding-top: 48px; }
     .lede { font-size: 18px; }
     .stage { margin-top: 44px; }
     .tour { grid-template-columns: 1fr; margin-left: -16px; margin-right: -16px; gap: 0; }
@@ -570,10 +571,116 @@
     .wtitle.hl { border-radius: 6px; padding: 2px 4px; }
   }
   .wrap.top { padding-top: 20px; padding-bottom: 20px; }
+  /* The header stays at the top while the page scrolls; its line and
+     blurred backing show once the page has moved. */
+  html { scroll-padding-top: 84px; }
+  .hdr { position: sticky; top: 0; z-index: 50; border-bottom: 1px solid transparent; transition: background-color .2s, border-color .2s; }
+  .hdr.stuck { background: rgba(20,20,20,.82); -webkit-backdrop-filter: saturate(1.4) blur(14px); backdrop-filter: saturate(1.4) blur(14px); border-bottom-color: var(--line); }
+  .hdr .wrap.top { padding-top: 14px; padding-bottom: 14px; }
+  /* Download in the header: only while the big button under the headline is out of sight */
+  .hdl { font-size: 14px; padding: 8px 13px; border-radius: 9px; gap: 7px; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .2s, transform .2s, visibility .2s; }
+  .hdr.dl .hdl { opacity: 1; visibility: visible; transform: none; }
+  @media (max-width: 680px) { .topr { gap: 16px; } .hdl { padding: 7px 11px; } }
+  /* the smallest phones: Download takes GitHub's place while it shows */
+  @media (max-width: 380px) { .hdr.dl .gh { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .hdr, .hdl { transition: none; } }
+
+  /* ---------- tabs above the terminal (Settings > General > Show tabs) ----------
+     TopTabBar: 200 pt two-line tabs in a 56 pt bar over the terminal, the
+     panel and the rail; the sidebar column is gone and its toolbar button
+     too, and "+" moves from the toolbar to the end of the tabs. */
+  .ttbar { grid-row: 2; grid-column: 2 / 5; display: none; align-items: center; gap: 4px; padding: 0 8px; background: var(--w-main); border-bottom: 1px solid var(--w-line); position: relative; }
+  .ttabs { flex: 1; display: flex; gap: 6px; padding: 4px 0 5px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .ttabs::-webkit-scrollbar { display: none; }
+  .ttab { all: unset; box-sizing: border-box; position: relative; flex: none; width: 200px; height: 46px; display: flex; align-items: center; gap: 8px; padding: 0 6px; border-radius: 9px; background: rgba(255,255,255,.025); box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); cursor: pointer; user-select: none; -webkit-user-select: none; }
+  .ttab:hover:not(.on) { background: rgba(255,255,255,.06); }
+  .ttab:focus-visible { outline: 2px solid var(--w-blue); outline-offset: -2px; }
+  .ttab.on { background: #2E2E2E; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1), 0 1px 2px rgba(0,0,0,.35); }
+  .ttab.drag { z-index: 2; cursor: grabbing; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 6px 16px rgba(0,0,0,.5); }
+  .ttab.slide { transition: transform .18s ease-out; }
+  .ttab .ava { width: 24px; height: 24px; margin: 3px; border-radius: 7px; font-size: 12px; }
+  .ttab.on .ava { background: var(--accent); color: #fff; }
+  .ttab.picker .ava { background: #333; color: var(--w-text2); }
+  .ttab .ava .ico { width: 13px; height: 13px; }
+  .ttab .ring { border-radius: 9px; }
+  .ttab .ring::after { border-radius: 10px; }
+  .ttab .dot, .ttab .bang { border-color: #232323; }
+  .ttab.on .dot, .ttab.on .bang { border-color: #2E2E2E; }
+  .ttab .txt { flex: 1; min-width: 0; }
+  .ttab .tt { display: flex; align-items: center; gap: 4px; height: 16px; font-weight: 600; font-size: 12px; color: #CCCCCC; }
+  .ttab .tt span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ttab.on .tt { color: var(--w-text); }
+  .ttab .tp { margin-top: 2px; font-size: 11px; color: var(--w-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ttab.on .tp { color: var(--w-text2); }
+  .ttab .tp.warn { color: var(--w-amber); font-weight: 500; }
+  .ttab .tp.none { opacity: .7; }
+  .ttab .x { margin-left: auto; width: 15px; height: 15px; border-radius: 4px; display: none; place-items: center; color: var(--w-text2); flex: none; }
+  .ttab:hover .x, .ttab:focus-within .x { display: grid; }
+  .ttab.drag .x { display: none; }
+  .ttab .x:hover { background: rgba(255,255,255,.12); color: var(--w-text); }
+  .ttab .x .ico { width: 9px; height: 9px; stroke-width: 2; }
+  .tbb { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 6px; color: var(--w-text2); flex: none; }
+  .tbb:hover { background: rgba(255,255,255,.08); color: var(--w-text); }
+  .tbb .ico { width: 14px; height: 14px; }
+  /* the hover card: 0.7 s on a tab shows its state, whole prompt, branch and folder */
+  .tcard { position: absolute; z-index: 4; width: 270px; padding: 12px; border-radius: 10px; background: #2A2A2A; border: 1px solid #3A3A3A; box-shadow: 0 8px 24px rgba(0,0,0,.5); pointer-events: none; display: none; font-size: 12px; }
+  .tcard.show { display: block; }
+  .tcard b { display: block; font-size: 13px; color: var(--w-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tcard .st { font-size: 11px; font-weight: 500; color: var(--w-muted); }
+  .tcard .st.busy { color: var(--w-busy); } .tcard .st.warn { color: var(--w-amber); } .tcard .st.done { color: var(--w-blue); }
+  .tcard p { margin: 8px 0; color: #CCCCCC; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .tcard small { display: flex; align-items: center; gap: 4px; color: var(--w-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tcard small + small { margin-top: 3px; }
+  .tcard small .ico { width: 10px; height: 10px; }
+
+  .win.toptabs { --side-w: 0px; grid-template-rows: 52px 56px minmax(0, 1fr) 36px; }
+  .win.toptabs .ttbar { display: flex; }
+  .win.toptabs .side { padding: 0; border: 0; overflow: visible; }
+  .win.toptabs .side > :not(.side-head) { display: none; }
+  .win.toptabs .side-head { position: absolute; top: 0; left: 14px; z-index: 4; width: auto; padding: 0; }
+  .win.toptabs .sbt, .win.toptabs .toolbar [data-act="newtab"] { display: none; }
+  .win.toptabs .toolbar { padding-left: 84px; }
+  .win.toptabs .term { grid-row: 3; }
+  .win.toptabs .strip { grid-row: 4; }
+  .win.toptabs .insp, .win.toptabs .rail { grid-row: 3 / 5; }
+  .win.toptabs .drawer { top: 108px; }
+  .win.toptabs .overlay:not(.menu):not(.pop) { top: 122px; }
+  .win.toptabs .overlay:not(.menu):not(.pop), .win.toptabs .toast { left: calc((100% - 306px) / 2); }
+  .win.toptabs.noinsp .overlay:not(.menu):not(.pop), .win.toptabs.noinsp .toast { left: calc((100% - 46px) / 2); }
+  @media (max-width: 1100px) {
+    .win.toptabs .ttbar { grid-column: 2 / 4; }
+    .win.toptabs .overlay:not(.menu):not(.pop), .win.toptabs .toast { left: calc((100% - 46px) / 2); }
+    .win.toptabs.show-insp .insp { top: 108px; }
+  }
+  @media (max-width: 680px) {
+    .win.toptabs { grid-template-rows: 48px 56px minmax(0, 1fr) 34px; }
+    .win.toptabs .side { display: none; }
+    .win.toptabs .toolbar { padding-left: 10px; }
+    .win.toptabs .ttbar { grid-column: 1; }
+    .win.toptabs .ttab { width: 168px; }
+    .win.toptabs .ttab .x { display: none; }
+    .win.toptabs .overlay:not(.menu):not(.pop) { top: 116px; }
+    .win.toptabs .overlay:not(.menu):not(.pop), .win.toptabs .toast { left: 50%; }
+    .win.toptabs.show-insp .insp { top: 104px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .ttab.slide { transition: none; } }
+
+  /* the Show tabs switch under the window, as in Settings > General */
+  .layout { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px 14px; margin: 22px auto 0; font-size: 15px; color: var(--text2); }
+  .layout .seg2 { display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+  .layout button { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 7px; color: var(--text2); font-size: 15px; }
+  .layout button:hover { color: var(--text); }
+  .layout button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+  .layout button[aria-checked="true"] { background: var(--accent); color: #fff; font-weight: 600; }
+  .layout svg { width: 18px; height: 14px; flex: none; }
+  /* Phones already show the tabs as a row of avatars above the terminal, so
+     the switch would change little there. */
+  @media (max-width: 680px) { .layout, .try .wide { display: none; } }
 </style>
 <script data-goatcounter="https://xylem.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </head>
 <body>
+<div class="hdr">
 <header class="wrap top">
   <a class="brand" href="./" aria-label="Xylem home">
     <img src="assets/icon-192.png" width="28" height="28" alt="">
@@ -582,8 +689,10 @@
   <div class="topr">
     <nav aria-label="Page"><a href="#features">Features</a><a href="#install">Install</a><a href="#faq">Questions</a></nav>
     <a class="gh" href="https://github.com/t1nkl/xylem" data-goatcounter-click="github-top" data-goatcounter-title="GitHub (top)"><svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+    <a class="btn hdl" href="https://github.com/t1nkl/xylem/releases/latest" data-goatcounter-click="download-header" data-goatcounter-title="Download for Mac (header)" tabindex="-1" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v9m0 0 3.5-3.5M9 11 5.5 7.5M3 14.5h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Download</a>
   </div>
 </header>
+</div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -648,6 +757,13 @@
         <div class="pill icons"><button type="button" class="ib" data-act="insp" aria-label="Show or hide the right panel"><svg class="ico"><use href="#i-inspector"/></svg></button></div>
       </div>
 
+      <div class="ttbar">
+        <div class="ttabs" role="group" aria-label="Tabs"></div>
+        <button type="button" class="tbb" data-act="newtab" aria-label="New Tab" title="New Tab"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg></button>
+        <button type="button" class="tbb" data-act="overview" aria-label="All Sessions" title="All Sessions"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg></button>
+      </div>
+      <div class="tcard" aria-hidden="true"></div>
+
       <div class="term" tabindex="0" aria-live="polite" aria-label="Terminal"></div>
 
       <div class="strip">
@@ -708,7 +824,15 @@
       <button type="button" class="banner" data-act="banner"><img src="assets/icon-192.png" width="30" height="30" alt=""><span><b></b><small></small></span></button>
     </div>
 
-    <p class="try">Xylem runs the same <code>claude</code> you use in Terminal and leaves your Claude Code settings alone. Try it: the window above works. Switch tabs, answer Claude's question, open ⌘K, browse the project's files and changes from the icons on the right, or pick a feature below.</p>
+    <div class="layout" role="radiogroup" aria-label="Show tabs">
+      <span>Show tabs</span>
+      <span class="seg2">
+        <button type="button" role="radio" aria-checked="true" data-layout="side"><svg viewBox="0 0 18 14" aria-hidden="true"><rect x=".75" y=".75" width="16.5" height="12.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="2.5" y="2.5" width="4" height="9" rx="1" fill="currentColor"/></svg>In the sidebar</button>
+        <button type="button" role="radio" aria-checked="false" data-layout="top"><svg viewBox="0 0 18 14" aria-hidden="true"><rect x=".75" y=".75" width="16.5" height="12.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="2.5" y="2.5" width="13" height="3" rx="1" fill="currentColor"/></svg>Above the terminal</button>
+      </span>
+    </div>
+
+    <p class="try">Xylem runs the same <code>claude</code> you use in Terminal and leaves your Claude Code settings alone. Try it: the window above works. Switch tabs, answer Claude's question, open ⌘K, browse the project's files and changes from the icons on the right,<span class="wide"> put the tabs above the terminal,</span> or pick a feature below.</p>
     <h2 class="sr-only">Features</h2>
     <div class="tour" id="features">
       <button type="button" data-key="attention" aria-pressed="false"><span class="sym"><span class="r"></span></span><h3>See which tab needs you</h3><p>A yellow ring while Claude is working, a blue dot when it has finished, an orange mark when it needs your permission. The Dock badge and notifications point to the same tab.</p></button>
@@ -772,6 +896,10 @@
           <p>Macs with Apple silicon or Intel, on macOS 15 Sequoia or later. One download runs natively on both.</p>
         </details>
         <details>
+          <summary>Can the tabs go across the top, like in a browser?</summary>
+          <p>Yes. In Settings, General, choose Show tabs: Above the terminal. Each tab keeps its project mark, title and latest prompt, and you can drag tabs to reorder them. The sidebar stays the default, and switching keeps every session running.</p>
+        </details>
+        <details>
           <summary>Does it work with nvm, mise or a custom config folder?</summary>
           <p>Yes. Tabs start <code>claude</code> the same way your terminal does, so nvm, mise, Homebrew and your own <code>PATH</code> setup all work. A custom <code>CLAUDE_CONFIG_DIR</code> is picked up too.</p>
         </details>
@@ -818,6 +946,8 @@
   const sheet = $('.overlay.sheet'), menu = $('.overlay.menu'), overview = $('.overlay.overview');
   const toastEl = $('.toast'), banner = $('.banner');
   const rail = $('.rail'), drawer = $('.drawer');
+  const topList = $('.ttabs'), card = $('.tcard');
+  const isTop = () => win.classList.contains('toptabs');
   // Under 1100 px the panel slides in over the terminal instead of a column.
   const wideWin = matchMedia('(min-width: 1101px)');
   wideWin.addEventListener('change', () => railState());
@@ -957,7 +1087,141 @@
         <div><div class="t">${esc(t.name)}</div><div class="p${t.status === 'needs' ? ' warn' : ''}">${esc(line)}</div><div class="b">${where(t)}</div></div>
         <button type="button" class="x" data-close="${t.id}" aria-label="Close ${esc(t.name)}">${ico('plus', 'rot')}</button></div>`;
     }).join('') || '<div class="none">No tabs match.</div>';
+    renderTopTabs();
   }
+
+  // ---------- tabs above the terminal ----------
+  const stateOf = t => t.picker ? ['', 'Waiting for a folder'] : t.status === 'working' ? ['busy', 'Claude is working'] : t.status === 'needs' ? ['warn', 'Needs your permission'] : t.unseen ? ['done', 'Claude finished'] : ['', 'Idle'];
+  function renderTopTabs() {
+    if (!isTop() || drag) return; // a drag moves the nodes itself
+    topList.innerHTML = tabs.map(t => {
+      const on = t.id === activeId;
+      const [line, cls] = t.picker ? ['Pick a folder', ' none'] : t.status === 'needs' ? ['Needs your permission…', ' warn'] : t.prompt ? [t.prompt, ''] : ['No prompt yet', ' none'];
+      return `<div class="ttab${on ? ' on' : ''}${t.picker ? ' picker' : ''}" role="button" tabindex="0" data-tab="${t.id}" aria-pressed="${on}" aria-label="${esc(t.name)}, ${stateOf(t)[1].toLowerCase()}">
+        <div class="ava">${t.picker ? ico('folder') : esc((folder(t.path).replace(/^\./, '')[0] || '?').toUpperCase())}${mark(t)}</div>
+        <div class="txt"><div class="tt"><span>${esc(t.name)}</span><button type="button" class="x" data-close="${t.id}" aria-label="Close ${esc(t.name)}">${ico('plus', 'rot')}</button></div><div class="tp${cls}">${esc(line)}</div></div></div>`;
+    }).join('');
+    if (cardTab) showCard(cardTab, true);
+  }
+  // The active tab scrolls into view (⌘T, a click in the palette, a new worktree tab).
+  function revealActive() {
+    if (!isTop()) return;
+    const el = topList.querySelector('.ttab.on');
+    if (!el) return;
+    const l = el.offsetLeft - topList.offsetLeft, r = l + el.offsetWidth;
+    if (l < topList.scrollLeft) topList.scrollLeft = l - 6;
+    else if (r > topList.scrollLeft + topList.clientWidth) topList.scrollLeft = r - topList.clientWidth + 6;
+  }
+  // The hover card: after 0.7 s on a tab, gone on a click, a scroll or leaving.
+  let cardTimer = 0, cardTab = null;
+  function showCard(id, refresh) {
+    const t = tabs.find(x => x.id === id), el = topList.querySelector(`[data-tab="${id}"]`);
+    if (!t || !el) { hideCard(); return; }
+    cardTab = id;
+    const [cls, st] = stateOf(t);
+    card.innerHTML = `<b>${esc(t.name)}</b><span class="st ${cls}">${st}</span>` +
+      (t.picker ? '' : `<p>${esc(t.prompt || 'No prompt yet')}</p>`) +
+      (t.branch ? `<small>${ico('branch')}${esc(t.branch)}</small>` : '') + `<small>${esc(t.path)}</small>`;
+    if (refresh && !card.classList.contains('show')) return;
+    const w = win.getBoundingClientRect(), r = el.getBoundingClientRect();
+    card.style.left = Math.max(8, Math.min(r.left - w.left, w.width - 278)) + 'px';
+    card.style.top = (r.bottom - w.top + 8) + 'px';
+    card.classList.add('show');
+  }
+  function hideCard() { clearTimeout(cardTimer); cardTab = null; card.classList.remove('show'); }
+  topList.addEventListener('pointerover', e => {
+    if (e.pointerType !== 'mouse' || drag) return;
+    const el = e.target.closest('.ttab');
+    const id = el ? +el.dataset.tab : null;
+    if (id === cardTab || (id && id === +card.dataset.wait)) return;
+    hideCard();
+    if (!id) return;
+    card.dataset.wait = id;
+    cardTimer = setTimeout(() => { card.dataset.wait = ''; showCard(id); }, reduce ? 0 : 700);
+  });
+  topList.addEventListener('pointerleave', () => { card.dataset.wait = ''; hideCard(); });
+  topList.addEventListener('scroll', hideCard, { passive: true });
+  // A mouse's vertical wheel scrolls the row sideways while there is room;
+  // at either end the page scrolls as usual.
+  topList.addEventListener('wheel', e => {
+    if (e.ctrlKey || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    const max = topList.scrollWidth - topList.clientWidth;
+    if (max <= 0 || (e.deltaY < 0 && topList.scrollLeft <= 0) || (e.deltaY > 0 && topList.scrollLeft >= max - 1)) return;
+    e.preventDefault();
+    topList.scrollLeft += e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+  }, { passive: false });
+  topList.addEventListener('keydown', e => {
+    const row = e.target.closest('[data-tab]');
+    if (row && (e.key === 'Enter' || e.key === ' ') && e.target === row) { e.preventDefault(); select(+row.dataset.tab); }
+  });
+  // Drag to reorder (mouse): one step per neighbour crossed, as in the app;
+  // the neighbour slides into the freed slot. Touch scrolls the row instead.
+  let drag = null, noClickUntil = 0;
+  win.addEventListener('click', e => { if (performance.now() < noClickUntil) { e.stopPropagation(); e.preventDefault(); } }, true);
+  const SLOT = () => (topList.querySelector('.ttab')?.offsetWidth || 200) + 6;
+  topList.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button !== 0 || e.target.closest('.x')) return;
+    const el = e.target.closest('.ttab');
+    if (!el) return;
+    drag = { el, id: +el.dataset.tab, x0: e.clientX, used: 0, moved: false, pid: e.pointerId };
+    hideCard();
+  });
+  topList.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.pid) return;
+    const dx = e.clientX - drag.x0;
+    if (!drag.moved) {
+      if (Math.abs(dx) < 5) return;
+      drag.moved = true;
+      drag.el.classList.add('drag');
+      try { topList.setPointerCapture(drag.pid); } catch {}
+    }
+    const slot = SLOT();
+    for (;;) {
+      const off = dx - drag.used, step = off > slot / 2 ? 1 : off < -slot / 2 ? -1 : 0;
+      if (!step) break;
+      const i = tabs.findIndex(t => t.id === drag.id), j = i + step;
+      if (i < 0 || j < 0 || j >= tabs.length) break;
+      [tabs[i], tabs[j]] = [tabs[j], tabs[i]];
+      const other = topList.querySelector(`[data-tab="${tabs[i].id}"]`);
+      if (step > 0) other.after(drag.el); else other.before(drag.el);
+      drag.used += step * slot;
+      // FLIP: the neighbour starts where it was and slides into place.
+      other.classList.remove('slide');
+      other.style.transform = `translateX(${step * slot}px)`;
+      other.getBoundingClientRect();
+      other.classList.add('slide');
+      other.style.transform = '';
+    }
+    drag.el.style.transform = `translateX(${dx - drag.used}px)`;
+  });
+  function endDrag() {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (!d.moved) return;
+    d.el.classList.remove('drag');
+    d.el.classList.add('slide');
+    d.el.style.transform = '';
+    // The click that ends a drag must not also select the tab.
+    noClickUntil = performance.now() + 100;
+    setTimeout(() => { renderTabs(); }, reduce ? 0 : 200);
+  }
+  topList.addEventListener('pointerup', endDrag);
+  topList.addEventListener('pointercancel', endDrag);
+  topList.addEventListener('lostpointercapture', endDrag);
+
+  // The Show tabs switch: the window keeps every tab and session, as in the app.
+  const layoutBtns = [...document.querySelectorAll('.layout [data-layout]')];
+  function setLayout(top) {
+    if (top === isTop()) return;
+    hideCard();
+    closeOverlays();
+    win.classList.toggle('toptabs', top);
+    layoutBtns.forEach(b => b.setAttribute('aria-checked', String((b.dataset.layout === 'top') === top)));
+    renderTabs();
+    fitStrip();
+    revealActive();
+  }
+  layoutBtns.forEach(b => b.addEventListener('click', () => setLayout(b.dataset.layout === 'top')));
 
   const folderIcon = c => `<span class="pk-f" style="background:${c}2E;color:${c}"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M1.5 3.5A1.5 1.5 0 0 1 3 2h3.2l1.6 1.6H13A1.5 1.5 0 0 1 14.5 5v7A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12z" fill="currentColor"/></svg></span>`;
   const pickerHTML = () => `<div class="pk-hero"><span class="pk-icon"><svg width="24" height="24" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3" fill="currentColor"/><path d="M6.5 9.5l3 2.5-3 2.5M11.5 15h5" fill="none" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Pick a project folder to spin up Claude Code.</span></div>
@@ -1341,6 +1605,7 @@ export function useAuth() {
     t.unseen = false; // opening a tab clears its "finished" dot, as in the app
     closeOverlays();
     renderAll();
+    revealActive();
   }
   function addTab(t) {
     if (tabs.length >= 8) { toast('This demo keeps eight tabs'); return null; }
@@ -1646,6 +1911,11 @@ export function useAuth() {
     }
     if (key === 'keys') { win.classList.add('focusing'); $('.overlay.keys').classList.add('show'); return; }
     win.classList.add('focusing');
+    if ((key === 'tabs' || key === 'attention') && isTop()) {
+      $('.ttbar').classList.add('hl');
+      if (key === 'attention') win.classList.add('focus-attention');
+      return;
+    }
     if ((key === 'tabs' || key === 'attention') && win.classList.contains('noside')) setSide(false);
     if (key === 'prompts') { palette.classList.add('show'); palField.value = 'retry'; palSel = 0; renderPalette(); return; }
     if (key === 'panel' && ui.drawer) closeDrawer(true);
@@ -1655,8 +1925,8 @@ export function useAuth() {
     }
     if (key === 'branch') {
       win.classList.add('focus-branch');
-      if (phone.matches) {
-        // Phones hide the tab rows' branch line: show the active tab's in the title.
+      if (phone.matches || isTop()) {
+        // Phones and the top tabs have no branch line: show the active tab's in the title.
         const t = active();
         if (t.branch) path.textContent = '⎇ ' + t.branch;
         const w = $('.wtitle'); w.classList.add('hl'); w.parentElement.classList.add('hl-parent');
@@ -1683,6 +1953,27 @@ export function useAuth() {
     b.addEventListener('blur', () => focus(pinned));
     b.addEventListener('click', () => { pinned = pinned === b.dataset.key ? null : b.dataset.key; focus(pinned); });
   });
+})();
+</script>
+<script>
+// The sticky header gets its backing once the page leaves the very top:
+// a 1 px marker at the top of the page tells when, with no scroll handler.
+(() => {
+  const hdr = document.querySelector('.hdr');
+  const marker = document.createElement('div');
+  marker.setAttribute('aria-hidden', 'true');
+  marker.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:4px;pointer-events:none';
+  document.body.prepend(marker);
+  new IntersectionObserver(([e]) => hdr.classList.toggle('stuck', !e.isIntersecting)).observe(marker);
+  // The header's Download shows while the headline's button is out of sight
+  // (scrolled past, or hidden under the header itself).
+  const hero = document.querySelector('.hero .btn'), dl = hdr.querySelector('.hdl');
+  new IntersectionObserver(([e]) => {
+    const show = !e.isIntersecting;
+    hdr.classList.toggle('dl', show);
+    dl.tabIndex = show ? 0 : -1;
+    show ? dl.removeAttribute('aria-hidden') : dl.setAttribute('aria-hidden', 'true');
+  }, { rootMargin: '-60px 0px 0px 0px' }).observe(hero);
 })();
 </script>
 <script>
