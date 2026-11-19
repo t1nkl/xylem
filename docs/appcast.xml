@@ -7,6 +7,21 @@
     <language>en</language>
     <!-- items: newest first -->
     <item>
+      <title>v1.2.7</title>
+      <pubDate>Thu, 19 Nov 2026 17:41:33 GMT</pubDate>
+      <sparkle:version>26</sparkle:version>
+      <sparkle:shortVersionString>1.2.7</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### New
+- **How usage is counted.** The "?" next to the Usage Dashboard's title explains where the numbers come from, why cost is an estimate at API list prices, how tokens, subagents, sessions and date ranges are counted, and how the numbers update.
+
+### Fixed
+- On macOS 26 and later, the Usage button no longer merges into the context and model capsule in the toolbar, and the gaps between the toolbar capsules are even.
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.2.7/Xylem-v1.2.7.dmg" type="application/octet-stream" sparkle:edSignature="EW+DpByrHaLK24zQWVD1RAQrjcUfkCI1UA9kb6XTP+IYEVMqVqjq6wg6gP54hlv1OgNxiSBxWLL4EKpsBXiZDA==" length="10218412"/>
+    </item>
+    <item>
       <title>v1.2.6</title>
       <pubDate>Wed, 18 Nov 2026 23:41:57 GMT</pubDate>
       <sparkle:version>25</sparkle:version>
