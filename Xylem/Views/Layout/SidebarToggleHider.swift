@@ -3,7 +3,8 @@
 //  Xylem
 //
 //  Hides the split view's sidebar button while the tabs are on top (there
-//  is no sidebar to show then). SwiftUI's `.toolbar(removing: .sidebarToggle)`
+//  is no sidebar to show then), and keeps the hidden column shut (see
+//  `watchSplitView()`). SwiftUI's `.toolbar(removing: .sidebarToggle)`
 //  leaves the button in place in this window wherever it is applied (the
 //  split view, its sidebar or its detail), so the window's
 //  NSToolbarItem is hidden directly. The item is matched by identifier;
@@ -68,6 +69,59 @@ struct SidebarToggleHider: NSViewRepresentable {
             for item in toolbar?.items ?? [] where Self.isSidebarToggle(item) {
                 Self.setHidden(item, hidesToggle)
             }
+            watchSplitView()
+        }
+
+        private var splitObserver: NSObjectProtocol?
+        private weak var observedSplit: NSSplitView?
+
+        /// A collapsed sidebar column can come back without the split view's
+        /// visibility asking for it: in full screen AppKit slides it in over
+        /// the content when the pointer touches the screen's left edge, or on
+        /// a drag from there (seen on macOS 15; the visibility changes only
+        /// after that slide, so the column showed fully before it snapped
+        /// back). While the tabs are on top the collapsed column is marked as
+        /// not collapsible, which turns that off; it is collapsible again
+        /// before the sidebar comes back. Checked on every update and every
+        /// resize of the split view, so it also holds once the column has
+        /// collapsed (a launch with the tabs on top).
+        private func watchSplitView() {
+            guard let split = enclosingSplitView() else { return }
+            pinSidebar(in: split)
+            guard split !== observedSplit else { return }
+            if let splitObserver { NotificationCenter.default.removeObserver(splitObserver) }
+            observedSplit = split
+            splitObserver = NotificationCenter.default.addObserver(
+                forName: NSSplitView.didResizeSubviewsNotification, object: split, queue: nil
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, let split = self.observedSplit else { return }
+                    self.pinSidebar(in: split)
+                }
+            }
+        }
+
+        private func pinSidebar(in split: NSSplitView) {
+            guard let item = (split.delegate as? NSSplitViewController)?
+                .splitViewItems.first(where: { $0.behavior == .sidebar })
+            else { return }
+            if hidesToggle {
+                if item.isCollapsed, item.canCollapse { item.canCollapse = false }
+            } else if !item.canCollapse {
+                item.canCollapse = true
+            }
+        }
+
+        private func enclosingSplitView() -> NSSplitView? {
+            var view = superview
+            while let current = view {
+                if let split = current as? NSSplitView, split.isVertical,
+                   split.delegate is NSSplitViewController {
+                    return split
+                }
+                view = current.superview
+            }
+            return nil
         }
 
         /// `isHidden` hides the item on macOS 26 and later; macOS 15 keeps
@@ -84,6 +138,7 @@ struct SidebarToggleHider: NSViewRepresentable {
 
         deinit {
             if let observer { NotificationCenter.default.removeObserver(observer) }
+            if let splitObserver { NotificationCenter.default.removeObserver(splitObserver) }
         }
     }
 }
