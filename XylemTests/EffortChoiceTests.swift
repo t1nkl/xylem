@@ -87,9 +87,9 @@ struct EffortChoiceTests {
         """
         #expect(EffortPicker.isOpen(onScreen: open))
         #expect(EffortPicker.sessionOnlyKey(onScreen: open) == "s")
-        // Once the session has a level of its own, Enter is "this session".
-        let again = "  low  medium  high  xhigh  max\n  ←/→ to adjust · Enter to use this session only · Esc to cancel"
-        #expect(EffortPicker.sessionOnlyKey(onScreen: again) == "\r")
+        // On the last stop Enter is "this session only".
+        let atMax = "  low  medium  high  xhigh  max\n  ←/→ to adjust · Enter to use this session only · Esc to cancel"
+        #expect(EffortPicker.sessionOnlyKey(onScreen: atMax) == "\r")
         #expect(EffortPicker.sessionOnlyKey(onScreen: "←/→ to adjust · Enter to save · Esc to cancel") == nil)
         #expect(!EffortPicker.isOpen(onScreen: "❯ /effort\n  ⎿  Set effort level to low (this session only): Quick"))
     }
@@ -113,37 +113,5 @@ struct EffortChoiceTests {
         """
         #expect(EffortPicker.confirmations(onScreen: screen) == ["low", "max"])
         #expect(EffortPicker.confirmations(onScreen: "nothing here").isEmpty)
-    }
-
-    @Test func stashedDraftIsSeenUnderThePrompt() {
-        let stashed = "● Done.\n────\n❯ \n────\n  ◐ medium · /effort · draft stashed\n"
-        #expect(ClaudePromptDraft.isStashed(onScreen: stashed))
-        #expect(ClaudePromptDraft.isStashed(onScreen: "────\n❯\n────\n· draft\nstashed"))
-        // In the conversation above the prompt, or on no prompt at all.
-        #expect(!ClaudePromptDraft.isStashed(onScreen: "● The draft stashed earlier is gone.\n────\n❯ my draft\n────\n  draft restored"))
-        // A dialog's list under the prompt: its "❯" row is not the prompt.
-        #expect(ClaudePromptDraft.isStashed(onScreen: "────\n❯ \n────\n· draft stashed\n  Allow?\n  ❯ 1. Yes\n    2. No"))
-        #expect(!ClaudePromptDraft.isStashed(onScreen: "draft stashed"))
-    }
-
-    @Test func claudeIsToldApartFromOtherForegroundPrograms() {
-        #expect(TerminalSession.isClaude("2.1.328"))
-        #expect(TerminalSession.isClaude("claude"))
-        #expect(TerminalSession.isClaude("node"))
-        #expect(!TerminalSession.isClaude("nano"))
-        #expect(!TerminalSession.isClaude("-zsh"))
-        #expect(!TerminalSession.isClaude(nil))
-    }
-
-    @Test func draftIsTextAfterThePromptMarkThatIsNotDim() {
-        func cells(_ text: String, dim: Bool) -> [(text: String, dim: Bool)] { text.map { (String($0), dim) } }
-        #expect(ClaudePromptDraft.hasDraft(promptCells: cells("❯ ", dim: false) + cells("my draft", dim: false)))
-        // The empty prompt's hint, and an empty prompt.
-        #expect(!ClaudePromptDraft.hasDraft(promptCells: cells("❯\u{00A0}", dim: false) + cells("Try \"how do I log an error?\"", dim: true)))
-        #expect(!ClaudePromptDraft.hasDraft(promptCells: cells("❯   ", dim: false)))
-        #expect(!ClaudePromptDraft.hasDraft(promptCells: cells("no prompt mark", dim: false)))
-        #expect(ClaudePromptDraft.promptRowIndex(["● hi", "────", "❯ x", "────", "  ❯ 1. Yes", "    2. No"]) == 2)
-        #expect(ClaudePromptDraft.promptRowIndex(["────", "❯ first line", "  second line", "────"]) == 1)
-        #expect(ClaudePromptDraft.promptRowIndex(["❯ no box"]) == nil)
     }
 }

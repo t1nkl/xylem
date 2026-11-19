@@ -171,16 +171,6 @@ final class TerminalSession: Identifiable {
     /// at the trust question has no hook events to expect).
     var shellIsInForeground: Bool { Self.isShell(foregroundProcessName) }
 
-    /// Claude Code itself is the terminal's foreground program: its native
-    /// build's process is named by its version ("2.1.328"), an npm install's
-    /// is "node" or "claude".
-    var claudeIsInForeground: Bool { Self.isClaude(foregroundProcessName) }
-
-    nonisolated static func isClaude(_ name: String?) -> Bool {
-        guard let name else { return false }
-        return name == "claude" || name == "node" || name.wholeMatch(of: /\d+\.\d+\.\d+/) != nil
-    }
-
     /// Process group in the terminal's foreground (claude, or the shell at
     /// its prompt); nil when not started or closed.
     var foregroundProcessGroup: pid_t? {
@@ -287,27 +277,10 @@ final class TerminalSession: Identifiable {
         send(text: command + "\r")
     }
 
-    /// The live screen's rows, top to bottom, with their cells' attributes.
-    func visibleRows() -> [TerminalContentRowSnapshot] {
-        terminalView.terminalContentSnapshot(region: .history(maximumScrollbackRows: -1))?.rows ?? []
-    }
-
     /// The live screen's rows as text, top to bottom (no attributes).
     func visibleText() -> String {
-        visibleRows().map(\.text).joined(separator: "\n")
-    }
-
-    /// Polls the screen every 50 ms; the screen text once `found` holds, nil
-    /// after `timeout` or when the task is cancelled.
-    func waitForScreen(timeout: TimeInterval, _ found: (String) -> Bool) async -> String? {
-        let end = Date().addingTimeInterval(timeout)
-        while !Task.isCancelled {
-            let screen = visibleText()
-            if found(screen) { return screen }
-            guard Date() < end else { return nil }
-            try? await Task.sleep(for: .milliseconds(50))
-        }
-        return nil
+        guard let snapshot = terminalView.terminalContentSnapshot(region: .history(maximumScrollbackRows: -1)) else { return "" }
+        return snapshot.rows.map(\.text).joined(separator: "\n")
     }
 
     // MARK: - Find in scrollback

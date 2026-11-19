@@ -106,7 +106,7 @@ private struct CompatibilityJudge {
         }
         // The capture is the raw stream, which redraws only the changed
         // letters ("Enertousethisessiononly"): a loose match.
-        if let atMax = manifest["effortPickerAtMax"].map({ ScreenText.flattened($0 as? String ?? "") }),
+        if let atMax = manifest["effortPickerAtMax"].map({ EffortPicker.flattened($0 as? String ?? "") }),
            !(atMax.contains("tousethis") && atMax.contains("essiononly") && !atMax.contains("entertosave")) {
             fail("tui.effortPicker", feature: feature,
                  "on the last stop the /effort picker no longer says \"Enter to use this session only\": Max would fail with a beep")

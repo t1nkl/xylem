@@ -17,7 +17,7 @@
 //  `/effort <level>` typed with an argument would also save the level as
 //  the default for new sessions of that model
 //  (`modelSettings.<model>.effortLevel` in ~/.claude/settings.json); the
-//  picker's "s" keeps it to the session. "auto" has no place on the picker's
+//  picker's "this session only" key keeps it to the session. "auto" has no place on the picker's
 //  slider, so the menu doesn't offer it.
 //
 
@@ -63,7 +63,7 @@ nonisolated enum EffortPicker {
     /// The key the picker on screen names for "this session only"; nil when
     /// no picker is open. Never the Enter that saves a default.
     static func sessionOnlyKey(onScreen screen: String) -> String? {
-        let text = ScreenText.flattened(screen)
+        let text = flattened(screen)
         guard text.contains("esctocancel") else { return nil }
         if text.contains("entertousethissessiononly") { return enter }
         if text.contains("stousethissessiononly") { return sessionKey }
@@ -77,7 +77,7 @@ nonisolated enum EffortPicker {
     /// The levels of the "this session only" confirmations on screen, top
     /// to bottom.
     static func confirmations(onScreen screen: String) -> [String] {
-        ScreenText.flattened(screen).matches(of: /seteffortlevelto([a-z]+)\(thissessiononly\)/).map { String($0.1) }
+        flattened(screen).matches(of: /seteffortlevelto([a-z]+)\(thissessiononly\)/).map { String($0.1) }
     }
 
     /// The slider's stops, left to right, from its label row ("low medium
@@ -85,8 +85,15 @@ nonisolated enum EffortPicker {
     /// whitespace gone, so a row split or padded by the terminal still
     /// matches. Nil when no such row is on screen.
     static func stops(onScreen screen: String) -> [String]? {
-        let row = ScreenText.flattened(screen).firstMatch(of: /lowmedium(high)?(xhigh)?(max)?/)
+        let row = flattened(screen).firstMatch(of: /lowmedium(high)?(xhigh)?(max)?/)
         guard let row else { return nil }
         return ["low", "medium"] + [row.1, row.2, row.3].compactMap { $0.map(String.init) }
+    }
+
+    /// Lowercased, whitespace gone.
+    static func flattened(_ screen: String) -> String {
+        String(screen.lowercased().unicodeScalars
+            .filter { !CharacterSet.whitespacesAndNewlines.contains($0) }
+            .map(Character.init))
     }
 }

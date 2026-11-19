@@ -32,8 +32,6 @@ final class AppModel {
     let tabActivity: TabActivityViewModel
     let agentTeams: AgentTeamsStore
     let modelSwitcher: ModelSwitchController
-    /// Commands typed into Claude's prompt, one after another per tab.
-    let promptInput: ClaudePromptInput
     let claudeStatus: ClaudeStatusViewModel
     let attentionNotifier: AttentionNotifier
     let claudeStates: ClaudeTabStateTracker
@@ -67,8 +65,7 @@ final class AppModel {
         self.sessionStats = SessionStatsViewModel()
         self.tabActivity = TabActivityViewModel()
         self.agentTeams = AgentTeamsStore()
-        self.promptInput = ClaudePromptInput()
-        self.modelSwitcher = ModelSwitchController(input: promptInput)
+        self.modelSwitcher = ModelSwitchController()
         self.claudeStatus = ClaudeStatusViewModel()
         let notifier = AttentionNotifier()
         self.attentionNotifier = notifier
@@ -238,12 +235,8 @@ final class AppModel {
         selectTab(tabs.openDirectory(path).id)
     }
 
-    /// Types a command into the active session and presses Return, with
-    /// the user's draft in Claude's prompt put away first (it comes back
-    /// after the command).
     func runInActiveSession(_ command: String) {
-        guard let session = activeSession else { return }
-        promptInput.run(command, in: session)
+        activeSession?.runCommand(command)
     }
 
     /// Types `/goal ` into Claude's prompt WITHOUT Enter: the command needs
@@ -251,11 +244,9 @@ final class AppModel {
     /// to the terminal so typing can continue right away.
     func startGoal() {
         guard let session = activeSession else { return }
-        // A draft is put away; Claude brings it back once the goal is sent.
-        promptInput.type("/goal ", in: session) {
-            let view = session.terminalView
-            view.window?.makeFirstResponder(view)
-        }
+        session.send(text: "/goal ")
+        let view = session.terminalView
+        view.window?.makeFirstResponder(view)
     }
 
     func copySelection() {
@@ -307,8 +298,8 @@ final class AppModel {
     /// Runs a skill's install command in the active tab, or copies it when
     /// no session is open.
     func installSkill(_ skill: MarketplaceSkill) {
-        if activeSession != nil {
-            runInActiveSession(skill.installCommand)
+        if let session = activeSession {
+            session.runCommand(skill.installCommand)
         } else {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(skill.installCommand, forType: .string)

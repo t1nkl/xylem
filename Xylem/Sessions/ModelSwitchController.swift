@@ -50,49 +50,41 @@ final class ModelSwitchController {
 
     private(set) var picks: [UUID: Pick] = [:]
     private(set) var effortPicks: [UUID: EffortPick] = [:]
-    @ObservationIgnored private let input: ClaudePromptInput
 
-    init(input: ClaudePromptInput) {
-        self.input = input
-    }
-
-    /// Types `/model <alias>` into the session, with the user's draft put
-    /// away first (ClaudePromptInput). Claude Code queues it if a reply is
-    /// still streaming.
+    /// Types `/model <alias>` into the session. Claude Code queues it if a
+    /// reply is still streaming.
     func switchModel(of session: TerminalSession, to choice: ClaudeModelChoice) {
+        session.runCommand(choice.command)
         picks[session.id] = Pick(choice: choice, at: Date())
-        input.run(choice.command, in: session)
     }
 
     /// Sets the effort of this session only, through Claude Code's `/effort`
     /// picker: `/effort <level>` typed with an argument also saves the level
-    /// as the model's default for new sessions, the picker's "s" does not
-    /// (Claude Code 2.1.329). The picker is a slider over the levels the
-    /// model has, read off the screen: left until it stops at the first,
-    /// right to the pick, then the key the picker names there for "this
-    /// session only": "s", or Enter on the last stop (max), where Enter means
-    /// that rather than "save" (2.1.329). Keys go out only while the picker is on
+    /// as the model's default for new sessions, the picker's "this session
+    /// only" key does not (Claude Code 2.1.329). The picker is a slider over
+    /// the levels the model has, read off the screen: left until it stops at
+    /// the first, right to the pick, then the key the picker names there for
+    /// "this session only" (EffortPicker). Keys go out only while the picker is on
     /// screen; a picker already open is closed with Esc first (its Enter
-    /// would save a default), and the user's draft is put away
-    /// (ClaudePromptDraft). Runs after the tab's earlier commands
-    /// (ClaudePromptInput), so a Compact pressed meanwhile can't land in the
-    /// picker. The confirmation Claude Code prints replaces the pick.
+    /// would save a default). The confirmation Claude Code prints replaces
+    /// the pick.
     func switchEffort(of session: TerminalSession, to choice: ClaudeEffortChoice) {
         // Claude has exited: `/effort` would go to the shell as a command.
         guard !session.shellIsInForeground else { NSSound.beep(); return }
-        let pick = EffortPick(choice: choice, at: Date())
-        effortPicks[session.id] = pick
-        input.enqueue(session) { [weak self] in
+        effortTasks[session.id]?.cancel()
+        effortPicks[session.id] = EffortPick(choice: choice, at: Date())
+        effortTasks[session.id] = Task { [weak self] in
             let succeeded = await Self.runEffortPicker(in: session, to: choice) { confirmed in
-                guard self?.effortPicks[session.id] == pick else { return }
-                self?.effortPicks[session.id] = EffortPick(choice: confirmed, at: pick.at)
+                self?.effortPicks[session.id] = EffortPick(choice: confirmed, at: Date())
             }
-            // A later pick owns the label now.
-            guard !succeeded, self?.effortPicks[session.id] == pick else { return }
+            // A newer pick cancelled this one and owns the state now.
+            guard !Task.isCancelled, !succeeded else { return }
             self?.effortPicks[session.id] = nil
             NSSound.beep()
         }
     }
+
+    @ObservationIgnored private var effortTasks: [UUID: Task<Void, Never>] = [:]
 
     /// The key sequence of `switchEffort`. False when the picker never came
     /// up or the model has no such level (nothing set).
@@ -100,12 +92,11 @@ final class ModelSwitchController {
                                         confirmed: (ClaudeEffortChoice) -> Void) async -> Bool {
         if EffortPicker.isOpen(onScreen: session.visibleText()) {
             session.send(text: EffortPicker.cancel)
-            let closed = await session.waitForScreen(timeout: 2) { !EffortPicker.isOpen(onScreen: $0) }
+            let closed = await waitFor(session, timeout: 2) { !EffortPicker.isOpen(onScreen: $0) }
             guard closed != nil else { return false }
         }
-        await ClaudePromptDraft.stash(in: session)
         session.send(text: "/effort\r")
-        guard let open = await session.waitForScreen(timeout: 3, { EffortPicker.isOpen(onScreen: $0) }) else { return false }
+        guard let open = await waitFor(session, timeout: 3, { EffortPicker.isOpen(onScreen: $0) }) else { return false }
         let stops = EffortPicker.stops(onScreen: open) ?? ClaudeEffortChoice.levels.map(\.level)
         guard let index = stops.firstIndex(of: choice.level) else {
             session.send(text: EffortPicker.cancel)
@@ -118,13 +109,13 @@ final class ModelSwitchController {
         // means "this session only" on the last stop only, and "save as the
         // default" everywhere else, so Enter goes out only for the last stop.
         let key = index == stops.count - 1 ? EffortPicker.enter : EffortPicker.sessionKey
-        guard await session.waitForScreen(timeout: 1.5, { EffortPicker.sessionOnlyKey(onScreen: $0) == key }) != nil else {
+        guard await waitFor(session, timeout: 1.5, { EffortPicker.sessionOnlyKey(onScreen: $0) == key }) != nil else {
             session.send(text: EffortPicker.cancel)
             return false
         }
         session.send(text: key)
         // A new confirmation below the earlier ones is this pick's answer.
-        if let screen = await session.waitForScreen(timeout: 3, {
+        if let screen = await waitFor(session, timeout: 3, {
                !EffortPicker.isOpen(onScreen: $0) && EffortPicker.confirmations(onScreen: $0).count > earlier
            }),
            let level = EffortPicker.confirmations(onScreen: screen).last,
@@ -132,6 +123,18 @@ final class ModelSwitchController {
             confirmed(answer)
         }
         return true
+    }
+
+    /// Polls the screen every 100 ms; the screen text once `found` holds.
+    private static func waitFor(_ session: TerminalSession, timeout: TimeInterval,
+                                _ found: (String) -> Bool) async -> String? {
+        let end = Date().addingTimeInterval(timeout)
+        while Date() < end, !Task.isCancelled {
+            let screen = session.visibleText()
+            if found(screen) { return screen }
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        return nil
     }
 
     /// The effort to show for a session: the pick until a reply to a prompt
@@ -170,4 +173,3 @@ final class ModelSwitchController {
         return true
     }
 }
-
