@@ -59,31 +59,44 @@ struct WindowToolbar: ToolbarContent {
                 ClaudeStatusBadge(status: status)
             }
         }
-        // Usage and the panel toggle are two separate capsules (design
-        // choice, 2026-11-16). The system merges neighbouring icon buttons
-        // into one glass capsule, and ToolbarSpacer(.fixed) was ignored here
-        // (no gap, in any placement). Hiding the shared background puts the
-        // panel toggle in its own grouping (Apple's docs); it draws its own
-        // capsule instead.
+        // Usage and the panel toggle are separate capsules. The system
+        // merges neighbouring items into one glass capsule (Usage joins the
+        // context and model one when no status badge sits between them),
+        // and ToolbarSpacer(.fixed) adds no gap here in any placement.
+        // Hiding the shared background puts an item in its own grouping
+        // (Apple's docs); it draws its own capsule instead.
         ToolbarItem(placement: .primaryAction) {
-            Button(action: onOpenUsage) {
-                Label("Usage", systemImage: "chart.bar")
-            }
-            .help("Usage Dashboard (⌘U)")
+            ToolbarIconCapsule(title: "Usage", systemImage: "chart.bar", action: onOpenUsage)
+                .help("Usage Dashboard (⌘U)")
         }
+        .sharedBackgroundHiddenIfAvailable()
         ToolbarItem(placement: .primaryAction) {
-            Button { showsInspector.toggle() } label: {
-                Label("Inspector", systemImage: "sidebar.right")
-                    .labelStyle(.iconOnly)
-                    // The system capsules' height (24 pt); 30 stood out.
-                    .frame(width: 36, height: UpdateReadyBadge.height)
-                    .contentShape(.capsule)
+            ToolbarIconCapsule(title: "Inspector", systemImage: "sidebar.right") {
+                showsInspector.toggle()
             }
-            .buttonStyle(.plain)
-            .modifier(PanelToggleGlass())
             .help(showsInspector ? "Hide the Claude / Git panel" : "Show the Claude / Git panel")
         }
         .sharedBackgroundHiddenIfAvailable()
+    }
+}
+
+/// An icon-only toolbar button in its own glass capsule (Usage, the panel
+/// toggle), for items whose shared background is hidden.
+private struct ToolbarIconCapsule: View {
+    let title: String
+    let systemImage: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .labelStyle(.iconOnly)
+                // The system capsules' height (24 pt); 30 stood out.
+                .frame(width: 36, height: UpdateReadyBadge.height)
+                .contentShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .modifier(PanelToggleGlass())
     }
 }
 
