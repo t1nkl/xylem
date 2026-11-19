@@ -66,9 +66,12 @@ struct UsageDashboardView: View {
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Usage Dashboard")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                HStack(alignment: .center, spacing: 8) {
+                    Text("Usage Dashboard")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                    UsageHelpButton()
+                }
                 subtitle
                     .font(.system(size: 11))
                     .foregroundStyle(AppTheme.Colors.textSecondary)
