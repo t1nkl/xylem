@@ -2,6 +2,7 @@
 
 Thanks for wanting to help. Bug reports, ideas and pull requests are all
 welcome.
+Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Reporting a bug
 
