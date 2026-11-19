@@ -110,9 +110,21 @@ struct EffortChoiceTests {
         #expect(EffortPicker.confirmations(onScreen: "nothing here").isEmpty)
     }
 
-    @Test func stashedDraftIsSeenOnScreen() {
-        #expect(ClaudePromptDraft.isStashed(onScreen: "  ◐ medium · /effort · draft stashed\n"))
-        #expect(ClaudePromptDraft.isStashed(onScreen: "· draft\nstashed"))
-        #expect(!ClaudePromptDraft.isStashed(onScreen: "❯ my draft\n  draft restored"))
+    @Test func stashedDraftIsSeenUnderThePrompt() {
+        let stashed = "● Done.\n────\n❯ \n────\n  ◐ medium · /effort · draft stashed\n"
+        #expect(ClaudePromptDraft.isStashed(onScreen: stashed))
+        #expect(ClaudePromptDraft.isStashed(onScreen: "❯\n· draft\nstashed"))
+        // In the conversation above the prompt, or on no prompt at all.
+        #expect(!ClaudePromptDraft.isStashed(onScreen: "● The draft stashed earlier is gone.\n❯ my draft\n  draft restored"))
+        #expect(!ClaudePromptDraft.isStashed(onScreen: "draft stashed"))
+    }
+
+    @Test func claudeIsToldApartFromOtherForegroundPrograms() {
+        #expect(TerminalSession.isClaude("2.1.328"))
+        #expect(TerminalSession.isClaude("claude"))
+        #expect(TerminalSession.isClaude("node"))
+        #expect(!TerminalSession.isClaude("nano"))
+        #expect(!TerminalSession.isClaude("-zsh"))
+        #expect(!TerminalSession.isClaude(nil))
     }
 }

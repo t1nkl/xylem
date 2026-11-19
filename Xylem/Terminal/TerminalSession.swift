@@ -171,6 +171,16 @@ final class TerminalSession: Identifiable {
     /// at the trust question has no hook events to expect).
     var shellIsInForeground: Bool { Self.isShell(foregroundProcessName) }
 
+    /// Claude Code itself is the terminal's foreground program: its native
+    /// build's process is named by its version ("2.1.328"), an npm install's
+    /// is "node" or "claude".
+    var claudeIsInForeground: Bool { Self.isClaude(foregroundProcessName) }
+
+    nonisolated static func isClaude(_ name: String?) -> Bool {
+        guard let name else { return false }
+        return name == "claude" || name == "node" || name.wholeMatch(of: /\d+\.\d+\.\d+/) != nil
+    }
+
     /// Process group in the terminal's foreground (claude, or the shell at
     /// its prompt); nil when not started or closed.
     var foregroundProcessGroup: pid_t? {

@@ -32,6 +32,8 @@ final class AppModel {
     let tabActivity: TabActivityViewModel
     let agentTeams: AgentTeamsStore
     let modelSwitcher: ModelSwitchController
+    /// Commands typed into Claude's prompt, one after another per tab.
+    let promptInput: ClaudePromptInput
     let claudeStatus: ClaudeStatusViewModel
     let attentionNotifier: AttentionNotifier
     let claudeStates: ClaudeTabStateTracker
@@ -65,7 +67,8 @@ final class AppModel {
         self.sessionStats = SessionStatsViewModel()
         self.tabActivity = TabActivityViewModel()
         self.agentTeams = AgentTeamsStore()
-        self.modelSwitcher = ModelSwitchController()
+        self.promptInput = ClaudePromptInput()
+        self.modelSwitcher = ModelSwitchController(input: promptInput)
         self.claudeStatus = ClaudeStatusViewModel()
         let notifier = AttentionNotifier()
         self.attentionNotifier = notifier
@@ -240,10 +243,7 @@ final class AppModel {
     /// after the command).
     func runInActiveSession(_ command: String) {
         guard let session = activeSession else { return }
-        Task {
-            await ClaudePromptDraft.stash(in: session)
-            session.runCommand(command)
-        }
+        promptInput.run(command, in: session)
     }
 
     /// Types `/goal ` into Claude's prompt WITHOUT Enter: the command needs
@@ -251,13 +251,10 @@ final class AppModel {
     /// to the terminal so typing can continue right away.
     func startGoal() {
         guard let session = activeSession else { return }
+        // A draft is put away; Claude brings it back once the goal is sent.
+        promptInput.type("/goal ", in: session)
         let view = session.terminalView
         view.window?.makeFirstResponder(view)
-        // A draft is put away; Claude brings it back once the goal is sent.
-        Task {
-            await ClaudePromptDraft.stash(in: session)
-            session.send(text: "/goal ")
-        }
     }
 
     func copySelection() {

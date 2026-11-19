@@ -50,16 +50,18 @@ final class ModelSwitchController {
 
     private(set) var picks: [UUID: Pick] = [:]
     private(set) var effortPicks: [UUID: EffortPick] = [:]
+    @ObservationIgnored private let input: ClaudePromptInput
+
+    init(input: ClaudePromptInput) {
+        self.input = input
+    }
 
     /// Types `/model <alias>` into the session, with the user's draft put
-    /// away first (ClaudePromptDraft). Claude Code queues it if a reply is
+    /// away first (ClaudePromptInput). Claude Code queues it if a reply is
     /// still streaming.
     func switchModel(of session: TerminalSession, to choice: ClaudeModelChoice) {
         picks[session.id] = Pick(choice: choice, at: Date())
-        Task {
-            await ClaudePromptDraft.stash(in: session)
-            session.runCommand(choice.command)
-        }
+        input.run(choice.command, in: session)
     }
 
     /// Sets the effort of this session only, through Claude Code's `/effort`
@@ -70,25 +72,25 @@ final class ModelSwitchController {
     /// right to the pick, "s". Keys go out only while the picker is on
     /// screen; a picker already open is closed with Esc first (its Enter
     /// would save a default), and the user's draft is put away
-    /// (ClaudePromptDraft). The confirmation Claude Code prints replaces the
-    /// pick.
+    /// (ClaudePromptDraft). Runs after the tab's earlier commands
+    /// (ClaudePromptInput), so a Compact pressed meanwhile can't land in the
+    /// picker. The confirmation Claude Code prints replaces the pick.
     func switchEffort(of session: TerminalSession, to choice: ClaudeEffortChoice) {
         // Claude has exited: `/effort` would go to the shell as a command.
         guard !session.shellIsInForeground else { NSSound.beep(); return }
-        effortTasks[session.id]?.cancel()
-        effortPicks[session.id] = EffortPick(choice: choice, at: Date())
-        effortTasks[session.id] = Task { [weak self] in
+        let pick = EffortPick(choice: choice, at: Date())
+        effortPicks[session.id] = pick
+        input.enqueue(session) { [weak self] in
             let succeeded = await Self.runEffortPicker(in: session, to: choice) { confirmed in
-                self?.effortPicks[session.id] = EffortPick(choice: confirmed, at: Date())
+                guard self?.effortPicks[session.id] == pick else { return }
+                self?.effortPicks[session.id] = EffortPick(choice: confirmed, at: pick.at)
             }
-            // A newer pick cancelled this one and owns the state now.
-            guard !Task.isCancelled, !succeeded else { return }
+            // A later pick owns the label now.
+            guard !succeeded, self?.effortPicks[session.id] == pick else { return }
             self?.effortPicks[session.id] = nil
             NSSound.beep()
         }
     }
-
-    @ObservationIgnored private var effortTasks: [UUID: Task<Void, Never>] = [:]
 
     /// The key sequence of `switchEffort`. False when the picker never came
     /// up or the model has no such level (nothing set).
@@ -99,7 +101,7 @@ final class ModelSwitchController {
             let closed = await session.waitForScreen(timeout: 2) { !EffortPicker.isOpen(onScreen: $0) }
             guard closed != nil else { return false }
         }
-        await ClaudePromptDraft.stash(in: session)
+        ClaudePromptDraft.stash(in: session)
         session.send(text: "/effort\r")
         guard let open = await session.waitForScreen(timeout: 3, { EffortPicker.isOpen(onScreen: $0) }) else { return false }
         let stops = EffortPicker.stops(onScreen: open) ?? ClaudeEffortChoice.levels.map(\.level)
