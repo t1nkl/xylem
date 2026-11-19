@@ -63,8 +63,9 @@ final class ModelSwitchController {
     /// as the model's default for new sessions, the picker's "this session
     /// only" key does not (Claude Code 2.1.329). The picker is a slider over
     /// the levels the model has, read off the screen: left until it stops at
-    /// the first, right to the pick, then the key the picker names there for
-    /// "this session only" (EffortPicker). Keys go out only while the picker is on
+    /// the first, right to the pick, then "s", which is "this session only"
+    /// on every stop but max (EffortPicker); max is typed as `/effort max`,
+    /// session-only by itself. Keys go out only while the picker is on
     /// screen; a picker already open is closed with Esc first (its Enter
     /// would save a default). The confirmation Claude Code prints replaces
     /// the pick.
@@ -73,6 +74,13 @@ final class ModelSwitchController {
         guard !session.shellIsInForeground else { NSSound.beep(); return }
         effortTasks[session.id]?.cancel()
         effortPicks[session.id] = EffortPick(choice: choice, at: Date())
+        // Max can't be a saved default, so `/effort max` typed with the
+        // argument is session-only already and needs no picker on screen.
+        if choice == ClaudeEffortChoice.levels.last {
+            effortTasks[session.id] = nil
+            session.runCommand("/effort \(choice.level)")
+            return
+        }
         effortTasks[session.id] = Task { [weak self] in
             let succeeded = await Self.runEffortPicker(in: session, to: choice) { confirmed in
                 self?.effortPicks[session.id] = EffortPick(choice: confirmed, at: Date())
@@ -103,17 +111,13 @@ final class ModelSwitchController {
             return false
         }
         let earlier = EffortPicker.confirmations(onScreen: open).count
+        // Arrows and "s" in one write, as soon as the picker is up: "s" is
+        // "this session only" on every stop but max (never "save"), and
+        // max goes through `/effort max` instead. Keeps the picker on screen
+        // as briefly as Claude Code allows.
         session.send(text: String(repeating: EffortPicker.left, count: stops.count)
-                     + String(repeating: EffortPicker.right, count: index))
-        // The key is read off the screen once the slider is there: Enter
-        // means "this session only" on the last stop only, and "save as the
-        // default" everywhere else, so Enter goes out only for the last stop.
-        let key = index == stops.count - 1 ? EffortPicker.enter : EffortPicker.sessionKey
-        guard await waitFor(session, timeout: 1.5, { EffortPicker.sessionOnlyKey(onScreen: $0) == key }) != nil else {
-            session.send(text: EffortPicker.cancel)
-            return false
-        }
-        session.send(text: key)
+                     + String(repeating: EffortPicker.right, count: index)
+                     + EffortPicker.sessionKey)
         // A new confirmation below the earlier ones is this pick's answer.
         if let screen = await waitFor(session, timeout: 3, {
                !EffortPicker.isOpen(onScreen: $0) && EffortPicker.confirmations(onScreen: $0).count > earlier
@@ -125,14 +129,15 @@ final class ModelSwitchController {
         return true
     }
 
-    /// Polls the screen every 100 ms; the screen text once `found` holds.
+    /// Polls the screen every 20 ms (a read of the live rows); the screen
+    /// text once `found` holds.
     private static func waitFor(_ session: TerminalSession, timeout: TimeInterval,
                                 _ found: (String) -> Bool) async -> String? {
         let end = Date().addingTimeInterval(timeout)
         while Date() < end, !Task.isCancelled {
             let screen = session.visibleText()
             if found(screen) { return screen }
-            try? await Task.sleep(for: .milliseconds(100))
+            try? await Task.sleep(for: .milliseconds(20))
         }
         return nil
     }

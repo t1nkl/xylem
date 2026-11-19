@@ -582,16 +582,12 @@ def interactive(claude, cwd, settings, work, manifest):
         term.reply(b"\x1b[D" * 5 + b"\x1b[C" * 2 + b"s")
         term.pump(2)
         manifest["effortPickerDone"] = term.screen_text(3000)
-        # On the last stop (max) Enter means "this session only"; the app
-        # presses Enter only there. Look, then leave with Esc.
-        term.type("/effort")
-        term.pump(2)
+        # Max is typed as "/effort max": it can't be a saved default, so it
+        # should say "this session only" without the picker.
         before = len(term.buffer)
-        term.reply(b"\x1b[C" * 5)
-        term.pump(1.5)
-        manifest["effortPickerAtMax"] = ANSI.sub(b"", term.buffer[before:]).decode("utf-8", "replace")
-        term.reply(b"\x1b")
-        term.pump(1.5)
+        term.type("/effort max")
+        term.pump(2.5)
+        manifest["effortTypedMax"] = ANSI.sub(b"", term.buffer[before:]).decode("utf-8", "replace")
 
         # /clear: new session id.
         progress("interactive run: /clear")

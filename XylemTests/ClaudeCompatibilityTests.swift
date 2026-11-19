@@ -104,12 +104,10 @@ private struct CompatibilityJudge {
                  "the /effort picker no longer offers \"s\" or \"Enter to use this session only\": the menu would only beep")
             return
         }
-        // The capture is the raw stream, which redraws only the changed
-        // letters ("Enertousethisessiononly"): a loose match.
-        if let atMax = manifest["effortPickerAtMax"].map({ EffortPicker.flattened($0 as? String ?? "") }),
-           !(atMax.contains("tousethis") && atMax.contains("essiononly") && !atMax.contains("entertosave")) {
+        if let typed = manifest["effortTypedMax"].map({ EffortPicker.flattened($0 as? String ?? "") }),
+           !typed.contains("max(thissessiononly)") {
             fail("tui.effortPicker", feature: feature,
-                 "on the last stop the /effort picker no longer says \"Enter to use this session only\": Max would fail with a beep")
+                 "\"/effort max\" no longer answers \"(this session only)\": the menu's Max may now save a default")
         } else if EffortPicker.stops(onScreen: open) == nil {
             fail("tui.effortPicker", feature: feature,
                  "the /effort picker's row of levels (\"low medium high …\") wasn't found: the menu can't tell its stops")
