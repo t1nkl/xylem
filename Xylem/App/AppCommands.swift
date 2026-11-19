@@ -91,6 +91,14 @@ enum AppCommands {
                     run: { app.switchModel(to: choice) }
                 ))
             }
+            for choice in ClaudeEffortChoice.levels {
+                commands.append(PaletteCommand(
+                    id: "effort-\(choice.level)", title: "Claude · Effort \(choice.title)",
+                    subtitle: "For the active session only (/effort)",
+                    keywords: ["effort", "thinking", "reasoning", choice.level, choice.title], icon: "brain", shortcut: nil,
+                    run: { app.switchEffort(to: choice) }
+                ))
+            }
         }
 
         // Per-tab switchers - makes ⌘K a tab jumper too.

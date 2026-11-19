@@ -16,6 +16,9 @@ nonisolated struct StatsSnapshot: Equatable, Sendable {
     var model: String = ""
     /// Raw model id of the newest assistant message (`claude-opus-5-5`).
     var modelID: String = ""
+    /// Effort level of the newest assistant message (`medium`), if the
+    /// transcript records one.
+    var effort: String?
     /// Timestamp of the newest assistant message.
     var lastAssistantAt: Date?
     /// Timestamp of the newest prompt the human typed. Together with

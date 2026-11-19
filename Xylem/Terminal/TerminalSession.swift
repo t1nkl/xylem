@@ -277,6 +277,12 @@ final class TerminalSession: Identifiable {
         send(text: command + "\r")
     }
 
+    /// The live screen's rows as text, top to bottom (no attributes).
+    func visibleText() -> String {
+        guard let snapshot = terminalView.terminalContentSnapshot(region: .history(maximumScrollbackRows: -1)) else { return "" }
+        return snapshot.rows.map(\.text).joined(separator: "\n")
+    }
+
     // MARK: - Find in scrollback
 
     // Backed by SwiftTerm's own find bar (`TerminalFindBarView`, a subview

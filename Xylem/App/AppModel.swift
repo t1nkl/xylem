@@ -170,6 +170,11 @@ final class AppModel {
         modelSwitcher.switchModel(of: session, to: choice)
     }
 
+    func switchEffort(to choice: ClaudeEffortChoice) {
+        guard let session = activeSession, session.launchedClaude else { return }
+        modelSwitcher.switchEffort(of: session, to: choice)
+    }
+
     /// A pick in the tab list. The list takes the keyboard on click, so the
     /// active terminal gets it back.
     func selectTab(_ id: TerminalTab.ID) {

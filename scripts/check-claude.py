@@ -571,6 +571,19 @@ def interactive(claude, cwd, settings, work, manifest):
             record("tui.esc", "skip", "Tabs go idle after Esc", "the second tool call never started")
         term.pump(2)
 
+        # The /effort picker the toolbar's effort menu drives (screen text
+        # only; the app matches its wording): open it, move to "high", "s"
+        # for this session only.
+        progress("interactive run: the /effort picker")
+        term.type("/effort")
+        term.pump(2)
+        manifest["effortPickerOpen"] = term.screen_text(3000)
+        for key in [b"\x1b[D"] * 5 + [b"\x1b[C"] * 2 + [b"s"]:
+            term.reply(key)
+            term.pump(0.1)
+        term.pump(2)
+        manifest["effortPickerDone"] = term.screen_text(3000)
+
         # /clear: new session id.
         progress("interactive run: /clear")
         n = len(read_events(events_dir))

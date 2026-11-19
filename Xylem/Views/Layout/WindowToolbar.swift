@@ -3,7 +3,7 @@
 //  Xylem
 //
 //  The window's native toolbar (unified compact style, set on the scene):
-//  New Tab on the leading side; Context, Model and Claude status, then
+//  New Tab on the leading side; Context, Model, Effort and Claude status, then
 //  Usage and the inspector toggle on the trailing side. The project is the
 //  window title (set by the terminals container), so it needs no item.
 //
@@ -49,6 +49,7 @@ struct WindowToolbar: ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
             ContextToolbarItem(app: app)
             ModelToolbarItem(app: app)
+            EffortToolbarItem(app: app)
         }
         // Its own item so an all-clear status leaves no empty pill behind.
         // Reading the status here re-renders the window root, but the value
@@ -237,5 +238,55 @@ private struct ModelToolbarItem: View {
         .help(canSwitch
               ? "Switch the model of this Claude session (/model)"
               : "Open a Claude session to switch its model")
+    }
+}
+
+// MARK: - Effort
+
+/// Effort menu: picking a level sets it for the active session only,
+/// through Claude Code's `/effort` picker (see ModelSwitchController). Shows the level of the newest reply,
+/// or a dash before the first one.
+private struct EffortToolbarItem: View {
+    let app: AppModel
+
+    var body: some View {
+        let session = app.activeSession
+        let stats = session == nil ? StatsSnapshot() : app.sessionStats.stats
+        let shown = session.flatMap {
+            ModelSwitchController.displayedEffort(pick: app.modelSwitcher.effortPicks[$0.id], stats: stats)
+        }
+        let canSwitch = session?.launchedClaude == true
+
+        Menu {
+            ForEach(ClaudeEffortChoice.levels) { choice in
+                Button { app.switchEffort(to: choice) } label: {
+                    if choice == shown {
+                        Label(choice.title, systemImage: "checkmark")
+                    } else {
+                        Text(choice.title)
+                    }
+                }
+            }
+        } label: {
+            // Same layout as the model menu's label.
+            HStack(spacing: 5) {
+                Image(systemName: "brain")
+                Text(shown?.title ?? "-")
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 10)
+        }
+        .menuIndicator(.hidden)
+        .disabled(!canSwitch)
+        .help(Self.help(canSwitch: canSwitch, shown: shown))
+        .accessibilityLabel("Effort \(shown?.title ?? "unknown")")
+    }
+
+    private static func help(canSwitch: Bool, shown: ClaudeEffortChoice?) -> String {
+        guard canSwitch else { return "Open a Claude session to set its effort" }
+        guard shown != nil else { return "Effort: shown after Claude's first reply. Pick a level to set it for this session" }
+        return "Set the effort of this Claude session only (/effort)"
     }
 }

@@ -84,8 +84,32 @@ private struct CompatibilityJudge {
             checkInteractive(session: tui, cleared: sessions["tuiCleared"] as? String, cwd: cwd,
                              projects: projects, runProjects: runProjects, prompt: prompts["tui"])
         }
+        checkEffortPicker()
         checkRealConfig(projects: projects)
         checkRecentTranscripts(projects: projects)
+    }
+
+    /// The toolbar's effort menu drives Claude Code's `/effort` picker by
+    /// its on-screen wording (EffortPicker).
+    mutating func checkEffortPicker() {
+        let feature = "Effort menu in the toolbar (this session only)"
+        guard let open = manifest["effortPickerOpen"] as? String,
+              let done = manifest["effortPickerDone"] as? String
+        else {
+            skip("tui.effortPicker", feature: feature, "the interactive run didn't reach the /effort picker")
+            return
+        }
+        guard EffortPicker.isOpen(onScreen: open) else {
+            fail("tui.effortPicker", feature: feature,
+                 "the /effort picker no longer says \"s to use this session only … Esc to cancel\": the menu would only beep")
+            return
+        }
+        if let level = EffortPicker.confirmedLevel(onScreen: done), ClaudeEffortChoice.matching(level: level) != nil {
+            ok("tui.effortPicker", feature: feature, "the picker set \(level) for this session only")
+        } else {
+            fail("tui.effortPicker", feature: feature,
+                 "after \"s\" no \"Set effort level to … (this session only)\" appeared: the menu can't confirm a pick")
+        }
     }
 
     // MARK: - Hooks
@@ -288,6 +312,17 @@ private struct CompatibilityJudge {
                "\(stats.model), \(stats.tokens) tokens, $\(String(format: "%.4f", stats.costUSD))")
         } else {
             fail("transcript.stats", feature: "Context %, model and cost in the toolbar", problems.joined(separator: "; "))
+        }
+        if let effort = stats.effort {
+            if ClaudeEffortChoice.matching(level: effort) != nil {
+                ok("transcript.effort", feature: "Effort in the toolbar", "replies carry their effort level (\(effort))")
+            } else {
+                warn("transcript.effort", feature: "Effort in the toolbar",
+                     "replies carry an effort level the menu doesn't know: \(effort)")
+            }
+        } else {
+            warn("transcript.effort", feature: "Effort in the toolbar",
+                 "replies carry no effort level; the toolbar shows a dash")
         }
         if !stats.modelID.isEmpty, !ModelPricingCatalog.hasListedPrice(stats.modelID) {
             warn("pricing.liveModel", feature: "Cost in the toolbar and Usage",

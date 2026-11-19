@@ -30,6 +30,7 @@ nonisolated struct SessionStatsAccumulator: JSONLFoldState {
     private var totalTokens = 0
     private var cost: Double = 0
     private var lastModel: String?
+    private var lastEffort: String?
     private var latestMessageTokens = 0
     private var firstTimestamp: Date?
     private var lastTimestamp: Date?
@@ -76,6 +77,7 @@ nonisolated struct SessionStatsAccumulator: JSONLFoldState {
 
         processedAnything = true
         if let model = message["model"] as? String { lastModel = model }
+        if let effort = root["effort"] as? String, !effort.isEmpty { lastEffort = effort }
         if let timestamp = root["timestamp"] as? String { pendingAssistantTimestamp = timestamp }
 
         // Priced per message: rates depend on that message's model, its
@@ -114,6 +116,7 @@ nonisolated struct SessionStatsAccumulator: JSONLFoldState {
             costUSD: cost,
             model: lastModel.map(ModelNameFormatter.display) ?? "-",
             modelID: lastModel ?? "",
+            effort: lastEffort,
             lastAssistantAt: lastAssistantTimestamp,
             lastPromptAt: lastPromptTimestamp,
             tokens: totalTokens,
