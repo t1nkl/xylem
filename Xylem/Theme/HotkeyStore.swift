@@ -140,7 +140,6 @@ struct HotkeyStore {
         .newTab:         HotkeyBinding(key: "t", modifiers: ["cmd"]),
         .closeTab:       HotkeyBinding(key: "w", modifiers: ["cmd"]),
         .closeOtherTabs: HotkeyBinding(key: "w", modifiers: ["cmd", "option"]),
-        // Not ⇧⌘U: on a Ukrainian layout that reaches the menu as ⌘U (Usage).
         .nextWaitingTab: HotkeyBinding(key: "u", modifiers: ["cmd", "control"]),
         .clear:          HotkeyBinding(key: "l", modifiers: ["cmd"]),
         .interrupt:      HotkeyBinding(key: "c", modifiers: ["cmd", "control"]),
