@@ -21,13 +21,18 @@ is a trademark of Anthropic.
 
 - **Tabs that know what Claude is doing.** Working, finished, or waiting for
   your permission - shown on the tab, in the Dock badge and as one macOS
-  notification per event. Xylem learns this from Claude Code hooks it passes
-  with `--settings`; your own settings files are never modified.
+  notification per event. Xylem learns this from Claude Code hooks and a
+  status line it passes with `--settings` (your own status line still
+  shows); your own settings files are never modified.
 - **Tabs in the sidebar or above the terminal.** The sidebar shows each tab's
   latest prompt, branch and folder; above the terminal (Settings > General)
   the terminal gets the full width, the tabs scroll sideways and reorder by
   dragging, and hovering a tab shows its whole prompt. All Sessions shows
   every tab's context, cost and state at a glance.
+- **Model and effort in the toolbar.** The model and effort level the tab's
+  Claude runs at, shown as soon as it starts, and menus to switch them. A new
+  effort level applies to that session only (Claude Code 2.1.300 or later;
+  Max with earlier versions too).
 - **Sessions survive restarts.** Tabs come back and continue their own
   conversation (`claude --resume`); a restored tab starts only when you open
   it. If the session is already open elsewhere, the tab forks it instead of
@@ -125,8 +130,9 @@ idles at about 0.1% CPU.
 
 ## State on disk
 
-Xylem keeps its own state in `~/.xylem/` (tabs, caches, the hook script, the
-prompt search index, hotkey overrides) and only reads Claude Code's files.
+Xylem keeps its own state in `~/.xylem/` (tabs, caches, the hook and status
+line scripts, the prompt search index, hotkey overrides) and only reads
+Claude Code's files.
 Nothing leaves your Mac except requests to status.claude.com and skills.sh,
 the hourly update check (`appcast.xml` on this repository's site), and crash
 reports to Sentry (stack trace, macOS version, Mac model, app version - no
