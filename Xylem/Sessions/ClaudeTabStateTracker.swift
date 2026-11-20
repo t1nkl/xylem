@@ -42,7 +42,7 @@ final class ClaudeTabStateTracker {
         /// The event file changed (nil: only the status line input did).
         let events: EventRead?
         /// The status line input changed.
-        let status: (mtime: Date, effort: LiveEffort?)?
+        let status: (mtime: Date, live: ClaudeLiveStatus?)?
     }
 
     private nonisolated struct EventRead: Sendable {
@@ -148,7 +148,7 @@ final class ClaudeTabStateTracker {
                     if id != tab.claudeSessionID, event.switchesSession || tab.claudeSessionID == nil {
                         tab.claudeSessionID = id
                         tab.transcriptPath = nil
-                        if tab.liveEffort != nil { tab.liveEffort = nil }
+                        if tab.liveStatus != nil { tab.liveStatus = nil }
                         bindingChanged = true
                     }
                     if id == tab.claudeSessionID {
@@ -174,11 +174,11 @@ final class ClaudeTabStateTracker {
             // teammate runs under the tab id too) or an earlier claude is
             // read again on the next tick instead of being skipped for good.
             if let status = byID[tab.id]?.status {
-                if let effort = status.effort, effort.at >= startedAt.addingTimeInterval(-1),
-                   effort.sessionID == nil || effort.sessionID == tab.claudeSessionID {
+                if let live = status.live, live.at >= startedAt.addingTimeInterval(-1),
+                   live.sessionID == nil || live.sessionID == tab.claudeSessionID {
                     statusMtimes[tab.id] = status.mtime
-                    if tab.liveEffort != effort { tab.liveEffort = effort }
-                } else if status.effort == nil {
+                    if tab.liveStatus != live { tab.liveStatus = live }
+                } else if status.live == nil {
                     statusMtimes[tab.id] = status.mtime
                 }
             }
@@ -198,7 +198,7 @@ final class ClaudeTabStateTracker {
             }
             if old != state { tab.claudeState = state }
             // Claude has exited: no level to show until the next one reports.
-            if state == .notRunning, tab.liveEffort != nil { tab.liveEffort = nil }
+            if state == .notRunning, tab.liveStatus != nil { tab.liveStatus = nil }
             // Not running: claude exited, the busy flag goes back to the
             // transcript-mtime fallback (claude may be restarted by hand).
             if let state, state != .notRunning {
@@ -297,7 +297,7 @@ final class ClaudeTabStateTracker {
         leavesPromptMarkers.remove(tab.id)
         if tab.claudeState != nil { tab.claudeState = nil }
         if tab.needsAttention { tab.needsAttention = false }
-        if tab.liveEffort != nil { tab.liveEffort = nil }
+        if tab.liveStatus != nil { tab.liveStatus = nil }
     }
 
     @concurrent nonisolated
@@ -314,10 +314,10 @@ final class ClaudeTabStateTracker {
                                    event: ClaudeHookBridge.latestEvent(forTab: query.id, in: directory),
                                    prompt: ClaudeHookBridge.lastPrompt(forTab: query.id, in: directory))
             }
-            var status: (mtime: Date, effort: LiveEffort?)?
+            var status: (mtime: Date, live: ClaudeLiveStatus?)?
             if let mtime = ClaudeHookBridge.statusModificationDate(forTab: query.id, in: directory),
                mtime != query.previousStatusMtime {
-                status = (mtime, ClaudeHookBridge.latestStatusEffort(forTab: query.id, in: directory))
+                status = (mtime, ClaudeHookBridge.latestStatus(forTab: query.id, in: directory))
             }
             guard events != nil || status != nil else { return nil }
             return Read(id: query.id, events: events, status: status)

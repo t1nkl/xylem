@@ -101,11 +101,13 @@ private struct CompatibilityJudge {
         if input.isEmpty {
             fail("statusLine.effort", feature: feature,
                  "the status line from --settings never ran: the effort label falls back to the transcript (shown after a reply)")
-        } else if let live = LiveEffort.parse(Data(input.utf8), at: Date()) {
-            ok("statusLine.effort", feature: feature, "the status line input carries effort.level (\(live.level)) at once")
+        } else if let live = ClaudeLiveStatus.parse(Data(input.utf8), at: Date()), let level = live.level,
+                  live.modelID != nil, live.version != nil {
+            ok("statusLine.effort", feature: feature,
+               "the status line input carries effort.level (\(level)), model.id and version at once")
         } else {
             fail("statusLine.effort", feature: feature,
-                 "the status line input has no effort.level: the label falls back to the transcript (shown after a reply)")
+                 "the status line input lacks effort.level, model.id or version: the effort and model labels fall back to the transcript, the menu can't tell which levels work")
         }
     }
 

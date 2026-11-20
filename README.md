@@ -31,8 +31,8 @@ is a trademark of Anthropic.
   every tab's context, cost and state at a glance.
 - **Model and effort in the toolbar.** The model and effort level the tab's
   Claude runs at, shown as soon as it starts, and menus to switch them. A new
-  effort level applies to that session only (Claude Code 2.1.300 or later;
-  Max with earlier versions too).
+  effort level applies to that session only (Claude Code 2.1.257 or later,
+  Max from 2.1.76; the menu greys out what an older version can't set).
 - **Sessions survive restarts.** Tabs come back and continue their own
   conversation (`claude --resume`); a restored tab starts only when you open
   it. If the session is already open elsewhere, the tab forks it instead of

@@ -119,10 +119,12 @@ struct EffortChoiceTests {
 
     @Test func statusLineInputGivesTheLevelAtOnce() throws {
         let json = #"{"session_id":"s1","model":{"id":"claude-opus-5-5"},"effort":{"level":"high"}}"#
-        let live = try #require(LiveEffort.parse(Data(json.utf8), at: Date(timeIntervalSince1970: 100)))
+        let live = try #require(ClaudeLiveStatus.parse(Data(json.utf8), at: Date(timeIntervalSince1970: 100)))
         #expect(live.level == "high" && live.sessionID == "s1")
         // Claude Code before effort was passed: no level.
-        #expect(LiveEffort.parse(Data(#"{"session_id":"s1"}"#.utf8), at: Date()) == nil)
+        #expect(ClaudeLiveStatus.parse(Data(#"{"session_id":"s1"}"#.utf8), at: Date()) == nil)
+        let full = try #require(ClaudeLiveStatus.parse(Data(#"{"session_id":"s1","version":"2.1.250","model":{"id":"claude-sonnet-5-5"}}"#.utf8), at: Date()))
+        #expect(full.level == nil && full.modelID == "claude-sonnet-5-5" && full.version == "2.1.250")
 
         // Before any reply the live level shows; a pick shows until a newer input.
         let stats = StatsSnapshot()
@@ -131,13 +133,13 @@ struct EffortChoiceTests {
         let pick = ModelSwitchController.EffortPick(choice: low, at: Date(timeIntervalSince1970: 150))
         #expect(ModelSwitchController.displayedEffort(pick: pick, live: live, stats: stats) == low)
         // A reply still streaming reports the old level: the pick holds.
-        let streaming = LiveEffort(level: "high", sessionID: "s1", at: Date(timeIntervalSince1970: 151))
+        let streaming = ClaudeLiveStatus(level: "high", sessionID: "s1", at: Date(timeIntervalSince1970: 151))
         #expect(ModelSwitchController.displayedEffort(pick: pick, live: streaming, stats: stats) == low)
         // The input names the pick: from now on the input decides.
-        let confirmed = LiveEffort(level: "low", sessionID: "s1", at: Date(timeIntervalSince1970: 152))
+        let confirmed = ClaudeLiveStatus(level: "low", sessionID: "s1", at: Date(timeIntervalSince1970: 152))
         #expect(ModelSwitchController.displayedEffort(pick: pick, live: confirmed, stats: stats)?.level == "low")
         // Never confirmed (a cap, a change in the terminal): the input after 10 s.
-        let later = LiveEffort(level: "medium", sessionID: "s1", at: Date(timeIntervalSince1970: 161))
+        let later = ClaudeLiveStatus(level: "medium", sessionID: "s1", at: Date(timeIntervalSince1970: 161))
         #expect(ModelSwitchController.displayedEffort(pick: pick, live: later, stats: stats)?.level == "medium")
     }
 
@@ -168,7 +170,7 @@ struct EffortChoiceTests {
         process.waitUntilExit()
         let printed = String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
         #expect(printed == "users line")
-        #expect(ClaudeHookBridge.latestStatusEffort(forTab: tab, in: events)?.level == "xhigh")
+        #expect(ClaudeHookBridge.latestStatus(forTab: tab, in: events)?.level == "xhigh")
         let mode = try FileManager.default.attributesOfItem(atPath: ClaudeHookBridge.statusFile(forTab: tab, in: events).path)[.posixPermissions] as? Int
         #expect(mode == 0o600)
     }
@@ -220,6 +222,52 @@ struct EffortChoiceTests {
             let statusLine = try #require(settings["statusLine"] as? [String: Any])
             #expect(statusLine["padding"] as? Int == padding)
         }
+    }
+
+    @Test func olderClaudeCodeIsToldApart() {
+        #expect(EffortPicker.unsupportedMarks(onScreen: "❯ /effort\n  ⎿  Unknown skill: effort") == 1)
+        #expect(EffortPicker.unsupportedMarks(onScreen: "Unknown slash command: effort") == 1)
+        #expect(EffortPicker.unsupportedMarks(onScreen: "⎿  Effort level: auto (currently high)") == 1)
+        #expect(EffortPicker.unsupportedMarks(onScreen: "⎿  Set effort level to max (this session only)") == 0)
+        // 2.1.200-2.1.252: a picker without "s" for this session only.
+        let old = "  low  medium  high  xhigh  max\n  ←/→ to adjust · Enter to confirm · Esc to cancel"
+        #expect(EffortPicker.isOpen(onScreen: old) && !EffortPicker.offersSessionKey(onScreen: old))
+
+        let low = ClaudeEffortChoice.levels[0], max = ClaudeEffortChoice.levels[4]
+        #expect(EffortSupport.explanation(for: low, version: "2.1.250").message.contains("Claude Code 2.1.250 can't"))
+        #expect(EffortSupport.explanation(for: low, version: nil).message.contains("2.1.257 or later"))
+        #expect(EffortSupport.explanation(for: max, version: "2.1.70").message.contains("Max needs Claude Code 2.1.76"))
+    }
+
+    @Test func menuOffersOnlyWhatTheRunningClaudeCodeCanDo() {
+        let low = ClaudeEffortChoice.levels[0], max = ClaudeEffortChoice.levels[4]
+        #expect(EffortSupport.isVersion("2.1.257", atLeast: "2.1.257"))
+        #expect(EffortSupport.isVersion("2.1.300", atLeast: "2.1.257"))
+        #expect(!EffortSupport.isVersion("2.1.76", atLeast: "2.1.257"))
+        #expect(EffortSupport.isVersion("3.0.0", atLeast: "2.1.257"))
+        #expect(EffortSupport.isAvailable(low, version: "2.1.329") && EffortSupport.isAvailable(max, version: "2.1.329"))
+        #expect(!EffortSupport.isAvailable(low, version: "2.1.250") && EffortSupport.isAvailable(max, version: "2.1.250"))
+        #expect(!EffortSupport.isAvailable(max, version: "2.1.75"))
+        #expect(EffortSupport.isAvailable(low, version: nil))
+        #expect(EffortSupport.canSetAnything(version: nil) && EffortSupport.canSetAnything(version: "2.1.76"))
+        #expect(!EffortSupport.canSetAnything(version: "2.1.70"))
+        #expect(EffortSupport.cantSetHelp(version: "2.1.70").contains("claude update"))
+    }
+
+    @Test func modelComesFromTheStatusLineAtOnce() throws {
+        let opus = try #require(ClaudeModelChoice.all.first { $0.alias == "opus" })
+        let haiku = try #require(ClaudeModelChoice.all.first { $0.alias == "haiku" })
+        var stats = StatsSnapshot()
+        stats.modelID = "<synthetic>"; stats.model = "<synthetic>"
+        let live = ClaudeLiveStatus(modelID: "claude-opus-5-5", at: Date(timeIntervalSince1970: 100))
+        #expect(ModelSwitchController.displayedModel(pick: nil, live: live, stats: stats).title == "Opus")
+        // A /model pick waits for the turn; it shows until the input names it.
+        let pick = ModelSwitchController.Pick(choice: haiku, at: Date(timeIntervalSince1970: 150))
+        #expect(ModelSwitchController.displayedModel(pick: pick, live: live, stats: stats).choice == haiku)
+        let switched = ClaudeLiveStatus(modelID: "claude-haiku-5-5", at: Date(timeIntervalSince1970: 200))
+        #expect(ModelSwitchController.displayedModel(pick: pick, live: switched, stats: stats).choice == haiku)
+        #expect(ModelSwitchController.displayedModel(pick: nil, live: nil, stats: stats).title == "<synthetic>")
+        _ = opus
     }
 }
 

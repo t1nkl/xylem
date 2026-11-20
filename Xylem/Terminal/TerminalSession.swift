@@ -171,6 +171,13 @@ final class TerminalSession: Identifiable {
     /// at the trust question has no hook events to expect).
     var shellIsInForeground: Bool { Self.isShell(foregroundProcessName) }
 
+    /// The version of the claude in front, when its process name gives it:
+    /// Claude Code's native build runs as a process named by its version
+    /// ("2.1.329"); an npm install runs as "node".
+    var foregroundClaudeVersion: String? {
+        foregroundProcessName.flatMap { $0.wholeMatch(of: /\d+\.\d+\.\d+/) != nil ? $0 : nil }
+    }
+
     /// Process group in the terminal's foreground (claude, or the shell at
     /// its prompt); nil when not started or closed.
     var foregroundProcessGroup: pid_t? {

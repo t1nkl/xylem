@@ -5,7 +5,10 @@
 //  The effort levels the toolbar's effort menu offers, and how a pick
 //  reaches Claude Code, for this session only (see
 //  `ModelSwitchController.switchEffort`; Claude Code 2.1.329 levels: low,
-//  medium, high, xhigh, max).
+//  medium, high, xhigh, max). Which Claude Code can do it (checked on every
+//  npm release around the edges): `/effort max` from 2.1.76 (it can't be a
+//  saved default, so it is session-only); the other levels for one session
+//  from 2.1.257, whose picker added "s" for this session only (EffortSupport).
 //
 //  What a session runs at is read from its transcript: every assistant line
 //  carries the level its request was sent with (`"effort":"medium"`), and
@@ -73,6 +76,16 @@ nonisolated enum EffortPicker {
         return text.contains("sforthissessiononly") || text.contains("stousethissessiononly")
     }
 
+    /// Claude Code turning `/effort` down on screen, counted so a new one
+    /// can be told from one already there: "Unknown skill: effort" or
+    /// "Unknown slash command: effort" (before 2.1.76), or the level printed
+    /// instead of a picker ("Effort level: …", 2.1.76 to about 2.1.150).
+    static func unsupportedMarks(onScreen screen: String) -> Int {
+        let text = flattened(screen)
+        return ["unknownskill:effort", "unknownslashcommand:effort", "effortlevel:"]
+            .reduce(0) { $0 + text.components(separatedBy: $1).count - 1 }
+    }
+
     /// The levels of the "this session only" confirmations on screen, top
     /// to bottom.
     static func confirmations(onScreen screen: String) -> [String] {
@@ -94,5 +107,58 @@ nonisolated enum EffortPicker {
         String(screen.lowercased().unicodeScalars
             .filter { !CharacterSet.whitespacesAndNewlines.contains($0) }
             .map(Character.init))
+    }
+}
+
+/// What the effort menu needs from Claude Code, for the explanation shown
+/// when a pick is turned down.
+nonisolated enum EffortSupport {
+    static let maxSince = "2.1.76"
+    static let sessionLevelsSince = "2.1.257"
+
+    /// Whether the menu can set `choice` for one session with Claude Code
+    /// `version`; unknown versions are let through (the pick then explains
+    /// itself if Claude Code turns it down).
+    static func isAvailable(_ choice: ClaudeEffortChoice, version: String?) -> Bool {
+        guard let version else { return true }
+        let since = choice == ClaudeEffortChoice.levels.last ? maxSince : sessionLevelsSince
+        return isVersion(version, atLeast: since)
+    }
+
+    /// Whether the menu can set any level at all (`/effort` exists).
+    static func canSetAnything(version: String?) -> Bool {
+        guard let version else { return true }
+        return isVersion(version, atLeast: maxSince)
+    }
+
+    /// The menu's short header over levels this Claude Code can't set for
+    /// one session.
+    static let unavailableHeader = "Needs Claude Code \(sessionLevelsSince)+"
+
+    /// The tooltip when the menu can't set anything.
+    static func cantSetHelp(version: String) -> String {
+        "Claude Code \(version) can't set the effort. Update Claude Code (claude update): Max needs \(maxSince)+, the other levels \(sessionLevelsSince)+"
+    }
+
+    /// Dotted versions compared number by number ("2.1.76" < "2.1.257").
+    static func isVersion(_ version: String, atLeast minimum: String) -> Bool {
+        let a = version.split(separator: ".").map { Int($0) ?? 0 }
+        let b = minimum.split(separator: ".").map { Int($0) ?? 0 }
+        for i in 0..<max(a.count, b.count) {
+            let x = i < a.count ? a[i] : 0, y = i < b.count ? b[i] : 0
+            if x != y { return x > y }
+        }
+        return true
+    }
+
+    /// The alert text; `version` is the running claude's when its process
+    /// name gives it (the native build is named by its version).
+    static func explanation(for choice: ClaudeEffortChoice, version: String?) -> (title: String, message: String) {
+        let running = version.map { "Claude Code \($0)" } ?? "This version of Claude Code"
+        let needs = choice == ClaudeEffortChoice.levels.last
+            ? "Max needs Claude Code \(maxSince) or later."
+            : "Setting \(choice.title) for one session needs Claude Code \(sessionLevelsSince) or later (Max works from \(maxSince))."
+        return ("Effort can't be set for this session",
+                "\(running) can't set the effort for one session. \(needs) Update Claude Code (claude update), then pick the level again.")
     }
 }

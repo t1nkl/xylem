@@ -240,15 +240,14 @@ nonisolated enum ClaudeHookBridge {
         return (time, (object?["session_id"] as? String).flatMap { $0.isEmpty ? nil : $0 })
     }
 
-    /// The effort level and session of the tab's latest status line input,
-    /// and when it was written; nil without one, or without `effort.level`
-    /// (Claude Code before it carried that).
-    static func latestStatusEffort(forTab id: UUID, in directory: URL = eventsDirectory) -> LiveEffort? {
+    /// The tab's latest status line input and when it was written; nil
+    /// without one.
+    static func latestStatus(forTab id: UUID, in directory: URL = eventsDirectory) -> ClaudeLiveStatus? {
         let url = statusFile(forTab: id, in: directory)
         guard let time = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate,
               let data = SafeFileRead.data(url, limit: 256 * 1024)
         else { return nil }
-        return LiveEffort.parse(data, at: time)
+        return ClaudeLiveStatus.parse(data, at: time)
     }
 
     static func statusModificationDate(forTab id: UUID, in directory: URL = eventsDirectory) -> Date? {
@@ -297,19 +296,30 @@ nonisolated enum ClaudeHookBridge {
     }
 }
 
-/// The effort level a tab's claude runs at, from its status line input:
-/// current at once, also before the first reply and right after `/effort`.
-nonisolated struct LiveEffort: Equatable, Sendable {
-    let level: String
-    let sessionID: String?
+/// What a tab's claude runs with, from its status line input: current at
+/// once, also before the first reply and right after `/effort` or `/model`.
+/// Any field may be missing (older Claude Code).
+nonisolated struct ClaudeLiveStatus: Equatable, Sendable {
+    /// Effort level (`effort.level`).
+    var level: String? = nil
+    /// Full model id (`model.id`, "claude-opus-5-5").
+    var modelID: String? = nil
+    /// Claude Code's version ("2.1.329").
+    var version: String? = nil
+    var sessionID: String? = nil
     /// When Claude Code passed it.
-    let at: Date
+    var at: Date
 
-    static func parse(_ data: Data, at time: Date) -> LiveEffort? {
-        guard let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-              let effort = object["effort"] as? [String: Any],
-              let level = effort["level"] as? String, !level.isEmpty
-        else { return nil }
-        return LiveEffort(level: level, sessionID: object["session_id"] as? String, at: time)
+    static func parse(_ data: Data, at time: Date) -> ClaudeLiveStatus? {
+        guard let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return nil }
+        func text(_ value: Any?) -> String? { (value as? String).flatMap { $0.isEmpty ? nil : $0 } }
+        let status = ClaudeLiveStatus(
+            level: text((object["effort"] as? [String: Any])?["level"]),
+            modelID: text((object["model"] as? [String: Any])?["id"]),
+            version: text(object["version"]),
+            sessionID: text(object["session_id"]),
+            at: time
+        )
+        return status.level == nil && status.modelID == nil && status.version == nil ? nil : status
     }
 }

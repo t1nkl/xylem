@@ -201,6 +201,7 @@ private struct ModelToolbarItem: View {
         let stats = session == nil ? StatsSnapshot() : app.sessionStats.stats
         let shown = ModelSwitchController.displayedModel(
             pick: session.flatMap { app.modelSwitcher.picks[$0.id] },
+            live: session == nil ? nil : app.tabs.activeTab?.liveStatus,
             stats: stats
         )
         // A fresh session has no reply yet: it runs the settings' default
@@ -254,20 +255,23 @@ private struct EffortToolbarItem: View {
         let stats = session == nil ? StatsSnapshot() : app.sessionStats.stats
         let shown = session.flatMap {
             ModelSwitchController.displayedEffort(pick: app.modelSwitcher.effortPicks[$0.id],
-                                                  live: app.tabs.activeTab?.liveEffort, stats: stats)
+                                                  live: app.tabs.activeTab?.liveStatus, stats: stats)
         }
-        let canSwitch = session?.launchedClaude == true
+        // Claude Code's version from the status line: levels it can't set
+        // for one session sit greyed under a short header; with no `/effort`
+        // at all the menu is off and the tooltip says why.
+        let version = session == nil ? nil : app.tabs.activeTab?.liveStatus?.version
+        let canSwitch = session?.launchedClaude == true && EffortSupport.canSetAnything(version: version)
+        let available = ClaudeEffortChoice.levels.filter { EffortSupport.isAvailable($0, version: version) }
+        let unavailable = ClaudeEffortChoice.levels.filter { !available.contains($0) }
 
         Menu {
-            ForEach(ClaudeEffortChoice.levels) { choice in
-                Button { app.switchEffort(to: choice) } label: {
-                    if choice == shown {
-                        Label(choice.title, systemImage: "checkmark")
-                    } else {
-                        Text(choice.title)
-                    }
+            if !unavailable.isEmpty {
+                Section(EffortSupport.unavailableHeader) {
+                    ForEach(unavailable) { choice in item(choice, shown: shown).disabled(true) }
                 }
             }
+            ForEach(available) { choice in item(choice, shown: shown) }
         } label: {
             // Same layout as the model menu's label.
             HStack(spacing: 5) {
@@ -281,11 +285,22 @@ private struct EffortToolbarItem: View {
         }
         .menuIndicator(.hidden)
         .disabled(!canSwitch)
-        .help(Self.help(canSwitch: canSwitch, shown: shown))
+        .help(Self.help(canSwitch: canSwitch, shown: shown, version: version))
         .accessibilityLabel("Effort \(shown?.title ?? "unknown")")
     }
 
-    private static func help(canSwitch: Bool, shown: ClaudeEffortChoice?) -> String {
+    private func item(_ choice: ClaudeEffortChoice, shown: ClaudeEffortChoice?) -> some View {
+        Button { app.switchEffort(to: choice) } label: {
+            if choice == shown {
+                Label(choice.title, systemImage: "checkmark")
+            } else {
+                Text(choice.title)
+            }
+        }
+    }
+
+    private static func help(canSwitch: Bool, shown: ClaudeEffortChoice?, version: String?) -> String {
+        if let version, !EffortSupport.canSetAnything(version: version) { return EffortSupport.cantSetHelp(version: version) }
         guard canSwitch else { return "Open a Claude session to set its effort" }
         guard shown != nil else {
             return "Effort: not known yet. Pick a level to set it for this session"

@@ -68,7 +68,8 @@ final class ModelSwitchController {
     /// Picks for one session run one after another, and each first closes a
     /// picker left open with Esc, so no text lands in a picker. The
     /// confirmation Claude Code prints replaces the pick.
-    func switchEffort(of session: TerminalSession, to choice: ClaudeEffortChoice) {
+    func switchEffort(of session: TerminalSession, to choice: ClaudeEffortChoice,
+                      onUnsupported: @escaping (ClaudeEffortChoice) -> Void = { _ in NSSound.beep() }) {
         // Claude has exited: `/effort` would go to the shell as a command.
         guard !session.shellIsInForeground else { NSSound.beep(); return }
         let pick = EffortPick(choice: choice, at: Date())
@@ -76,16 +77,20 @@ final class ModelSwitchController {
         let previous = effortTasks[session.id]
         effortTasks[session.id] = Task { [weak self] in
             await previous?.value
-            let succeeded = await Self.runEffort(in: session, to: choice) { confirmed in
+            let outcome = await Self.runEffort(in: session, to: choice) { confirmed in
                 guard self?.effortPicks[session.id] == pick else { return }
                 self?.effortPicks[session.id] = EffortPick(choice: confirmed, at: pick.at)
             }
             // A later pick owns the label now.
-            guard !succeeded, self?.effortPicks[session.id] == pick else { return }
+            guard outcome != .set, self?.effortPicks[session.id] == pick else { return }
             self?.effortPicks[session.id] = nil
-            NSSound.beep()
+            if outcome == .unsupported { onUnsupported(choice) } else { NSSound.beep() }
         }
     }
+
+    /// How a pick went. `unsupported`: this Claude Code can't set the level
+    /// for one session (EffortSupport).
+    enum EffortOutcome: Equatable { case set, failed, unsupported }
 
     @ObservationIgnored private var effortTasks: [UUID: Task<Void, Never>] = [:]
 
@@ -93,39 +98,47 @@ final class ModelSwitchController {
     /// didn't close, the picker never came up or the model has no such
     /// level (nothing set).
     private static func runEffort(in session: TerminalSession, to choice: ClaudeEffortChoice,
-                                  confirmed: (ClaudeEffortChoice) -> Void) async -> Bool {
+                                  confirmed: (ClaudeEffortChoice) -> Void) async -> EffortOutcome {
         if EffortPicker.isOpen(onScreen: session.visibleText()) {
             session.send(text: EffortPicker.cancel)
             let closed = await waitFor(session, timeout: 2) { !EffortPicker.isOpen(onScreen: $0) }
-            guard closed != nil else { return false }
+            guard closed != nil else { return .failed }
         }
+        let before = EffortPicker.unsupportedMarks(onScreen: session.visibleText())
+        func turnedDown(_ screen: String) -> Bool { EffortPicker.unsupportedMarks(onScreen: screen) > before }
         if choice == ClaudeEffortChoice.levels.last {
             session.runCommand("/effort \(choice.level)")
-            return true
+            // Claude Code before 2.1.76 has no `/effort` and says so.
+            let answer = await waitFor(session, timeout: 2) { turnedDown($0) || !EffortPicker.confirmations(onScreen: $0).isEmpty }
+            return answer.map(turnedDown) == true ? .unsupported : .set
         }
         session.send(text: "/effort\r")
-        guard let open = await waitFor(session, timeout: 3, { EffortPicker.isOpen(onScreen: $0) }) else {
+        guard let open = await waitFor(session, timeout: 3, { EffortPicker.isOpen(onScreen: $0) || turnedDown($0) }),
+              !turnedDown(open)
+        else {
+            let screen = session.visibleText()
             // One that comes up late isn't left open for the user's Enter.
-            if EffortPicker.isOpen(onScreen: session.visibleText()) { session.send(text: EffortPicker.cancel) }
-            return false
+            if EffortPicker.isOpen(onScreen: screen) { session.send(text: EffortPicker.cancel) }
+            return turnedDown(screen) ? .unsupported : .failed
         }
         // The stops are always the first levels in order (a lower cap cuts
         // the top), so the index works for any model the pick exists on.
         let stops = EffortPicker.stops(onScreen: open) ?? ClaudeEffortChoice.levels.map(\.level)
         guard let index = stops.firstIndex(of: choice.level) else {
             session.send(text: EffortPicker.cancel)
-            return false
+            return .failed
         }
         let earlier = EffortPicker.confirmations(onScreen: open).count
         // Left as many times as there are levels at all reaches low from
         // any stop. "s" goes out once the picker, now on the pick, offers it
         // (it doesn't on max, where the picker may have opened); otherwise
-        // the picker is left with Esc (Enter would save a default).
+        // the picker is left with Esc (Enter would save a default). A picker
+        // that never offers it is Claude Code before 2.1.257.
         session.send(text: String(repeating: EffortPicker.left, count: ClaudeEffortChoice.levels.count)
                      + String(repeating: EffortPicker.right, count: index))
         guard await waitFor(session, timeout: 1.5, { EffortPicker.offersSessionKey(onScreen: $0) }) != nil else {
             session.send(text: EffortPicker.cancel)
-            return false
+            return .unsupported
         }
         session.send(text: EffortPicker.sessionKey)
         // A new confirmation below the earlier ones is this pick's answer.
@@ -136,7 +149,7 @@ final class ModelSwitchController {
            let answer = ClaudeEffortChoice.matching(level: level), answer != choice {
             confirmed(answer)
         }
-        return true
+        return .set
     }
 
     /// Polls the screen every 20 ms (a read of the live rows); the screen
@@ -154,20 +167,20 @@ final class ModelSwitchController {
 
     static let pickHoldsAgainstLiveInput: TimeInterval = 10
 
-    /// The effort to show for a session. With a status line input (current
-    /// at once, see LiveEffort): the pick until an input names its level (or
-    /// 10 s), then the input. Without one (Claude Code that doesn't pass
+    /// The effort to show for a session. With a status line input that
+    /// carries it (current at once, see ClaudeLiveStatus): the pick until an
+    /// input names its level (or 10 s), then the input. Without one (Claude Code that doesn't pass
     /// it, hooks off): the pick until a reply to a prompt sent after it
     /// exists, else the newest reply's level; nil before the first reply.
-    static func displayedEffort(pick: EffortPick?, live: LiveEffort? = nil, stats: StatsSnapshot) -> ClaudeEffortChoice? {
-        if let live {
+    static func displayedEffort(pick: EffortPick?, live: ClaudeLiveStatus? = nil, stats: StatsSnapshot) -> ClaudeEffortChoice? {
+        if let live, let level = live.level {
             // Inputs written while a reply streams may still carry the old
             // level: the pick shows until one names it, or for 10 s (Claude
             // Code capped it, or the level was changed in the terminal).
-            if let pick, live.level != pick.choice.level, live.at < pick.at.addingTimeInterval(pickHoldsAgainstLiveInput) {
+            if let pick, level != pick.choice.level, live.at < pick.at.addingTimeInterval(pickHoldsAgainstLiveInput) {
                 return pick.choice
             }
-            return ClaudeEffortChoice.matching(level: live.level)
+            return ClaudeEffortChoice.matching(level: level)
         }
         if let pick, !transcriptConfirms(pickedAt: pick.at, stats: stats) {
             return pick.choice
@@ -175,12 +188,17 @@ final class ModelSwitchController {
         return ClaudeEffortChoice.matching(level: stats.effort)
     }
 
-    /// The model to show for a session: the pick until a reply to a prompt
-    /// sent after it exists, else the transcript's model.
-    static func displayedModel(pick: Pick?, stats: StatsSnapshot) -> (title: String?, choice: ClaudeModelChoice?) {
-        if let pick, !transcriptConfirms(pickedAt: pick.at, stats: stats) {
+    /// The model to show for a session: the pick until the status line input
+    /// names its family or a reply to a prompt sent after it exists, then the
+    /// status line's model (current at once, also before the first reply),
+    /// else the transcript's.
+    static func displayedModel(pick: Pick?, live: ClaudeLiveStatus? = nil,
+                               stats: StatsSnapshot) -> (title: String?, choice: ClaudeModelChoice?) {
+        let liveChoice = live?.modelID.flatMap(ClaudeModelChoice.matching(modelID:))
+        if let pick, liveChoice != pick.choice, !transcriptConfirms(pickedAt: pick.at, stats: stats) {
             return (pick.choice.title, pick.choice)
         }
+        if let liveChoice { return (liveChoice.title, liveChoice) }
         // The selector names the family only ("Opus", not "Opus 5.5"); an
         // unknown model falls back to the formatter's display name.
         let choice = ClaudeModelChoice.matching(modelID: stats.modelID)

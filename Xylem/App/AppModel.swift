@@ -177,7 +177,28 @@ final class AppModel {
         case .needsInput, .notRunning: NSSound.beep(); return
         default: break
         }
-        modelSwitcher.switchEffort(of: session, to: choice)
+        let version = tabs.activeTab?.liveStatus?.version ?? session.foregroundClaudeVersion
+        guard EffortSupport.isAvailable(choice, version: version) else {
+            Self.explainUnsupportedEffort(EffortSupport.explanation(for: choice, version: version))
+            return
+        }
+        modelSwitcher.switchEffort(of: session, to: choice) { choice in
+            Self.explainUnsupportedEffort(EffortSupport.explanation(for: choice, version: version))
+        }
+    }
+
+    /// A sheet on the window (an app-modal alert without one).
+    private static func explainUnsupportedEffort(_ text: (title: String, message: String)) {
+        let alert = NSAlert()
+        alert.messageText = text.title
+        alert.informativeText = text.message
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        if let window = NSApp.keyWindow ?? NSApp.mainWindow {
+            alert.beginSheetModal(for: window)
+        } else {
+            alert.runModal()
+        }
     }
 
     /// A pick in the tab list. The list takes the keyboard on click, so the

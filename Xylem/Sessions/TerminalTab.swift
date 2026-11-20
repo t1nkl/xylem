@@ -52,9 +52,9 @@ final class TerminalTab: Identifiable {
     /// What the tab's claude is doing, from hook events + pty output. nil
     /// = no hook data (yet): the busy flag falls back to transcript mtime.
     var claudeState: ClaudeTabState?
-    /// The effort the tab's claude runs at, from its status line input
-    /// (ClaudeHookBridge); nil without one.
-    var liveEffort: LiveEffort?
+    /// Effort, model and Claude Code version of the tab's claude, from its
+    /// status line input (ClaudeHookBridge); nil without one.
+    var liveStatus: ClaudeLiveStatus?
     /// Claude finished or asks for input while the user was looking
     /// elsewhere; cleared when the tab is seen.
     var needsAttention: Bool = false
