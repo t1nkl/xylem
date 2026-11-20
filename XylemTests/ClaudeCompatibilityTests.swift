@@ -102,9 +102,24 @@ private struct CompatibilityJudge {
             fail("statusLine.effort", feature: feature,
                  "the status line from --settings never ran: the effort label falls back to the transcript (shown after a reply)")
         } else if let live = ClaudeLiveStatus.parse(Data(input.utf8), at: Date()), let level = live.level,
-                  live.modelID != nil, live.version != nil {
+                  let modelID = live.modelID, let version = live.version {
             ok("statusLine.effort", feature: feature,
                "the status line input carries effort.level (\(level)), model.id and version at once")
+            // The model label names the family from model.id.
+            if ClaudeModelChoice.matching(modelID: modelID) != nil {
+                ok("statusLine.model", feature: "Model in the toolbar", "model.id \(modelID) names a known model family")
+            } else {
+                warn("statusLine.model", feature: "Model in the toolbar",
+                     "model.id \(modelID) names no family the model menu knows: the label shows the id, the menu has no check mark")
+            }
+            // The effort menu greys out levels by this version.
+            let dotted = version.split(separator: ".").count >= 2 && version.split(separator: ".").allSatisfy { Int($0) != nil }
+            if dotted, ClaudeEffortChoice.levels.allSatisfy({ EffortSupport.isAvailable($0, version: version) }) {
+                ok("statusLine.version", feature: feature, "version \(version) reads as a version with every level available")
+            } else {
+                fail("statusLine.version", feature: feature,
+                     "version \"\(version)\" isn't a plain dotted version or reads as too old: the effort menu would grey out levels that work")
+            }
         } else {
             fail("statusLine.effort", feature: feature,
                  "the status line input lacks effort.level, model.id or version: the effort and model labels fall back to the transcript, the menu can't tell which levels work")
