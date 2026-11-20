@@ -142,7 +142,15 @@ final class XylemTerminalView: LocalProcessTerminalView {
                 view.send(txt: text)
                 return nil
             }
-            return latinControlEvent(for: event) ?? latinCommandEvent(for: event) ?? event
+            if let control = latinControlEvent(for: event) { return control }
+            guard let relabelled = latinCommandEvent(for: event) else { return event }
+            // The menus match Shift+Command on the event as typed: on a
+            // relabelled copy ⇧⌘U reached ⌘U (Usage) and ⇧⌘G ⌘G. Only what
+            // no menu takes goes on to the terminal as the US key.
+            if event.modifierFlags.contains(.shift), NSApp.mainMenu?.performKeyEquivalent(with: event) == true {
+                return nil
+            }
+            return relabelled
         }
     }
 
