@@ -7,6 +7,24 @@
     <language>en</language>
     <!-- items: newest first -->
     <item>
+      <title>v1.2.8</title>
+      <pubDate>Fri, 20 Nov 2026 09:02:05 GMT</pubDate>
+      <sparkle:version>27</sparkle:version>
+      <sparkle:shortVersionString>1.2.8</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### New
+- **Effort in the toolbar.** Next to the model, the toolbar shows the effort level the tab's Claude runs at, as soon as it starts. Pick Low, Medium, High, Extra High or Max to change it for that session only; your default for new sessions stays as it is. Setting a level for one session needs Claude Code 2.1.257 or later (Max 2.1.76 or later); with an older version the menu greys out what it can't set and says which version it needs.
+
+### Improved
+- **The model shows at once.** The toolbar names the model a tab's Claude actually runs as soon as it starts, instead of waiting for its first reply.
+
+### Fixed
+- With the tabs above the terminal, the hidden tab sidebar no longer slides in when the pointer touches the left edge of the screen in full screen.
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.2.8/Xylem-v1.2.8.dmg" type="application/octet-stream" sparkle:edSignature="iiL51Ex1uB65015ubrwlGIzZmghBNvCGbgy1/NWhvaeL/imaKvloF6AqtcxZqpFwfhjOJFBbO2BWyywd6/4AAQ==" length="10329817"/>
+    </item>
+    <item>
       <title>v1.2.7</title>
       <pubDate>Thu, 19 Nov 2026 17:41:33 GMT</pubDate>
       <sparkle:version>26</sparkle:version>
