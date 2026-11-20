@@ -44,9 +44,10 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DERIVED_DATA = "/tmp/xylem-dd-tests"
 LAST_PASS_FILE = os.path.join(REPO, ".claude-check-last-pass")
 HOOK_EVENTS_FALLBACK = ["SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse",
-                        "Stop", "Notification", "SessionEnd"]
+                        "Stop", "Notification", "SessionEnd", "StopFailure"]
 # Flags every tab's claude is started with.
 REQUIRED_FLAGS = ["--session-id", "--resume", "--fork-session", "--settings"]
+STOP_FAILURE_SINCE = "2.1.78"   # ClaudeHookBridge.stopFailureSince
 STREAM_MIN_BATCHES = 5      # ClaudeTabState.streamMinBatches
 STREAM_WINDOW = 1.5         # ClaudeTabState.streamWindow
 TIME_LIMIT = 300            # seconds for every claude run together
@@ -120,8 +121,18 @@ def encode_folder(path):
 
 # ---------------------------------------------------------------- hooks
 
-def write_hook_settings(work):
-    """--settings like Xylem's, every event logged to its own file."""
+def version_at_least(version, minimum):
+    def parts(v):
+        return [int(x) if x.isdigit() else 0 for x in v.split(".")]
+    a, b = parts(version), parts(minimum)
+    width = max(len(a), len(b))
+    return a + [0] * (width - len(a)) >= b + [0] * (width - len(b))
+
+
+def write_hook_settings(work, version):
+    """--settings like Xylem's, every event logged to its own file. Claude
+    Code before 2.1.78 drops every hook of a file that names StopFailure
+    (Xylem gives it settings-legacy.json), so it isn't named for one."""
     installed = os.path.expanduser("~/.xylem/hooks/settings.json")
     events = HOOK_EVENTS_FALLBACK
     try:
@@ -129,6 +140,8 @@ def write_hook_settings(work):
             events = sorted(json.load(f)["hooks"].keys())
     except (OSError, ValueError, KeyError):
         pass
+    if not version_at_least(version, STOP_FAILURE_SINCE):
+        events = [e for e in events if e != "StopFailure"]
     logger = os.path.join(work, "log-event.sh")
     with open(logger, "w") as f:
         f.write('#!/bin/sh\n'
@@ -260,6 +273,63 @@ def headless(claude, cwd, settings, work, manifest):
         record("run.fork", "ok", feature, "fork got its own transcript, the original was left alone")
         sessions["fork"] = fork
     return True
+
+
+# ---------------------------------------------------------------- API error turn
+
+def stop_failure(claude, work, manifest):
+    """A turn an API error ends: claude -p against a local stand-in for the
+    API that answers 429, with its own config folder and a made-up key, so
+    nothing touches the user's account or settings. Xylem's tab shows
+    "Stopped" from the StopFailure hook this should send."""
+    import http.server
+    import threading
+
+    class RateLimited(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass
+
+        def do_POST(self):
+            self.rfile.read(int(self.headers.get("content-length") or 0))
+            body = json.dumps({"type": "error", "error": {"type": "rate_limit_error",
+                                                          "message": "check-claude stand-in"}}).encode()
+            self.send_response(429)
+            self.send_header("content-type", "application/json")
+            self.send_header("content-length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        do_GET = do_POST
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), RateLimited)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    events_dir = os.path.join(work, "events-stopfailure")
+    config = os.path.join(work, "stopfailure-config")
+    cwd = os.path.join(work, "stopfailure")
+    for folder in (events_dir, config, cwd):
+        os.makedirs(folder, exist_ok=True)
+    logger = os.path.join(work, "log-event.sh")
+    settings = os.path.join(work, "settings-stopfailure.json")
+    with open(settings, "w") as f:
+        json.dump({"hooks": {e: [{"hooks": [{"type": "command", "command": "/bin/sh '" + logger + "'"}]}]
+                             for e in ["SessionStart", "UserPromptSubmit", "Stop", "StopFailure", "SessionEnd"]}}, f)
+    env = clean_env({"XYLEM_CHECK_EVENTS": events_dir, "XYLEM_TAB_ID": str(uuid.uuid4()).upper(),
+                     "CLAUDE_CONFIG_DIR": config, "ANTHROPIC_API_KEY": "sk-ant-check-0000-not-a-real-key",
+                     "ANTHROPIC_BASE_URL": "http://127.0.0.1:%d" % server.server_address[1],
+                     "CLAUDE_CODE_MAX_RETRIES": "0", "DISABLE_AUTOUPDATER": "1",
+                     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"})
+    progress("headless run: a turn that ends on an API error")
+    ran = False
+    try:
+        subprocess.run([claude, "-p", "Reply with ok.", "--settings", settings, "--model", "haiku"], cwd=cwd, env=env,
+                       capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL)
+        ran = True
+    except (OSError, subprocess.TimeoutExpired):
+        record("hooks.stopFailure", "skip", "\"Stopped\" mark when an API error ends a turn",
+               "not checked: claude didn't finish the API error run within 60 s")
+    finally:
+        server.shutdown()
+    manifest["stopFailureRan"] = ran
 
 
 # ---------------------------------------------------------------- interactive run
@@ -777,7 +847,7 @@ def main():
     cwd = os.path.join(work, "proj dir_v1.0")
     os.makedirs(cwd)
     subprocess.run(["git", "init", "-q", cwd], capture_output=True)
-    settings, events = write_hook_settings(work)
+    settings, events = write_hook_settings(work, version)
     manifest = {
         "claudeVersion": version, "claudePath": claude,
         "binaryMtime": os.path.getmtime(os.path.realpath(claude)),
@@ -792,6 +862,8 @@ def main():
     try:
         if check_cli(claude):
             if headless(claude, cwd, settings, work, manifest):
+                if version_at_least(version, STOP_FAILURE_SINCE):
+                    stop_failure(claude, work, manifest)
                 interactive(claude, cwd, settings, work, manifest)
             else:
                 record("tui.skipped", "skip", "Everything that needs a running claude",

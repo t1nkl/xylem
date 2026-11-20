@@ -86,6 +86,8 @@ private struct CompatibilityJudge {
         }
         checkEffortPicker()
         checkStatusLineEffort()
+        checkStatusLineContextAndLimits()
+        checkStopFailure()
         checkRealConfig(projects: projects)
         checkRecentTranscripts(projects: projects)
     }
@@ -156,13 +158,87 @@ private struct CompatibilityJudge {
         }
     }
 
+    /// The context gauge and the plan limits read the same status line
+    /// input (ContextReading, ClaudeTabStateTracker.planLimits).
+    mutating func checkStatusLineContextAndLimits() {
+        guard let input = manifest["statusLineInput"] as? String, !input.isEmpty,
+              let live = ClaudeLiveStatus.parse(Data(input.utf8), at: Date())
+        else {
+            skip("statusLine.context", feature: "Context in the toolbar", "the interactive run didn't reach the status line check")
+            return
+        }
+        let object = (try? JSONSerialization.jsonObject(with: Data(input.utf8))) as? [String: Any] ?? [:]
+        if let context = live.context, let percent = context.usedPercentage, let size = context.size {
+            ok("statusLine.context", feature: "Context in the toolbar",
+               "context_window gives \(Int(percent))% of \(size) tokens, the count the toolbar shows")
+        } else if object["context_window"] == nil {
+            warn("statusLine.context", feature: "Context in the toolbar",
+                 "the status line input has no context_window any more: the toolbar falls back to the transcript and shows the old size after /compact")
+        } else {
+            fail("statusLine.context", feature: "Context in the toolbar",
+                 "context_window has no used_percentage or context_window_size after replies: the toolbar would show \"-\" where the transcript has a number")
+        }
+        let limitsFeature = "Plan usage limits in the toolbar"
+        if let raw = object["rate_limits"] as? [String: Any], !raw.isEmpty {
+            if let limits = live.rateLimits, !limits.isEmpty {
+                let windows = [limits.fiveHour.map { "5-hour \(Int($0.usedPercentage))%" },
+                               limits.sevenDay.map { "weekly \(Int($0.usedPercentage))%" }].compactMap { $0 }
+                let unknown = Set(raw.keys).subtracting(["five_hour", "seven_day", "spend_limit"])
+                if unknown.isEmpty {
+                    ok("statusLine.limits", feature: limitsFeature, "rate_limits reads as " + windows.joined(separator: ", "))
+                } else {
+                    warn("statusLine.limits", feature: limitsFeature,
+                         "rate_limits reads as \(windows.joined(separator: ", ")), and has windows Xylem doesn't show: \(unknown.sorted())")
+                }
+            } else {
+                fail("statusLine.limits", feature: limitsFeature,
+                     "rate_limits is there but no window has a numeric used_percentage: the toolbar shows nothing")
+            }
+        } else {
+            skip("statusLine.limits", feature: limitsFeature,
+                 "no rate_limits in the input (an API key, or the plan reported none): nothing to show")
+        }
+    }
+
+    /// A turn an API error ended: the tab shows "Stopped" from StopFailure.
+    mutating func checkStopFailure() {
+        let feature = "\"Stopped\" mark when an API error ends a turn"
+        guard manifest["stopFailureRan"] as? Bool == true else {
+            // A run that didn't finish has its own line from the capture.
+            if manifest["stopFailureRan"] as? Bool == false { return }
+            skip("hooks.stopFailure", feature: feature,
+                 "not run: StopFailure needs Claude Code \(ClaudeHookBridge.stopFailureSince)+ (older versions run without it)")
+            return
+        }
+        let names = events("stopfailure").compactMap { $0["hook_event_name"] as? String }
+        guard let raw = events("stopfailure").first(where: { $0["hook_event_name"] as? String == "StopFailure" }),
+              let data = try? JSONSerialization.data(withJSONObject: raw),
+              let event = ClaudeTabEvent.parse(data, at: Date())
+        else {
+            fail("hooks.stopFailure", feature: feature,
+                 "a turn rejected with HTTP 429 sent no StopFailure hook (events: \(names)): the tab would show nothing")
+            return
+        }
+        if names.contains("Stop") {
+            warn("hooks.stopFailure", feature: feature, "the failed turn sent Stop as well as StopFailure: the tab may show \"finished\" too")
+        } else if case .stopFailure(let error, _) = event.kind, error == "rate_limit" {
+            ok("hooks.stopFailure", feature: feature, "HTTP 429 ended the turn with StopFailure (error rate_limit)")
+        } else {
+            warn("hooks.stopFailure", feature: feature,
+                 "HTTP 429 sent StopFailure with error \(raw["error"] ?? "none"), not rate_limit: the tab says \"API error\"")
+        }
+    }
+
     // MARK: - Hooks
 
     /// The capture subscribed to the events of the installed hook settings;
     /// the app's list must be the same, or the capture proves nothing.
     mutating func checkHookSubscription() {
         let captured = Set(manifest["subscribedEvents"] as? [String] ?? [])
-        let app = Set(ClaudeHookBridge.events)
+        // The file a tab of this version gets (ClaudeHookBridge.settingsPath).
+        let version = manifest["claudeVersion"] as? String
+        let app = Set(version.map { ClaudeCLIVersion.isVersion($0, atLeast: ClaudeHookBridge.stopFailureSince) } ?? false
+                      ? ClaudeHookBridge.events : ClaudeHookBridge.legacyEvents)
         if captured == app {
             ok("hooks.subscription", feature: "Tab state (working, finished, needs permission)",
                "the check listened to the same \(app.count) hook events the app subscribes to")
