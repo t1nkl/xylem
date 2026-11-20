@@ -380,6 +380,11 @@ private struct TopTab: View {
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(AppTheme.Colors.statusAmber)
                 .lineLimit(1)
+        } else if let failure = TabRowText.failureLine(tab) {
+            Text(failure)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(AppTheme.Colors.statusRed)
+                .lineLimit(1)
         } else if let prompt = tab.lastPrompt, !prompt.isEmpty {
             Text(prompt)
                 .font(.system(size: 11))
@@ -506,6 +511,7 @@ private struct TopTabHoverCard: View {
         if tab.needsAttention, case .needsInput(let message) = tab.claudeState {
             return (TabRowText.needsInputLine(message), AppTheme.Colors.statusAmber)
         }
+        if let failure = TabRowText.failureLine(tab) { return (failure, AppTheme.Colors.statusRed) }
         if tab.needsAttention { return ("Claude finished", AppTheme.Colors.statusBlue) }
         if !tab.hasAnyRunningSession { return ("Waiting for a folder", AppTheme.Colors.textMuted) }
         if tab.session?.isStarted != true { return ("Starts when you open it", AppTheme.Colors.textMuted) }

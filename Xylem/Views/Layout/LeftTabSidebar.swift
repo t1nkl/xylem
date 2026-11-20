@@ -213,6 +213,11 @@ private struct TabRow: View {
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(AppTheme.Colors.statusAmber)
                 .lineLimit(1)
+        } else if let failure = TabRowText.failureLine(tab) {
+            Text(failure)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(AppTheme.Colors.statusRed)
+                .lineLimit(1)
         } else if let prompt = tab.lastPrompt, !prompt.isEmpty {
             Text(prompt)
                 .font(.system(size: 12))
@@ -364,6 +369,13 @@ nonisolated enum TabRowText {
         }
         return message
     }
+
+    /// "Stopped: Rate limit reached" while a turn an API error ended is
+    /// unseen; nil otherwise.
+    static func failureLine(_ tab: TerminalTab) -> String? {
+        guard tab.needsAttention, case .failed(let error, _) = tab.claudeState else { return nil }
+        return "Stopped: " + ClaudeTabState.failureLabel(error)
+    }
 }
 
 /// `/Users/me/x` → `~/x`.
@@ -405,6 +417,9 @@ struct TabAvatar: View {
                     .allowsHitTesting(false)
             } else if tab.needsAttention, case .needsInput = tab.claudeState {
                 AttentionBadge(color: AppTheme.Colors.statusAmber, symbol: "exclamationmark")
+                    .frame(width: frameSize, height: frameSize, alignment: .topTrailing)
+            } else if tab.needsAttention, case .failed = tab.claudeState {
+                AttentionBadge(color: AppTheme.Colors.statusRed, symbol: "exclamationmark")
                     .frame(width: frameSize, height: frameSize, alignment: .topTrailing)
             } else if tab.needsAttention {
                 AttentionBadge(color: AppTheme.Colors.statusBlue, symbol: nil)

@@ -76,6 +76,23 @@ final class TabsViewModel {
 
     // MARK: - Tab lifecycle
 
+    /// The first tab after `active` (wrapping around, the active one last
+    /// and never itself) that waits for the user: its mark is on (finished,
+    /// a permission question, an error, not seen yet), or Claude asks for
+    /// permission there still - a question looked at but not answered.
+    static func nextWaitingTab(in tabs: [TerminalTab], after active: TerminalTab.ID?) -> TerminalTab.ID? {
+        let start = active.flatMap { id in tabs.firstIndex { $0.id == id } } ?? -1
+        let count = tabs.count
+        guard count > 0 else { return nil }
+        for step in 1...count {
+            let tab = tabs[(start + step + count) % count]
+            if tab.id == active { continue }
+            if tab.needsAttention { return tab.id }
+            if case .needsInput = tab.claudeState { return tab.id }
+        }
+        return nil
+    }
+
     func select(_ id: TerminalTab.ID) {
         guard tabs.contains(where: { $0.id == id }) else { return }
         guard activeTabID != id else { return }
@@ -376,6 +393,11 @@ final class TabsViewModel {
     /// tab forks the conversation under a new id instead.
     private func startIfNeeded(_ tab: TerminalTab) {
         guard let session = tab.session, !session.isStarted, pendingStarts[tab.id] == nil else { return }
+        // The hook settings for the claude version known by now.
+        if let id = session.claudeSessionID,
+           let command = sessionFactory.launchWithCurrentHookSettings(session.configuration.initialCommand) {
+            session.replaceLaunch(command: command, sessionID: id)
+        }
         guard let resumed = TerminalSessionFactory.resumedSessionID(in: session.configuration.initialCommand) else {
             session.start()
             return

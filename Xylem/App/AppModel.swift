@@ -201,6 +201,20 @@ final class AppModel {
         }
     }
 
+    /// The next tab after the active one (wrapping around) that waits for
+    /// the user: its "waiting" mark is on, or Claude still asks for
+    /// permission there. Selects it like a click; false (and a beep) when
+    /// there is none.
+    @discardableResult
+    func selectNextWaitingTab() -> Bool {
+        guard let id = TabsViewModel.nextWaitingTab(in: tabs.tabs, after: tabs.activeTabID) else {
+            NSSound.beep()
+            return false
+        }
+        selectTab(id)
+        return true
+    }
+
     /// A pick in the tab list. The list takes the keyboard on click, so the
     /// active terminal gets it back.
     func selectTab(_ id: TerminalTab.ID) {
@@ -383,6 +397,16 @@ extension AppModel {
             // answer until the shell replies.
             if shell == nil, case .notOnPath = self.doctorStatus, case .healthy = status { return }
             if self.doctorStatus != status { self.doctorStatus = status }
+            // Which hook settings the next tabs get (StopFailure from 2.1.78).
+            if case .found(let path) = location {
+                let searchPath = shell?.path ?? ClaudeBinaryLocator.knownDirectories(
+                    home: FileManager.default.homeDirectoryForCurrentUser.path)
+                let version = await Task.detached {
+                    ClaudeCLIVersion.read(executable: path, searchPath: searchPath)
+                }.value
+                guard !Task.isCancelled else { return }
+                ClaudeCLIVersion.remember(version)
+            }
         }
         doctorTask = task
         return task

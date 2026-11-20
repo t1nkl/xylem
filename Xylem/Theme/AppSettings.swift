@@ -174,6 +174,7 @@ enum MenuTabAction {
     case closeOtherTabs
     case clear, interrupt
     case switchToTab(Int)   // 1-based index
+    case nextWaitingTab
     case findInTerminal
     case findNext
     case findPrevious

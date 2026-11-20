@@ -349,6 +349,8 @@ struct ContentView: View {
                 tabs.select(tabs.tabs[n - 1].id)
                 tabRevealRequest += 1
             }
+        case .nextWaitingTab:
+            if app.selectNextWaitingTab() { tabRevealRequest += 1 }
         }
     }
 }

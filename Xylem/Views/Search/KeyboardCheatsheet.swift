@@ -56,6 +56,7 @@ struct KeyboardCheatsheet: View {
                 Row(label: "New Tab",            binding: b(.newTab)),
                 Row(label: "Close Tab",          binding: b(.closeTab)),
                 Row(label: "Close Other Tabs",   binding: b(.closeOtherTabs)),
+                Row(label: "Next Waiting Tab",   binding: b(.nextWaitingTab)),
                 Row(label: "Switch to Tab N",    binding: "⌘1 … ⌘9")
             ]),
             Group(title: "Terminal", rows: [

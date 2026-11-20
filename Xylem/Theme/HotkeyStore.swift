@@ -22,7 +22,7 @@ import Foundation
 import SwiftUI
 
 enum HotkeyAction: String, CaseIterable, Codable, Identifiable {
-    case newTab, closeTab, closeOtherTabs
+    case newTab, closeTab, closeOtherTabs, nextWaitingTab
     case clear, interrupt
     case commandPalette
     case findInTerminal, findNextMatch, findPreviousMatch
@@ -37,6 +37,7 @@ enum HotkeyAction: String, CaseIterable, Codable, Identifiable {
         case .newTab:         return "New Tab"
         case .closeTab:       return "Close Tab"
         case .closeOtherTabs: return "Close Other Tabs"
+        case .nextWaitingTab: return "Next Tab Waiting for You"
         case .clear:          return "Clear Terminal"
         case .interrupt:      return "Interrupt"
         case .commandPalette: return "Command Palette"
@@ -139,6 +140,8 @@ struct HotkeyStore {
         .newTab:         HotkeyBinding(key: "t", modifiers: ["cmd"]),
         .closeTab:       HotkeyBinding(key: "w", modifiers: ["cmd"]),
         .closeOtherTabs: HotkeyBinding(key: "w", modifiers: ["cmd", "option"]),
+        // Not ⇧⌘U: on a Ukrainian layout that reaches the menu as ⌘U (Usage).
+        .nextWaitingTab: HotkeyBinding(key: "u", modifiers: ["cmd", "control"]),
         .clear:          HotkeyBinding(key: "l", modifiers: ["cmd"]),
         .interrupt:      HotkeyBinding(key: "c", modifiers: ["cmd", "control"]),
         .commandPalette: HotkeyBinding(key: "k", modifiers: ["cmd"]),

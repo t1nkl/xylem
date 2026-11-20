@@ -142,13 +142,7 @@ nonisolated enum EffortSupport {
 
     /// Dotted versions compared number by number ("2.1.76" < "2.1.257").
     static func isVersion(_ version: String, atLeast minimum: String) -> Bool {
-        let a = version.split(separator: ".").map { Int($0) ?? 0 }
-        let b = minimum.split(separator: ".").map { Int($0) ?? 0 }
-        for i in 0..<max(a.count, b.count) {
-            let x = i < a.count ? a[i] : 0, y = i < b.count ? b[i] : 0
-            if x != y { return x > y }
-        }
-        return true
+        ClaudeCLIVersion.isVersion(version, atLeast: minimum)
     }
 
     /// The alert text; `version` is the running claude's when its process

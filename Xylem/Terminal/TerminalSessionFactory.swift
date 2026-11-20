@@ -36,9 +36,13 @@ struct TerminalSessionFactory {
         SessionFileLocator.latestSessionFile(for: directory, excluding: excluded)?
             .deletingPathExtension().lastPathComponent
     }
-    /// `--settings` file with the tab-event hooks; nil runs claude without
-    /// them (tests, or the files could not be written).
-    var hookSettingsPath: () -> String? = { ClaudeHookBridge.installedSettingsPath }
+    /// `--settings` file with the tab-event hooks, the one for the claude
+    /// version Doctor last read; nil runs claude without them (tests, or the
+    /// files could not be written).
+    var hookSettingsPath: () -> String? = {
+        ClaudeHookBridge.settingsPath(installed: ClaudeHookBridge.installedSettingsPath,
+                                      claudeVersion: ClaudeCLIVersion.known)
+    }
     /// Whether a session's transcript exists, i.e. `--resume` can open it.
     var sessionExists: (_ directory: String, _ sessionID: String) -> Bool = { directory, id in
         Self.transcriptURL(directory: directory, sessionID: id).map {
@@ -259,5 +263,27 @@ struct TerminalSessionFactory {
 
     private func hookArguments() -> [String] {
         hookSettingsPath().map { ["--settings", $0] } ?? []
+    }
+
+    /// A tab's launch with the hook settings file chosen now: a restored tab
+    /// builds its command at restore, before Doctor may know the claude
+    /// version (a just-updated claude takes ~5 s for its first `--version`
+    /// while macOS checks the new binary), and starts only when first shown.
+    /// nil when nothing changes.
+    func launchWithCurrentHookSettings(_ command: [String]?) -> [String]? {
+        guard let command, let current = hookSettingsPath() else { return nil }
+        return Self.replacingHookSettings(in: command, with: current)
+    }
+
+    /// The value after `--settings` replaced, only when it is one of Xylem's
+    /// hook settings files and differs; nil otherwise.
+    nonisolated static func replacingHookSettings(in command: [String], with path: String) -> [String]? {
+        guard let flag = command.firstIndex(of: "--settings"), flag + 1 < command.count,
+              command[flag + 1].contains(ClaudeHookBridge.settingsFileMarker),
+              command[flag + 1] != path
+        else { return nil }
+        var updated = command
+        updated[flag + 1] = path
+        return updated
     }
 }

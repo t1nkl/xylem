@@ -70,7 +70,10 @@ final class AttentionNotifier: NSObject, AttentionNotifying {
         content.body = body
         content.userInfo = [Self.tabIDKey: tabID.uuidString]
         content.threadIdentifier = tabID.uuidString
-        if case .needsInput = state { content.sound = .default }
+        switch state {
+        case .needsInput, .failed: content.sound = .default
+        default: break
+        }
         // One live notification per tab: a newer episode replaces it.
         let request = UNNotificationRequest(identifier: tabID.uuidString, content: content, trigger: nil)
         Task {
@@ -88,6 +91,11 @@ final class AttentionNotifier: NSObject, AttentionNotifying {
         switch state {
         case .needsInput(let message):
             return message.flatMap { $0.isEmpty ? nil : $0 } ?? "Claude needs your input"
+        case .failed(let error, let message):
+            // The kind, then Claude Code's own error text on the next line.
+            let line = "Stopped: " + ClaudeTabState.failureLabel(error)
+            guard let message, !message.isEmpty else { return line }
+            return line + "\n" + message
         case .finished:
             guard let prompt = lastPrompt, !prompt.isEmpty else { return "Claude finished" }
             return "Claude finished: \(prompt)"

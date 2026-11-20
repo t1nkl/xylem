@@ -15,7 +15,10 @@
 //  with -p); every event carries `session_id` and `transcript_path`;
 //  `/clear` sends SessionEnd(reason clear) then SessionStart(source clear)
 //  with a new id; a permission prompt sends Notification(notification_type
-//  permission_prompt); Esc sends nothing (see ClaudeTabState).
+//  permission_prompt); Esc sends nothing (see ClaudeTabState). A turn an
+//  API error ended sends StopFailure instead of Stop, with `error`
+//  (rate_limit, authentication_failed, server_error, unknown, …) and the
+//  error text as `last_assistant_message` (2.1.329).
 //
 //  A UserPromptSubmit is also kept as `<tab id>.prompt` (its hook passes
 //  the script a `prompt` argument): the event file keeps only the latest
@@ -52,8 +55,18 @@ nonisolated enum ClaudeHookBridge {
     /// turn as running again after a permission answer.
     static let events = [
         "SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse",
-        "Stop", "Notification", "SessionEnd"
+        "Stop", "Notification", "SessionEnd", stopFailureEvent
     ]
+
+    /// Sent instead of Stop when an API error ended the turn (rate limit,
+    /// authentication, server error). Claude Code before 2.1.78 doesn't know
+    /// it, and an unknown event name makes those versions drop every hook in
+    /// the file (2.1.77 and 2.0.50: not one event fired), so their tabs get
+    /// `legacySettingsName`, the same file without it.
+    static let stopFailureEvent = "StopFailure"
+    static let stopFailureSince = "2.1.78"
+    static let settingsName = "settings.json"
+    static let legacySettingsName = "settings-legacy.json"
 
     static let environmentKey = "XYLEM_TAB_ID"
 
@@ -63,8 +76,9 @@ nonisolated enum ClaudeHookBridge {
     static let userStatusLineExtension = "statusline"
 
     /// On the command line of every claude a Xylem tab starts (`--settings
-    /// …/.xylem/hooks/settings.json`): tells our processes from others.
-    static let settingsFileMarker = "/.xylem/hooks/settings.json"
+    /// …/.xylem/hooks/settings.json` or `settings-legacy.json`): tells our
+    /// processes from others.
+    static let settingsFileMarker = "/.xylem/hooks/settings"
 
     static var rootDirectory: URL {
         FileManager.default.homeDirectoryForCurrentUser.appending(path: ".xylem", directoryHint: .isDirectory)
@@ -117,6 +131,14 @@ nonisolated enum ClaudeHookBridge {
     /// Written once per launch: the files only change with the app.
     static let installedSettingsPath: String? = install()
 
+    /// The settings file for a claude of `version`: the one with StopFailure
+    /// from 2.1.78, else (also when the version is unknown) the one without.
+    static func settingsPath(installed: String?, claudeVersion version: String?) -> String? {
+        guard let installed else { return nil }
+        if let version, ClaudeCLIVersion.isVersion(version, atLeast: stopFailureSince) { return installed }
+        return (installed as NSString).deletingLastPathComponent + "/" + legacySettingsName
+    }
+
     /// Writes the hook script and settings file when their content differs
     /// (first launch, or a template change after an update) and returns the
     /// settings path for `--settings`; nil if they can't be written, in
@@ -128,7 +150,8 @@ nonisolated enum ClaudeHookBridge {
         let eventsDir = root.appending(path: "tab-events", directoryHint: .isDirectory)
         let script = hooksDir.appending(path: "tab-event.sh")
         let statusScript = hooksDir.appending(path: "status-line.sh")
-        let settings = hooksDir.appending(path: "settings.json")
+        let settings = hooksDir.appending(path: settingsName)
+        let legacySettings = hooksDir.appending(path: legacySettingsName)
         do {
             try FileManager.default.createDirectory(at: hooksDir, withIntermediateDirectories: true)
             try FileManager.default.createDirectory(at: eventsDir, withIntermediateDirectories: true)
@@ -142,6 +165,8 @@ nonisolated enum ClaudeHookBridge {
             let padding = userSettings.readGlobalSettings()?.statusLine?.padding
             try writeIfChanged(settingsSource(scriptPath: script.path, statusScriptPath: statusScript.path,
                                               statusLinePadding: padding), to: settings)
+            try writeIfChanged(settingsSource(scriptPath: script.path, statusScriptPath: statusScript.path,
+                                              statusLinePadding: padding, events: legacyEvents), to: legacySettings)
             return settings.path
         } catch {
             return nil
@@ -204,7 +229,11 @@ nonisolated enum ClaudeHookBridge {
         """
     }
 
-    static func settingsSource(scriptPath: String, statusScriptPath: String, statusLinePadding: Int? = nil) -> String {
+    /// Every event but StopFailure, for Claude Code before 2.1.78.
+    static var legacyEvents: [String] { events.filter { $0 != stopFailureEvent } }
+
+    static func settingsSource(scriptPath: String, statusScriptPath: String, statusLinePadding: Int? = nil,
+                               events: [String] = events) -> String {
         let command = "/bin/sh " + shellQuote(scriptPath)
         func hook(_ command: String) -> [String: Any] { ["hooks": [["type": "command", "command": command]]] }
         var hooks: [String: Any] = [:]
@@ -307,8 +336,36 @@ nonisolated struct ClaudeLiveStatus: Equatable, Sendable {
     /// Claude Code's version ("2.1.329").
     var version: String? = nil
     var sessionID: String? = nil
+    /// The context window as Claude Code counts it (`context_window`); nil
+    /// when the input has none.
+    var context: Context? = nil
+    /// The plan's usage limits (`rate_limits`); nil when the input has none
+    /// (API keys, before the first request).
+    var rateLimits: RateLimits? = nil
     /// When Claude Code passed it.
     var at: Date
+
+    nonisolated struct Context: Equatable, Sendable {
+        /// `used_percentage`: nil until the first reply of the session, and
+        /// again after `/compact` until the next reply (2.1.329).
+        var usedPercentage: Double?
+        /// Input tokens of the latest request (`total_input_tokens`).
+        var usedTokens: Int?
+        /// `context_window_size`.
+        var size: Int?
+    }
+
+    nonisolated struct RateLimits: Equatable, Sendable {
+        var fiveHour: Window?
+        var sevenDay: Window?
+
+        nonisolated struct Window: Equatable, Sendable {
+            var usedPercentage: Double
+            var resetsAt: Date?
+        }
+
+        var isEmpty: Bool { fiveHour == nil && sevenDay == nil }
+    }
 
     static func parse(_ data: Data, at time: Date) -> ClaudeLiveStatus? {
         guard let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return nil }
@@ -318,8 +375,33 @@ nonisolated struct ClaudeLiveStatus: Equatable, Sendable {
             modelID: text((object["model"] as? [String: Any])?["id"]),
             version: text(object["version"]),
             sessionID: text(object["session_id"]),
+            context: (object["context_window"] as? [String: Any]).map(Self.context),
+            rateLimits: (object["rate_limits"] as? [String: Any]).map(Self.rateLimits).flatMap { $0.isEmpty ? nil : $0 },
             at: time
         )
         return status.level == nil && status.modelID == nil && status.version == nil ? nil : status
+    }
+
+    /// A JSON number (`NSNumber`, not a Bool); `null` and anything else is nil.
+    static func number(_ value: Any?) -> Double? {
+        guard let number = value as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID() else { return nil }
+        let double = number.doubleValue
+        return double.isFinite ? double : nil
+    }
+
+    private static func context(_ object: [String: Any]) -> Context {
+        Context(usedPercentage: number(object["used_percentage"]),
+                usedTokens: number(object["total_input_tokens"]).map { Int($0) },
+                size: number(object["context_window_size"]).flatMap { $0 > 0 ? Int($0) : nil })
+    }
+
+    private static func rateLimits(_ object: [String: Any]) -> RateLimits {
+        func window(_ value: Any?) -> RateLimits.Window? {
+            guard let window = value as? [String: Any], let used = number(window["used_percentage"]) else { return nil }
+            // Unix seconds.
+            let resets = number(window["resets_at"]).flatMap { $0 > 0 ? Date(timeIntervalSince1970: $0) : nil }
+            return RateLimits.Window(usedPercentage: used, resetsAt: resets)
+        }
+        return RateLimits(fiveHour: window(object["five_hour"]), sevenDay: window(object["seven_day"]))
     }
 }

@@ -74,3 +74,44 @@ nonisolated struct StatsSnapshot: Equatable, Sendable {
         return ".../" + components.suffix(2).joined(separator: "/")
     }
 }
+
+/// The context gauge's numbers, from one source: Claude Code's own count in
+/// the status line input when it has one, else the transcript.
+///
+/// The status line input says `used_percentage: null` until a session's
+/// first reply, and again after `/compact` until the next reply, while the
+/// transcript still ends with the reply from before the compact (measured
+/// on 2.1.329). An input newer than the transcript's last reply wins even
+/// then: the gauge shows "not known yet" rather than the old size.
+nonisolated struct ContextReading: Equatable, Sendable {
+    var usedTokens: Int = 0
+    var limit: Int = 0
+    /// nil = not known.
+    var percent: Double?
+
+    var fraction: CGFloat {
+        guard let percent else { return 0 }
+        return CGFloat(min(max(percent, 0), 100) / 100)
+    }
+
+    var display: String {
+        guard let percent else { return "-" }
+        return "\(Int(min(max(percent, 0), 100).rounded(.down)))%"
+    }
+
+    static func make(stats: StatsSnapshot?, live: ClaudeLiveStatus?) -> ContextReading {
+        if let live, let context = live.context {
+            let limit = context.size ?? stats?.contextLimit ?? 0
+            if let percent = context.usedPercentage {
+                let used = context.usedTokens ?? Int(percent / 100 * Double(limit))
+                return ContextReading(usedTokens: used, limit: limit, percent: percent)
+            }
+            if stats?.lastAssistantAt.map({ live.at >= $0 }) ?? true {
+                return ContextReading(limit: limit)
+            }
+        }
+        guard let stats, stats.hasUsageData else { return ContextReading(limit: stats?.contextLimit ?? 0) }
+        return ContextReading(usedTokens: stats.contextUsed, limit: stats.contextLimit,
+                              percent: Double(stats.contextFraction) * 100)
+    }
+}

@@ -21,7 +21,8 @@
 //  either: a permission prompt keeps redrawing (~1.6 batches per second), so
 //  "needs input" ends when the user answers in that tab (keyboard input) or the
 //  next hook event arrives. A question dialog (AskUserQuestion) arrives as a
-//  permission prompt too.
+//  permission prompt too. A turn an API error ended (StopFailure, sent
+//  instead of Stop) is "failed" until the next event.
 //
 //  Everything here is pure; the view model feeds it times and events.
 //
@@ -37,6 +38,10 @@ nonisolated struct ClaudeTabEvent: Equatable, Sendable {
         case promptSubmitted
         case toolActivity
         case stop
+        /// An API error ended the turn (sent instead of Stop): `error` is
+        /// Claude Code's kind (rate_limit, server_error, …), `message` the
+        /// error text it showed.
+        case stopFailure(error: String?, message: String?)
         /// Permission prompt or a question to the user.
         case needsInput(message: String?)
         /// Claude has been waiting at the prompt for a while.
@@ -61,6 +66,11 @@ nonisolated struct ClaudeTabEvent: Equatable, Sendable {
         case "UserPromptSubmit": kind = .promptSubmitted
         case "PreToolUse", "PostToolUse": kind = .toolActivity
         case "Stop": kind = .stop
+        case "StopFailure":
+            kind = .stopFailure(error: (object["error"] as? String).flatMap { $0.isEmpty ? nil : $0 },
+                                message: (object["last_assistant_message"] as? String).flatMap {
+                                    $0.isEmpty ? nil : String($0.prefix(ClaudeTabState.failureMessageLimit))
+                                })
         case "Notification":
             switch object["notification_type"] as? String {
             case "permission_prompt", "elicitation_dialog":
@@ -146,6 +156,8 @@ nonisolated enum ClaudeTabState: Equatable, Sendable {
     case working
     /// The turn ended - the user's move.
     case finished
+    /// An API error ended the turn (rate limit, authentication, server).
+    case failed(error: String?, message: String?)
     /// Claude asks for permission or an answer.
     case needsInput(message: String?)
 
@@ -158,11 +170,32 @@ nonisolated enum ClaudeTabState: Equatable, Sendable {
     /// Output in the first moments after Stop is the final redraw, not a
     /// continued turn.
     static let afterEventMargin: TimeInterval = 1.5
+    /// Longest error text kept from a StopFailure event.
+    static let failureMessageLimit = 300
 
     var wantsAttention: Bool {
         switch self {
-        case .finished, .needsInput: return true
+        case .finished, .needsInput, .failed: return true
         default: return false
+        }
+    }
+
+    /// Claude Code's error kind in words, for the tab and the banner.
+    static func failureLabel(_ error: String?) -> String {
+        switch error {
+        case "rate_limit": return "Rate limit reached"
+        case "overloaded": return "API overloaded"
+        case "authentication_failed": return "Authentication failed"
+        case "oauth_org_not_allowed": return "Organization not allowed"
+        case "account_on_hold": return "Account on hold"
+        case "verification_required": return "Verification required"
+        case "billing_error": return "Billing problem"
+        case "invalid_request": return "Request rejected"
+        case "model_not_found": return "Model not found"
+        case "server_error": return "API server error"
+        case "max_output_tokens": return "Reply hit the output limit"
+        case "cloud_credential_error": return "Cloud credentials problem"
+        default: return "API error"
         }
     }
 
@@ -195,6 +228,10 @@ nonisolated enum ClaudeTabState: Equatable, Sendable {
             // `/goal` evaluating or continuing: the spinner is on.
             let after = event.time.addingTimeInterval(afterEventMargin)
             return activity.isStreaming(now: now, after: after) ? .working : .finished
+        case .stopFailure(let error, let message):
+            // Like Stop: a turn that goes on (a retry) shows the spinner.
+            let after = event.time.addingTimeInterval(afterEventMargin)
+            return activity.isStreaming(now: now, after: after) ? .working : .failed(error: error, message: message)
         case .needsInput(let message):
             if let input = activity.lastInput, input > event.time {
                 // Answered in the tab: running again, or denied and idle.
@@ -226,8 +263,8 @@ nonisolated enum ClaudeTabState: Equatable, Sendable {
 /// already knows about - one that got a banner, or that they watched land:
 /// a turn Claude starts on its own after that (a background
 /// task reporting back) stays silent, while `/goal`, whose in-between Stops
-/// nobody saw settle, still announces its end. A permission question always
-/// notifies, once per event.
+/// nobody saw settle, still announces its end. A permission question and
+/// a turn an API error ended always notify, once per event.
 nonisolated struct AttentionAnnouncements: Equatable, Sendable {
     /// Time of the hook event behind the last banner.
     private(set) var lastAnnounced: Date?
@@ -240,7 +277,7 @@ nonisolated struct AttentionAnnouncements: Equatable, Sendable {
     func allows(_ state: ClaudeTabState, event: ClaudeTabEvent, lastPromptAt: Date?) -> Bool {
         guard event.time != lastAnnounced else { return false }
         switch (state, event.kind) {
-        case (.needsInput, .needsInput):
+        case (.needsInput, .needsInput), (.failed, .stopFailure):
             return true
         case (.finished, .stop):
             guard let lastKnownStop, let lastPromptAt else { return true }

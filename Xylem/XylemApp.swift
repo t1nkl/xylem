@@ -34,6 +34,8 @@ struct XylemApp: App {
         // Before restore: tabs look their transcripts up in the Claude
         // config folder (CLAUDE_CONFIG_DIR). Asks the shell only once ever.
         ClaudeConfigDirectory.bootstrap()
+        // Before restore too: which hook settings restored tabs start with.
+        ClaudeCLIVersion.bootstrap(configured: AppSettings.claudeBinaryPath)
         let model = AppModel()
         let updater = AppUpdater()
         updater.notifier = model.attentionNotifier
@@ -139,6 +141,9 @@ struct XylemApp: App {
                         .keyboardShortcut(HotkeyStore.shortcut(for: .closeTab))
                     Button("Close Other Tabs") { post(.closeOtherTabs) }
                         .keyboardShortcut(HotkeyStore.shortcut(for: .closeOtherTabs))
+                    Divider()
+                    Button("Next Tab Waiting for You") { post(.nextWaitingTab) }
+                        .keyboardShortcut(HotkeyStore.shortcut(for: .nextWaitingTab))
                     Divider()
                     ForEach(1...9, id: \.self) { n in
                         Button("Switch to Tab \(n)") { post(.switchToTab(n)) }

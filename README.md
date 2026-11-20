@@ -19,20 +19,24 @@ is a trademark of Anthropic.
 
 ## What it does
 
-- **Tabs that know what Claude is doing.** Working, finished, or waiting for
-  your permission - shown on the tab, in the Dock badge and as one macOS
-  notification per event. Xylem learns this from Claude Code hooks and a
-  status line it passes with `--settings` (your own status line still
-  shows); your own settings files are never modified.
+- **Tabs that know what Claude is doing.** Working, finished, waiting for
+  your permission, or stopped by an API error (rate limit, authentication,
+  server) - shown on the tab, in the Dock badge and as one macOS
+  notification per event; ⌃⌘U jumps to the next tab waiting for you. Xylem
+  learns this from Claude Code hooks and a status line it passes with
+  `--settings` (your own status line still shows); your own settings files
+  are never modified.
 - **Tabs in the sidebar or above the terminal.** The sidebar shows each tab's
   latest prompt, branch and folder; above the terminal (Settings > General)
   the terminal gets the full width, the tabs scroll sideways and reorder by
   dragging, and hovering a tab shows its whole prompt. All Sessions shows
   every tab's context, cost and state at a glance.
-- **Model and effort in the toolbar.** The model and effort level the tab's
-  Claude runs at, shown as soon as it starts, and menus to switch them. A new
-  effort level applies to that session only (Claude Code 2.1.257 or later,
-  Max from 2.1.76; the menu greys out what an older version can't set).
+- **Model, effort, context and plan limits in the toolbar.** The model and
+  effort level the tab's Claude runs at, shown as soon as it starts, and
+  menus to switch them. A new effort level applies to that session only
+  (Claude Code 2.1.257 or later, Max from 2.1.76; the menu greys out what an
+  older version can't set). The context gauge uses Claude Code's own count,
+  and with a Claude plan the 5-hour and weekly usage limits show next to it.
 - **Sessions survive restarts.** Tabs come back and continue their own
   conversation (`claude --resume`); a restored tab starts only when you open
   it. If the session is already open elsewhere, the tab forks it instead of

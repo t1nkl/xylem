@@ -457,7 +457,7 @@ struct ClaudeTabStateTrackerTests {
         let tab = TerminalTab(id: tabID, title: "t", state: .session(session))
         tab.claudeSessionID = "A"
         let notifier = FakeNotifier()
-        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true)
+        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true, rememberVersion: { _ in })
         var bindingChanges = 0
         tracker.onBindingChange = { bindingChanges += 1 }
         let start = Date()
@@ -511,7 +511,7 @@ struct ClaudeTabStateTrackerTests {
         let tab = TerminalTab(id: tabID, title: "t", state: .session(session))
         tab.claudeSessionID = "A"
         let notifier = FakeNotifier()
-        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true)
+        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true, rememberVersion: { _ in })
         let start = Date().addingTimeInterval(1)
         func at(_ offset: TimeInterval) -> Date { start.addingTimeInterval(offset) }
         func tick(_ offset: TimeInterval, seen: Bool = false) async {
@@ -598,7 +598,7 @@ struct ClaudeTabStateTrackerTests {
         let tab = TerminalTab(id: tabID, title: "t", state: .session(session))
         tab.claudeSessionID = "A"
         let notifier = FakeNotifier()
-        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true)
+        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true, rememberVersion: { _ in })
         let start = Date().addingTimeInterval(1)
         func at(_ offset: TimeInterval) -> Date { start.addingTimeInterval(offset) }
         func tick(_ offset: TimeInterval) async {
@@ -633,7 +633,7 @@ struct ClaudeTabStateTrackerTests {
         let tab = TerminalTab(id: tabID, title: "t", state: .session(session))
         tab.claudeSessionID = "A"
         let notifier = FakeNotifier()
-        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true)
+        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true, rememberVersion: { _ in })
         let start = Date().addingTimeInterval(1)
         func at(_ offset: TimeInterval) -> Date { start.addingTimeInterval(offset) }
         func tick(_ offset: TimeInterval) async {
@@ -675,7 +675,7 @@ struct ClaudeTabStateTrackerTests {
         let tab = TerminalTab(id: tabID, title: "t", state: .session(session))
         tab.claudeSessionID = "A"
         let notifier = FakeNotifier()
-        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true)
+        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true, rememberVersion: { _ in })
         let start = Date().addingTimeInterval(1)
         func tick(_ offset: TimeInterval) async {
             await tracker.refresh(tabs: [tab], activeTabID: nil, appIsActive: true, now: start.addingTimeInterval(offset))
@@ -703,7 +703,7 @@ struct ClaudeTabStateTrackerTests {
         let tab = TerminalTab(id: tabID, title: "t", state: .session(session))
         tab.claudeSessionID = "A"
         let notifier = FakeNotifier()
-        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true)
+        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true, rememberVersion: { _ in })
         let start = Date().addingTimeInterval(1)
 
         try write(#"{"hook_event_name":"UserPromptSubmit","session_id":"A"}"#, tab: tabID, in: dir, at: start.addingTimeInterval(5))
@@ -731,7 +731,7 @@ struct ClaudeTabStateTrackerTests {
         let session = factory.makeSession(tabID: tabID, title: "t", directory: "/tmp")
         defer { session.close() }
         let tab = TerminalTab(id: tabID, title: "work", state: .session(session))
-        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: FakeNotifier(), hooksInstalled: true)
+        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: FakeNotifier(), hooksInstalled: true, rememberVersion: { _ in })
         let start = try #require(session.startedAt)
         session.activity.noteInput(at: start.addingTimeInterval(2))
         try await waitUntil { session.shellIsInForeground }
@@ -810,7 +810,7 @@ struct ClaudeTabStateTrackerTests {
         let session = factory.makeSession(tabID: tabID, title: "t", directory: "/tmp")
         defer { session.close() }
         let tab = TerminalTab(id: tabID, title: "work", state: .session(session))
-        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: FakeNotifier(), hooksInstalled: true)
+        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: FakeNotifier(), hooksInstalled: true, rememberVersion: { _ in })
         let start = try #require(session.startedAt)
         // The fake claude (`sleep`) is in front, not the shell still starting.
         try await waitUntil { session.foregroundProcessName == "sleep" }

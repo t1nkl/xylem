@@ -269,7 +269,7 @@ private struct OverviewCard: View {
 
     private var modelValue: String {
         guard let stats, !stats.model.isEmpty else { return "-" }
-        return "\(stats.model)\(contextSuffix(stats.contextLimit))"
+        return "\(stats.model)\(contextSuffix(context.limit))"
     }
 
     private func contextSuffix(_ limit: Int) -> String {
@@ -281,6 +281,11 @@ private struct OverviewCard: View {
         return " (\(rounded)M context)"
     }
 
+    /// The toolbar's rule: Claude Code's own count when the tab has one.
+    private var context: ContextReading {
+        ContextReading.make(stats: stats, live: tab.liveStatus)
+    }
+
     private var contextBar: some View {
         VStack(alignment: .leading, spacing: 4) {
             ZStack(alignment: .leading) {
@@ -290,13 +295,13 @@ private struct OverviewCard: View {
                 GeometryReader { proxy in
                     RoundedRectangle(cornerRadius: 3)
                         .fill(AppTheme.Colors.accent)
-                        .frame(width: proxy.size.width * (stats?.contextFraction ?? 0), height: 6)
+                        .frame(width: proxy.size.width * context.fraction, height: 6)
                 }
                 .frame(height: 6)
             }
             HStack {
                 Spacer()
-                Text(stats?.contextDisplay ?? "-")
+                Text(context.display)
                     .font(.system(size: 10))
                     .foregroundStyle(AppTheme.Colors.textMuted)
             }

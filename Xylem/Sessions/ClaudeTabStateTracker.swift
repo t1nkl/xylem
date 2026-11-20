@@ -57,6 +57,16 @@ final class ClaudeTabStateTracker {
     /// Newest event of any tab's current claude, for Doctor's "last event".
     /// Read only by the Doctor popover while it is open.
     private(set) var lastHookEventAt: Date?
+    /// The plan's usage limits from the newest status line input of any tab
+    /// that had them, windows whose reset has passed left out (their
+    /// percentage is old). nil without any (API keys, no request yet).
+    /// Account-wide, so not tied to a tab's session. Equality-guarded.
+    private(set) var planLimits: ClaudeLiveStatus.RateLimits?
+    /// When Claude Code passed `planLimits` (it may be from before this
+    /// launch: the numbers are as of then).
+    private(set) var planLimitsReportedAt: Date?
+    /// The input `planLimits` comes from.
+    @ObservationIgnored private var newestLimits: (limits: ClaudeLiveStatus.RateLimits, at: Date)?
 
     /// Latest event that carries state, per tab (an `.other` event such as
     /// an auth notice doesn't replace it).
@@ -92,14 +102,19 @@ final class ClaudeTabStateTracker {
     @ObservationIgnored private let eventsDirectory: URL
     @ObservationIgnored private let notifier: AttentionNotifying
     @ObservationIgnored private let hooksInstalled: Bool
+    /// Keeps the version a tab's claude reports (ClaudeCLIVersion); tests
+    /// pass their own so they never write the app's preferences.
+    @ObservationIgnored private let rememberVersion: (String?) -> Void
     /// Called when a tab moved to another Claude session (to persist it).
     @ObservationIgnored var onBindingChange: () -> Void = {}
 
     init(eventsDirectory: URL = ClaudeHookBridge.eventsDirectory, notifier: AttentionNotifying,
-         hooksInstalled: Bool = ClaudeHookBridge.installedSettingsPath != nil) {
+         hooksInstalled: Bool = ClaudeHookBridge.installedSettingsPath != nil,
+         rememberVersion: @escaping (String?) -> Void = ClaudeCLIVersion.remember) {
         self.eventsDirectory = eventsDirectory
         self.notifier = notifier
         self.hooksInstalled = hooksInstalled
+        self.rememberVersion = rememberVersion
     }
 
     func refresh(tabs: [TerminalTab], activeTabID: UUID?, appIsActive: Bool, now: Date = Date()) async {
@@ -174,10 +189,18 @@ final class ClaudeTabStateTracker {
             // teammate runs under the tab id too) or an earlier claude is
             // read again on the next tick instead of being skipped for good.
             if let status = byID[tab.id]?.status {
+                // Account-wide: any input counts, also one from before this
+                // launch or from a teammate's session.
+                if let live = status.live, let limits = live.rateLimits,
+                   live.at >= (newestLimits?.at ?? .distantPast) {
+                    newestLimits = (limits, live.at)
+                }
                 if let live = status.live, live.at >= startedAt.addingTimeInterval(-1),
                    live.sessionID == nil || live.sessionID == tab.claudeSessionID {
                     statusMtimes[tab.id] = status.mtime
                     if tab.liveStatus != live { tab.liveStatus = live }
+                    // The claude this tab really runs: the next tabs' hook settings follow it.
+                    rememberVersion(live.version)
                 } else if status.live == nil {
                     statusMtimes[tab.id] = status.mtime
                 }
@@ -227,8 +250,27 @@ final class ClaudeTabStateTracker {
         leavesPromptMarkers = leavesPromptMarkers.filter { live.contains($0) }
 
         notifier.setBadgeCount(tabs.filter(\.needsAttention).count)
+        let limits = newestLimits.flatMap { Self.current($0.limits, now: now) }
+        if planLimits != limits { planLimits = limits }
+        // To the minute, as the tooltip shows it: inputs arrive every second
+        // while a tab streams, and each would re-render the limits.
+        let reportedAt = limits == nil ? nil : newestLimits.map {
+            Date(timeIntervalSince1970: ($0.at.timeIntervalSince1970 / 60).rounded(.down) * 60)
+        }
+        if planLimitsReportedAt != reportedAt { planLimitsReportedAt = reportedAt }
         if bindingChanged { onBindingChange() }
         updateHookHealth(tabs: tabs, now: now)
+    }
+
+    /// The windows whose reset is still ahead; nil when none is.
+    nonisolated static func current(_ limits: ClaudeLiveStatus.RateLimits, now: Date) -> ClaudeLiveStatus.RateLimits? {
+        func keep(_ window: ClaudeLiveStatus.RateLimits.Window?) -> ClaudeLiveStatus.RateLimits.Window? {
+            guard let window else { return nil }
+            if let reset = window.resetsAt, reset <= now { return nil }
+            return window
+        }
+        let result = ClaudeLiveStatus.RateLimits(fiveHour: keep(limits.fiveHour), sevenDay: keep(limits.sevenDay))
+        return result.isEmpty ? nil : result
     }
 
     private func updateHookHealth(tabs: [TerminalTab], now: Date) {
