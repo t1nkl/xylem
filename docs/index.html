@@ -462,7 +462,7 @@
   .empty { color: var(--w-muted); padding: 18px 4px; text-align: center; }
   .empty button { display: block; margin: 8px auto 0; color: var(--accent); font-weight: 500; }
 
-  /* overlays: palette, usage, worktree sheet, model menu, Doctor, All Sessions */
+  /* overlays: palette, usage, worktree sheet, model and effort menu, Doctor, All Sessions */
   .overlay .field { all: unset; box-sizing: border-box; display: block; width: 100%; background: #1E1E1E; border-radius: 8px; padding: 9px 10px; margin-bottom: 6px; color: var(--w-text); }
   .overlay .field::placeholder { color: var(--w-muted); }
   .overlay .it { width: 100%; text-align: left; }
@@ -752,7 +752,7 @@
       <div class="toolbar">
         <button type="button" class="round" data-act="newtab" aria-label="New Tab"><svg class="ico"><use href="#i-plus"/></svg></button>
         <div class="wtitle"><b></b><span></span></div>
-        <div class="pill ctx"><span class="gauge" aria-hidden="true"><i></i></span><span class="pct"></span><span class="sep"></span><button type="button" class="model" data-act="model" aria-haspopup="menu" aria-label="Model"><svg class="ico" aria-hidden="true"><use href="#i-cpu"/></svg><span class="mname">Opus</span><svg class="ico small" aria-hidden="true"><use href="#i-chev-down"/></svg></button></div>
+        <div class="pill ctx"><span class="gauge" aria-hidden="true"><i></i></span><span class="pct"></span><span class="sep"></span><button type="button" class="model" data-act="model" aria-haspopup="menu" aria-label="Model"><svg class="ico" aria-hidden="true"><use href="#i-cpu"/></svg><span class="mname">Opus</span><svg class="ico small" aria-hidden="true"><use href="#i-chev-down"/></svg></button><span class="sep"></span><button type="button" class="model effort" data-act="effort" aria-haspopup="menu" aria-label="Effort"><svg class="ico" aria-hidden="true"><use href="#i-brain"/></svg><span class="ename">Medium</span><svg class="ico small" aria-hidden="true"><use href="#i-chev-down"/></svg></button></div>
         <div class="pill icons"><button type="button" class="ib usage" data-act="usage" aria-label="Usage"><svg class="ico"><use href="#i-chart"/></svg></button></div>
         <div class="pill icons"><button type="button" class="ib" data-act="insp" aria-label="Show or hide the right panel"><svg class="ico"><use href="#i-inspector"/></svg></button></div>
       </div>
@@ -942,6 +942,7 @@
   const term = $('.term'), tabList = $('.tabs'), insp = $('.insp'), strip = $('.strip');
   const title = $('.wtitle b'), path = $('.wtitle span'), pct = $('.pct'), gauge = $('.gauge i');
   const modelBtn = $('.pill .model'), modelName = $('.mname');
+  const effortBtn = $('.pill .effort'), effortName = $('.ename');
   const palette = $('.overlay.palette'), palField = palette.querySelector('.field'), palList = palette.querySelector('.results');
   const sheet = $('.overlay.sheet'), menu = $('.overlay.menu'), overview = $('.overlay.overview');
   const toastEl = $('.toast'), banner = $('.banner');
@@ -965,6 +966,8 @@
   const welcome = n => `<div class="welcome">✻ Welcome to Claude Code<small>cwd: ${esc(n)}</small></div>`;
 
   const MODELS = [['Fable', 'fable', 'Fable 5.2'], ['Opus', 'opus', 'Opus 5.5'], ['Sonnet', 'sonnet', 'Sonnet 5.5'], ['Haiku', 'haiku', 'Haiku 5.5']];
+  // As in the app: set for the tab's session only.
+  const EFFORTS = [['Low', 'low'], ['Medium', 'medium'], ['High', 'high'], ['Extra High', 'xhigh'], ['Max', 'max']];
   const recent = [
     ['api-gateway', '~/code/api-gateway', '5m', 12, '#16A34A', 'Add rate limiting to the public endpoints', 'Added a token-bucket limiter in front of /v1/* with a 429 and a Retry-After header.', 'main'],
     ['design-system', '~/code/design-system', '1h', 7, '#6EA8FE', 'Turn the spacing scale into tokens', 'Moved the 4/8/12/16/24 scale into tokens/spacing.json and replaced 41 hard-coded values.', 'tokens'],
@@ -985,7 +988,7 @@
   ];
 
   let seq = 0;
-  const mk = o => ({ id: ++seq, model: 'Opus', draft: '', ctx: null, status: 'idle', unseen: false, lines: [], prompt: '', branch: null, ...o });
+  const mk = o => ({ id: ++seq, model: 'Opus', effort: 'Medium', draft: '', ctx: null, status: 'idle', unseen: false, lines: [], prompt: '', branch: null, ...o });
   const tabs = [
     mk({ name: 'checkout-service', path: '~/code/checkout-service', branch: 'fix/webhook-retries', ctx: 43, status: 'working',
       prompt: 'Add retries to the payment webhook, max 3, with backoff',
@@ -1254,6 +1257,8 @@
     gauge.style.width = (t.ctx || 0) + '%';
     modelName.textContent = t.model;
     modelBtn.disabled = !!t.picker;
+    effortName.textContent = t.picker ? '-' : t.effort;
+    effortBtn.disabled = !!t.picker;
   }
   function renderStrip() {
     const t = active();
@@ -1657,7 +1662,14 @@ export function useAuth() {
       case 'model': {
         if (t.picker) break;
         menu.innerHTML = MODELS.map(([n, a]) => `<button type="button" class="it" role="menuitemradio" aria-checked="${n === t.model}" data-model="${n}"><span class="chk">${n === t.model ? '✓' : ''}</span><span>${n}</span></button>`).join('');
-        toggle(menu); break;
+        menu.setAttribute('aria-label', 'Model');
+        placeMenu(modelBtn); toggle(menu); break;
+      }
+      case 'effort': {
+        if (t.picker) break;
+        menu.innerHTML = EFFORTS.map(([n]) => `<button type="button" class="it" role="menuitemradio" aria-checked="${n === t.effort}" data-effort="${n}"><span class="chk">${n === t.effort ? '✓' : ''}</span><span>${n}</span></button>`).join('');
+        menu.setAttribute('aria-label', 'Effort');
+        placeMenu(effortBtn); toggle(menu); break;
       }
       case 'compact':
         send(t, '/compact', [[1800, () => { t.lines = [note('✻ Conversation compacted (ctrl+o for history)')]; t.ctx = Math.max(4, Math.round((t.ctx || 8) / 5)); t.status = 'idle'; t.work = null; syncTicker(); }]], 'Compacting conversation');
@@ -1758,6 +1770,7 @@ export function useAuth() {
       ...(t.picker ? [] : [['Files · Show Project Files', 'folder', () => { if (ui.drawer !== 'files') railSelect('files'); }], ['Git · Show Changes', 'plusminus', () => { if (ui.drawer !== 'changes') railSelect('changes'); }]]),
       ...(t.branch ? [['Git · New Worktree Tab…', 'branch', () => runAction('worktree')]] : []),
       ...(t.picker ? [] : MODELS.filter(m => m[0] !== t.model).map(([n, a]) => [`Claude · Switch to ${n}`, 'cpu', () => setModel(t, n)])),
+      ...(t.picker ? [] : EFFORTS.filter(e => e[0] !== t.effort).map(([n]) => [`Claude · Effort ${n}`, 'brain', () => setEffort(t, n)])),
       ...tabs.filter(x => x.id !== t.id).map(x => [`Switch to ${x.name}`, 'sidebar', () => select(x.id)])
     ].filter(([n]) => !q || n.toLowerCase().includes(q)).map(([label, icon, run]) => ({ label: esc(label), icon, run }));
     const prompts = q.length < 2 ? [] : history.filter(([p]) => p.toLowerCase().includes(q)).slice(0, 6).map(([p, proj]) => {
@@ -1778,6 +1791,19 @@ export function useAuth() {
     const i = recent.findIndex(r => r[0] === project);
     if (i >= 0) openProject(i);
   }
+  // The menu opens under the button that opened it (model or effort).
+  function placeMenu(btn) {
+    if (!wideWin.matches) { menu.style.right = ''; return; }
+    const w = win.getBoundingClientRect(), b = btn.getBoundingClientRect();
+    menu.style.right = Math.max(8, w.right - b.right - 6) + 'px';
+  }
+  function setEffort(t, n) {
+    const level = EFFORTS.find(e => e[0] === n)[1];
+    t.effort = n;
+    // Max is typed as `/effort max`; the other levels go through the picker.
+    t.lines.push(you(level === 'max' ? '/effort max' : '/effort'), res(`Set effort level to ${level} (this session only)`));
+    closeOverlays(); changed(t);
+  }
   function setModel(t, n) {
     const full = MODELS.find(m => m[0] === n);
     t.model = n;
@@ -1787,7 +1813,7 @@ export function useAuth() {
 
   // ---------- events: one listener per kind ----------
   win.addEventListener('click', e => {
-    const el = e.target.closest('[data-close],[data-tab],[data-act],[data-open],[data-opt],[data-sec],[data-panel],[data-scope],[data-model],[data-pal],[data-resume],[data-rail],[data-dir],[data-cdir],[data-file],[data-change]');
+    const el = e.target.closest('[data-close],[data-tab],[data-act],[data-open],[data-opt],[data-sec],[data-panel],[data-scope],[data-model],[data-effort],[data-pal],[data-resume],[data-rail],[data-dir],[data-cdir],[data-file],[data-change]');
     if (!el) { if (!e.target.closest('.overlay')) closeOverlays(); return; }
     const d = el.dataset;
     if (d.close) { e.stopPropagation(); closeTab(+d.close); return; }
@@ -1805,6 +1831,7 @@ export function useAuth() {
     if (d.panel) { ui.panel = d.panel; renderInsp(); return; }
     if (d.scope) { ui.scope = d.scope; renderInsp(); return; }
     if (d.model) { setModel(active(), d.model); return; }
+    if (d.effort) { setEffort(active(), d.effort); return; }
     if (d.pal) { runPalette(+d.pal); return; }
     if (d.resume) { resume(d.resume); }
   });
