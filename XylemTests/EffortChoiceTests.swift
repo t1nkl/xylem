@@ -130,23 +130,30 @@ struct EffortChoiceTests {
         let low = try #require(ClaudeEffortChoice.matching(level: "low"))
         let pick = ModelSwitchController.EffortPick(choice: low, at: Date(timeIntervalSince1970: 150))
         #expect(ModelSwitchController.displayedEffort(pick: pick, live: live, stats: stats) == low)
-        let newer = LiveEffort(level: "medium", sessionID: "s1", at: Date(timeIntervalSince1970: 151))
-        #expect(ModelSwitchController.displayedEffort(pick: pick, live: newer, stats: stats)?.level == "medium")
+        // A reply still streaming reports the old level: the pick holds.
+        let streaming = LiveEffort(level: "high", sessionID: "s1", at: Date(timeIntervalSince1970: 151))
+        #expect(ModelSwitchController.displayedEffort(pick: pick, live: streaming, stats: stats) == low)
+        // The input names the pick: from now on the input decides.
+        let confirmed = LiveEffort(level: "low", sessionID: "s1", at: Date(timeIntervalSince1970: 152))
+        #expect(ModelSwitchController.displayedEffort(pick: pick, live: confirmed, stats: stats)?.level == "low")
+        // Never confirmed (a cap, a change in the terminal): the input after 10 s.
+        let later = LiveEffort(level: "medium", sessionID: "s1", at: Date(timeIntervalSince1970: 161))
+        #expect(ModelSwitchController.displayedEffort(pick: pick, live: later, stats: stats)?.level == "medium")
     }
 
     @Test func statusLineScriptKeepsTheInputAndRunsTheUsersCommand() throws {
         let root = FileManager.default.temporaryDirectory.appending(path: "xylem-sl-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
-        let settingsPath = try #require(ClaudeHookBridge.install(root: root))
+        let settingsPath = try #require(ClaudeHookBridge.install(root: root, userSettings: NoClaudeSettings()))
         let settings = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: settingsPath))) as? [String: Any])
-        let statusLine = try #require(settings["statusLine"] as? [String: String])
-        #expect(statusLine["type"] == "command")
+        let statusLine = try #require(settings["statusLine"] as? [String: Any])
+        #expect(statusLine["type"] as? String == "command")
 
         // Run it the way Claude Code does: JSON on stdin, the tab's env.
         let tab = UUID()
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
-        process.arguments = ["-c", statusLine["command"]!]
+        process.arguments = ["-c", try #require(statusLine["command"] as? String)]
         let events = root.appending(path: "tab-events")
         ClaudeHookBridge.setUserStatusLine("cat >/dev/null; printf 'users line'", forTab: tab, in: events)
         let commandMode = try FileManager.default.attributesOfItem(atPath: ClaudeHookBridge.userStatusLineFile(forTab: tab, in: events).path)[.posixPermissions] as? Int
@@ -183,7 +190,7 @@ struct EffortChoiceTests {
         // Kept beside the hook settings in use; nothing without that folder.
         let root = FileManager.default.temporaryDirectory.appending(path: "xylem-slenv-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
-        let hooks = try #require(ClaudeHookBridge.install(root: root))
+        let hooks = try #require(ClaudeHookBridge.install(root: root, userSettings: NoClaudeSettings()))
         let events = root.appending(path: "tab-events")
         let tab = UUID()
         TerminalSessionFactory.keepUserStatusLine(tabID: tab, directory: "/x", hookSettingsPath: hooks, settings: all)
@@ -214,4 +221,10 @@ struct EffortChoiceTests {
             #expect(statusLine["padding"] as? Int == padding)
         }
     }
+}
+
+/// No user settings: tests never read the real ~/.claude.
+nonisolated struct NoClaudeSettings: ClaudeSettingsReading {
+    func readGlobalSettings() -> ClaudeSettings? { nil }
+    func readProjectSettings(at projectDirectory: String) -> (shared: ClaudeSettings?, local: ClaudeSettings?) { (nil, nil) }
 }

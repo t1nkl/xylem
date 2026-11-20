@@ -159,7 +159,11 @@ struct TerminalSessionFactory {
     private func session(tabID: UUID, title: String, directory: String?, launch: Launch?,
                          startsImmediately: Bool = true) -> TerminalSession {
         if launch != nil, let hooks = hookSettingsPath() {
-            Self.keepUserStatusLine(tabID: tabID, directory: directory, hookSettingsPath: hooks)
+            // Off main: a few settings reads and a write per tab, done long
+            // before claude draws its first status line.
+            Task.detached(priority: .utility) {
+                Self.keepUserStatusLine(tabID: tabID, directory: directory, hookSettingsPath: hooks)
+            }
         }
         return TerminalSession(
             id: tabID,
@@ -180,7 +184,7 @@ struct TerminalSessionFactory {
     /// not in the tab's environment where every program would see it.
     /// Nothing is written when that folder doesn't exist (hooks not
     /// installed there).
-    static func keepUserStatusLine(tabID: UUID, directory: String?, hookSettingsPath: String,
+    nonisolated static func keepUserStatusLine(tabID: UUID, directory: String?, hookSettingsPath: String,
                                    settings: ClaudeSettingsReading = ClaudeSettingsReader()) {
         let events = URL(fileURLWithPath: hookSettingsPath)
             .deletingLastPathComponent().deletingLastPathComponent()
@@ -195,7 +199,7 @@ struct TerminalSessionFactory {
     /// The status line Claude Code would run in the folder without Xylem's:
     /// local, then project, then user settings (its padding is applied from
     /// the user's global one, see ClaudeHookBridge).
-    static func userStatusLine(directory: String?, settings: ClaudeSettingsReading) -> ClaudeSettings.StatusLine? {
+    nonisolated static func userStatusLine(directory: String?, settings: ClaudeSettingsReading) -> ClaudeSettings.StatusLine? {
         let project = directory.map { settings.readProjectSettings(at: $0) }
         let candidates = [project?.local?.statusLine, project?.shared?.statusLine, settings.readGlobalSettings()?.statusLine]
         return candidates.compactMap { $0 }.first { $0.command?.isEmpty == false }

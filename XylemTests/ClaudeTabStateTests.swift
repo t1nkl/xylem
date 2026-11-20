@@ -273,7 +273,7 @@ struct ClaudeHookBridgeTests {
     @Test func installWritesARunnableHookThatKeepsTheLatestEvent() throws {
         let root = FileManager.default.temporaryDirectory.appending(path: "xylem-hooks-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
-        let settingsPath = try #require(ClaudeHookBridge.install(root: root))
+        let settingsPath = try #require(ClaudeHookBridge.install(root: root, userSettings: NoClaudeSettings()))
 
         // settings.json routes every event to the script.
         let settings = try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: settingsPath))) as? [String: Any]

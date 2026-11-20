@@ -30,7 +30,7 @@ struct PrivateFilesTests {
     @Test func hookEventFilesAreOwnerOnly() throws {
         let root = FileManager.default.temporaryDirectory.appending(path: "xylem-hook-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
-        _ = try #require(ClaudeHookBridge.install(root: root))
+        _ = try #require(ClaudeHookBridge.install(root: root, userSettings: NoClaudeSettings()))
         let events = root.appending(path: "tab-events")
         #expect(try permissions(events.path) == 0o700)
 

@@ -136,16 +136,6 @@ final class ClaudeTabStateTracker {
                 reset(tab)
                 continue
             }
-            if let status = byID[tab.id]?.status {
-                statusMtimes[tab.id] = status.mtime
-                // Only the tab's own session (a teammate runs under its id too),
-                // and only from this claude.
-                let effort = status.effort.flatMap { effort in
-                    effort.at >= startedAt.addingTimeInterval(-1)
-                        && (effort.sessionID == nil || effort.sessionID == tab.claudeSessionID) ? effort : nil
-                }
-                if let effort, tab.liveEffort != effort { tab.liveEffort = effort }
-            }
             if let read = byID[tab.id]?.events {
                 eventMtimes[tab.id] = read.mtime
                 // Events from before this shell started belong to an
@@ -158,6 +148,7 @@ final class ClaudeTabStateTracker {
                     if id != tab.claudeSessionID, event.switchesSession || tab.claudeSessionID == nil {
                         tab.claudeSessionID = id
                         tab.transcriptPath = nil
+                        if tab.liveEffort != nil { tab.liveEffort = nil }
                         bindingChanged = true
                     }
                     if id == tab.claudeSessionID {
@@ -178,6 +169,20 @@ final class ClaudeTabStateTracker {
                 }
             }
 
+            // After the binding moved (`/clear`): a new session's input that
+            // came in the same tick counts. One from another session (a
+            // teammate runs under the tab id too) or an earlier claude is
+            // read again on the next tick instead of being skipped for good.
+            if let status = byID[tab.id]?.status {
+                if let effort = status.effort, effort.at >= startedAt.addingTimeInterval(-1),
+                   effort.sessionID == nil || effort.sessionID == tab.claudeSessionID {
+                    statusMtimes[tab.id] = status.mtime
+                    if tab.liveEffort != effort { tab.liveEffort = effort }
+                } else if status.effort == nil {
+                    statusMtimes[tab.id] = status.mtime
+                }
+            }
+
             let old = tab.claudeState
             var state: ClaudeTabState?
             if let event = events[tab.id] {
@@ -192,6 +197,8 @@ final class ClaudeTabStateTracker {
                 state = resolved
             }
             if old != state { tab.claudeState = state }
+            // Claude has exited: no level to show until the next one reports.
+            if state == .notRunning, tab.liveEffort != nil { tab.liveEffort = nil }
             // Not running: claude exited, the busy flag goes back to the
             // transcript-mtime fallback (claude may be restarted by hand).
             if let state, state != .notRunning {

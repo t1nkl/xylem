@@ -25,19 +25,19 @@
 //  teammate runs under the same tab id) since the last known Stop.
 //
 //  The same settings set Claude Code's status line to a second script: it
-//  keeps the JSON Claude Code passes (model, effort, context; Claude Code
-//  2.1.325 and later carry `effort.level`) as `<tab id>.status` for the
-//  toolbar, then runs the user's own status line command, if any, with the
-//  same input (kept per tab in `<tab id>.statusline`, owner-only, from
-//  their settings), so their line still shows: a `statusLine` in
-//  `--settings` replaces theirs. Its `padding` comes from the user's global
-//  status line, read when the files are written (each launch): Claude Code
-//  drops leading spaces from a status line's output, so the script can't
-//  indent it, and the settings file is one for all tabs, so a project's own
-//  padding isn't followed (measured on Claude Code 2.1.329: padding 6 puts
-//  the text 6 columns further right than none or 0). Claude Code runs a status line only in a
-//  trusted folder and not with `disableAllHooks` (2.1.329), so the user's
-//  command runs exactly when Claude Code itself would run it.
+//  keeps the JSON Claude Code passes (model, effort, context; `effort.level`
+//  is there in 2.1.200 to 2.1.329) as `<tab id>.status` for the toolbar,
+//  then runs the user's own status line command, if any, with the same
+//  input (kept per tab in `<tab id>.statusline`, owner-only, from their
+//  settings), so their line still shows: a `statusLine` in `--settings`
+//  replaces theirs. Its `padding` comes from the user's global status line,
+//  read when the files are written (each launch): Claude Code drops leading
+//  spaces from a status line's output, so the script can't indent it, and
+//  the settings file is one for all tabs, so a project's own padding isn't
+//  followed (2.1.329: padding 6 puts the text 6 columns further right than
+//  none or 0). Claude Code runs a status line only in a trusted folder and
+//  not with `disableAllHooks`, so the user's command runs exactly when
+//  Claude Code itself would run it.
 //
 //  The script is silent and always exits 0: hook stdout can be fed back to
 //  Claude, and a failing hook would show up in the user's session. Without
@@ -197,8 +197,9 @@ nonisolated enum ClaudeHookBridge {
         esac
         case "$id" in ''|*[!A-Za-z0-9-]*) exit 0 ;; esac
         user=\(shellQuote(eventsDirectory))"/$id.\(userStatusLineExtension)"
-        [ -s "$user" ] && printf '%s' "$input" | /bin/sh -c "$(cat "$user")"
-        exit 0
+        [ -s "$user" ] || exit 0
+        # Their command's exit status is the line's, as without Xylem.
+        printf '%s' "$input" | /bin/sh -c "$(cat "$user")"
 
         """
     }
