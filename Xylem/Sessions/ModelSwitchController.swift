@@ -104,7 +104,11 @@ final class ModelSwitchController {
             return true
         }
         session.send(text: "/effort\r")
-        guard let open = await waitFor(session, timeout: 3, { EffortPicker.isOpen(onScreen: $0) }) else { return false }
+        guard let open = await waitFor(session, timeout: 3, { EffortPicker.isOpen(onScreen: $0) }) else {
+            // One that comes up late isn't left open for the user's Enter.
+            if EffortPicker.isOpen(onScreen: session.visibleText()) { session.send(text: EffortPicker.cancel) }
+            return false
+        }
         // The stops are always the first levels in order (a lower cap cuts
         // the top), so the index works for any model the pick exists on.
         let stops = EffortPicker.stops(onScreen: open) ?? ClaudeEffortChoice.levels.map(\.level)
@@ -113,12 +117,17 @@ final class ModelSwitchController {
             return false
         }
         let earlier = EffortPicker.confirmations(onScreen: open).count
-        // Arrows and "s" in one write as soon as the picker is up, so it
-        // stays on screen as briefly as Claude Code allows; left as many
-        // times as there are levels at all reaches low from any stop.
+        // Left as many times as there are levels at all reaches low from
+        // any stop. "s" goes out once the picker, now on the pick, offers it
+        // (it doesn't on max, where the picker may have opened); otherwise
+        // the picker is left with Esc (Enter would save a default).
         session.send(text: String(repeating: EffortPicker.left, count: ClaudeEffortChoice.levels.count)
-                     + String(repeating: EffortPicker.right, count: index)
-                     + EffortPicker.sessionKey)
+                     + String(repeating: EffortPicker.right, count: index))
+        guard await waitFor(session, timeout: 1.5, { EffortPicker.offersSessionKey(onScreen: $0) }) != nil else {
+            session.send(text: EffortPicker.cancel)
+            return false
+        }
+        session.send(text: EffortPicker.sessionKey)
         // A new confirmation below the earlier ones is this pick's answer.
         if let screen = await waitFor(session, timeout: 3, {
                !EffortPicker.isOpen(onScreen: $0) && EffortPicker.confirmations(onScreen: $0).count > earlier

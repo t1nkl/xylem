@@ -99,9 +99,9 @@ private struct CompatibilityJudge {
             skip("tui.effortPicker", feature: feature, "the interactive run didn't reach the /effort picker")
             return
         }
-        guard EffortPicker.isOpen(onScreen: open) else {
+        guard EffortPicker.isOpen(onScreen: open), EffortPicker.offersSessionKey(onScreen: open) else {
             fail("tui.effortPicker", feature: feature,
-                 "the /effort picker no longer says \"to use this session only … Esc to cancel\": the menu would only beep")
+                 "the /effort picker no longer offers \"s\" for this session only (or its \"to adjust … Esc to cancel\" hint changed): the menu would only beep")
             return
         }
         if let typed = manifest["effortTypedMax"].map({ EffortPicker.flattened($0 as? String ?? "") }),

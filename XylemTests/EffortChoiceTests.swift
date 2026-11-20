@@ -86,9 +86,13 @@ struct EffortChoiceTests {
          cancel
         """
         #expect(EffortPicker.isOpen(onScreen: open))
+        #expect(EffortPicker.offersSessionKey(onScreen: open))
+        // Claude Code 2.1.325's wording.
+        let older = "  low     medium     high     xhigh      max\n  ←/→ to adjust · Enter to confirm · s for this session only · Esc to cancel"
+        #expect(EffortPicker.isOpen(onScreen: older) && EffortPicker.offersSessionKey(onScreen: older))
         // On the max stop Enter is "this session only": still the picker.
         let atMax = "  low  medium  high  xhigh  max\n  ←/→ to adjust · Enter to use this session only · Esc to cancel"
-        #expect(EffortPicker.isOpen(onScreen: atMax))
+        #expect(EffortPicker.isOpen(onScreen: atMax) && !EffortPicker.offersSessionKey(onScreen: atMax))
         #expect(!EffortPicker.isOpen(onScreen: "❯ /effort\n  ⎿  Set effort level to low (this session only): Quick"))
     }
 

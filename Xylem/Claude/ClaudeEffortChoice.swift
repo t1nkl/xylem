@@ -47,24 +47,30 @@ nonisolated struct ClaudeEffortChoice: Identifiable, Hashable, Sendable {
     }
 }
 
-/// Claude Code's `/effort` picker as it appears on screen (2.1.329). Its
-/// hint depends on where the slider is: "←/→ to adjust · s to use this
-/// session only · Enter to save · Esc to cancel" on every stop but the last
-/// (max), "←/→ to adjust · Enter to use this session only · Esc to cancel"
-/// there. Then "Set effort level to high (this session only): …". Matching
-/// ignores whitespace and case: the terminal may wrap or pad it.
+/// Claude Code's `/effort` picker as it appears on screen. Its hint names
+/// the keys: "←/→ to adjust · Enter to confirm · s for this session only ·
+/// Esc to cancel" (2.1.325), "←/→ to adjust · s to use this session only ·
+/// Enter to save · Esc to cancel" on every stop but max and "←/→ to adjust ·
+/// Enter to use this session only · Esc to cancel" on max (2.1.329). Then
+/// "Set effort level to high (this session only): …". Matching ignores
+/// whitespace and case: the terminal may wrap or pad it.
 nonisolated enum EffortPicker {
     static let left = "\u{1B}[D"
     static let right = "\u{1B}[C"
     static let cancel = "\u{1B}"
-    /// "this session only" on every stop but max.
+    /// "this session only" on every stop but max, in both wordings.
     static let sessionKey = "s"
 
-    /// The picker is on screen: its hint names "this session only" (as "s",
-    /// or as Enter on the max stop) and Esc.
+    /// A picker is on screen (its hint, in any of the wordings above).
     static func isOpen(onScreen screen: String) -> Bool {
         let text = flattened(screen)
-        return text.contains("esctocancel") && text.contains("tousethissessiononly")
+        return text.contains("toadjust") && text.contains("esctocancel")
+    }
+
+    /// The open picker offers "s" for this session only.
+    static func offersSessionKey(onScreen screen: String) -> Bool {
+        let text = flattened(screen)
+        return text.contains("sforthissessiononly") || text.contains("stousethissessiononly")
     }
 
     /// The levels of the "this session only" confirmations on screen, top
