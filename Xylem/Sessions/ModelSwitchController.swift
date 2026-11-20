@@ -152,10 +152,16 @@ final class ModelSwitchController {
         return nil
     }
 
-    /// The effort to show for a session: the pick until a reply to a prompt
-    /// sent after it exists, else the newest reply's level. Nil before the
-    /// first reply: the level a new session runs at can't be read anywhere.
-    static func displayedEffort(pick: EffortPick?, stats: StatsSnapshot) -> ClaudeEffortChoice? {
+    /// The effort to show for a session. With a status line input (current
+    /// at once, see LiveEffort): the pick until an input newer than the pick
+    /// arrives, then the input. Without one (Claude Code that doesn't pass
+    /// it, hooks off): the pick until a reply to a prompt sent after it
+    /// exists, else the newest reply's level; nil before the first reply.
+    static func displayedEffort(pick: EffortPick?, live: LiveEffort? = nil, stats: StatsSnapshot) -> ClaudeEffortChoice? {
+        if let live {
+            if let pick, pick.at >= live.at { return pick.choice }
+            return ClaudeEffortChoice.matching(level: live.level)
+        }
         if let pick, !transcriptConfirms(pickedAt: pick.at, stats: stats) {
             return pick.choice
         }

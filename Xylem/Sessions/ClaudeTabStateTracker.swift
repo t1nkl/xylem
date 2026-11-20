@@ -34,10 +34,18 @@ final class ClaudeTabStateTracker {
     private nonisolated struct Query: Sendable {
         let id: UUID
         let previousMtime: Date?
+        let previousStatusMtime: Date?
     }
 
     private nonisolated struct Read: Sendable {
         let id: UUID
+        /// The event file changed (nil: only the status line input did).
+        let events: EventRead?
+        /// The status line input changed.
+        let status: (mtime: Date, effort: LiveEffort?)?
+    }
+
+    private nonisolated struct EventRead: Sendable {
         let mtime: Date
         let event: ClaudeTabEvent?
         /// The tab's prompt marker (ClaudeHookBridge): when, which session.
@@ -54,6 +62,7 @@ final class ClaudeTabStateTracker {
     /// an auth notice doesn't replace it).
     @ObservationIgnored private var events: [UUID: ClaudeTabEvent] = [:]
     @ObservationIgnored private var eventMtimes: [UUID: Date] = [:]
+    @ObservationIgnored private var statusMtimes: [UUID: Date] = [:]
     /// Time of the newest event of each tab's CURRENT claude (any session,
     /// any kind): proof the hooks fire for it.
     @ObservationIgnored private var lastEventAt: [UUID: Date] = [:]
@@ -100,7 +109,7 @@ final class ClaudeTabStateTracker {
 
         // A restored tab not opened yet has no claude and no events.
         let queries = tabs.filter { $0.session?.isStarted == true }
-            .map { Query(id: $0.id, previousMtime: eventMtimes[$0.id]) }
+            .map { Query(id: $0.id, previousMtime: eventMtimes[$0.id], previousStatusMtime: statusMtimes[$0.id]) }
         ticksSincePrune += 1
         let prune = ticksSincePrune >= 60
         if prune { ticksSincePrune = 0 }
@@ -127,7 +136,17 @@ final class ClaudeTabStateTracker {
                 reset(tab)
                 continue
             }
-            if let read = byID[tab.id] {
+            if let status = byID[tab.id]?.status {
+                statusMtimes[tab.id] = status.mtime
+                // Only the tab's own session (a teammate runs under its id too),
+                // and only from this claude.
+                let effort = status.effort.flatMap { effort in
+                    effort.at >= startedAt.addingTimeInterval(-1)
+                        && (effort.sessionID == nil || effort.sessionID == tab.claudeSessionID) ? effort : nil
+                }
+                if let effort, tab.liveEffort != effort { tab.liveEffort = effort }
+            }
+            if let read = byID[tab.id]?.events {
                 eventMtimes[tab.id] = read.mtime
                 // Events from before this shell started belong to an
                 // earlier claude (e.g. before a relaunch).
@@ -191,6 +210,7 @@ final class ClaudeTabStateTracker {
         let live = Set(tabs.map(\.id))
         events = events.filter { live.contains($0.key) }
         eventMtimes = eventMtimes.filter { live.contains($0.key) }
+        statusMtimes = statusMtimes.filter { live.contains($0.key) }
         lastEventAt = lastEventAt.filter { live.contains($0.key) }
         attentionSince = attentionSince.filter { live.contains($0.key) }
         interruptedTurn = interruptedTurn.filter { live.contains($0.key) }
@@ -270,6 +290,7 @@ final class ClaudeTabStateTracker {
         leavesPromptMarkers.remove(tab.id)
         if tab.claudeState != nil { tab.claudeState = nil }
         if tab.needsAttention { tab.needsAttention = false }
+        if tab.liveEffort != nil { tab.liveEffort = nil }
     }
 
     @concurrent nonisolated
@@ -277,14 +298,22 @@ final class ClaudeTabStateTracker {
         // About once a minute: files of closed tabs (see pruneEvents).
         if let live { ClaudeHookBridge.pruneEvents(keeping: live, in: directory) }
         return queries.compactMap { query in
-            guard let mtime = ClaudeHookBridge.modificationDate(forTab: query.id, in: directory),
-                  mtime != query.previousMtime
-            else { return nil }
-            // The marker is touched before the event file is written, so it
-            // is current whenever the event file changed.
-            return Read(id: query.id, mtime: mtime,
-                        event: ClaudeHookBridge.latestEvent(forTab: query.id, in: directory),
-                        prompt: ClaudeHookBridge.lastPrompt(forTab: query.id, in: directory))
+            var events: EventRead?
+            if let mtime = ClaudeHookBridge.modificationDate(forTab: query.id, in: directory),
+               mtime != query.previousMtime {
+                // The marker is touched before the event file is written, so
+                // it is current whenever the event file changed.
+                events = EventRead(mtime: mtime,
+                                   event: ClaudeHookBridge.latestEvent(forTab: query.id, in: directory),
+                                   prompt: ClaudeHookBridge.lastPrompt(forTab: query.id, in: directory))
+            }
+            var status: (mtime: Date, effort: LiveEffort?)?
+            if let mtime = ClaudeHookBridge.statusModificationDate(forTab: query.id, in: directory),
+               mtime != query.previousStatusMtime {
+                status = (mtime, ClaudeHookBridge.latestStatusEffort(forTab: query.id, in: directory))
+            }
+            guard events != nil || status != nil else { return nil }
+            return Read(id: query.id, events: events, status: status)
         }
     }
 }

@@ -163,12 +163,34 @@ struct TerminalSessionFactory {
             title: title,
             configuration: .loginShell(
                 workingDirectory: directory,
-                extraEnvironment: [ClaudeHookBridge.environmentKey: tabID.uuidString],
+                extraEnvironment: Self.tabEnvironment(tabID: tabID, directory: directory),
                 initialCommand: launch?.command
             ),
             claudeSessionID: launch?.sessionID,
             startsImmediately: startsImmediately
         )
+    }
+
+    /// The tab id the hooks write under, and the user's own status line
+    /// command for the folder, which Xylem's status line script runs after
+    /// keeping its input (ClaudeHookBridge).
+    static func tabEnvironment(tabID: UUID, directory: String?,
+                               settings: ClaudeSettingsReading = ClaudeSettingsReader()) -> [String: String] {
+        var environment = [ClaudeHookBridge.environmentKey: tabID.uuidString]
+        if let command = userStatusLineCommand(directory: directory, settings: settings) {
+            environment[ClaudeHookBridge.userStatusLineKey] = command
+        }
+        return environment
+    }
+
+    /// The status line command Claude Code would run in the folder without
+    /// Xylem's: local, then project, then user settings.
+    static func userStatusLineCommand(directory: String?, settings: ClaudeSettingsReading) -> String? {
+        let project = directory.map { settings.readProjectSettings(at: $0) }
+        let command = project?.local?.statusLine?.command
+            ?? project?.shared?.statusLine?.command
+            ?? settings.readGlobalSettings()?.statusLine?.command
+        return command?.isEmpty == false ? command : nil
     }
 
     // MARK: - Commands (pure, unit-tested)

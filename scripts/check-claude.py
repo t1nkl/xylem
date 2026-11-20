@@ -139,11 +139,20 @@ def write_hook_settings(work):
                 'exit 0\n')
     os.chmod(logger, 0o755)
     hook = {"hooks": [{"type": "command", "command": "/bin/sh '" + logger + "'"}]}
+    # Like Xylem's status line: keep the input Claude Code passes.
+    status = os.path.join(work, "status-line.sh")
+    with open(status, "w") as f:
+        f.write('#!/bin/sh\n'
+                '[ -n "$XYLEM_CHECK_EVENTS" ] || { cat >/dev/null; exit 0; }\n'
+                'cat > "$XYLEM_CHECK_EVENTS/status-line.json"\n'
+                'exit 0\n')
+    os.chmod(status, 0o755)
     settings = os.path.join(work, "settings.json")
     with open(settings, "w") as f:
         # Ask for Bash even when the user's settings allow it: the run needs
         # the permission question.
-        json.dump({"hooks": {e: [hook] for e in events}, "permissions": {"ask": ["Bash"]}}, f, indent=2)
+        json.dump({"hooks": {e: [hook] for e in events}, "permissions": {"ask": ["Bash"]},
+                   "statusLine": {"type": "command", "command": "/bin/sh '" + status + "'"}}, f, indent=2)
     return settings, events
 
 
@@ -582,6 +591,11 @@ def interactive(claude, cwd, settings, work, manifest):
         term.reply(b"\x1b[D" * 5 + b"\x1b[C" * 2 + b"s")
         term.pump(2)
         manifest["effortPickerDone"] = term.screen_text(3000)
+        try:
+            with open(os.path.join(events_dir, "status-line.json")) as f:
+                manifest["statusLineInput"] = f.read()
+        except OSError:
+            manifest["statusLineInput"] = ""
         # Max is typed as "/effort max": it can't be a saved default, so it
         # should say "this session only" without the picker.
         before = len(term.buffer)

@@ -85,8 +85,28 @@ private struct CompatibilityJudge {
                              projects: projects, runProjects: runProjects, prompt: prompts["tui"])
         }
         checkEffortPicker()
+        checkStatusLineEffort()
         checkRealConfig(projects: projects)
         checkRecentTranscripts(projects: projects)
+    }
+
+    /// The toolbar's effort label reads the status line input Xylem's
+    /// `--settings` status line keeps (ClaudeHookBridge).
+    mutating func checkStatusLineEffort() {
+        let feature = "Effort in the toolbar"
+        guard let input = manifest["statusLineInput"] as? String else {
+            skip("statusLine.effort", feature: feature, "the interactive run didn't reach the status line check")
+            return
+        }
+        if input.isEmpty {
+            fail("statusLine.effort", feature: feature,
+                 "the status line from --settings never ran: the effort label falls back to the transcript (shown after a reply)")
+        } else if let live = LiveEffort.parse(Data(input.utf8), at: Date()) {
+            ok("statusLine.effort", feature: feature, "the status line input carries effort.level (\(live.level)) at once")
+        } else {
+            fail("statusLine.effort", feature: feature,
+                 "the status line input has no effort.level: the label falls back to the transcript (shown after a reply)")
+        }
     }
 
     /// The toolbar's effort menu drives Claude Code's `/effort` picker by

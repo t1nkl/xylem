@@ -116,4 +116,69 @@ struct EffortChoiceTests {
         #expect(EffortPicker.confirmations(onScreen: screen) == ["low", "max"])
         #expect(EffortPicker.confirmations(onScreen: "nothing here").isEmpty)
     }
+
+    @Test func statusLineInputGivesTheLevelAtOnce() throws {
+        let json = #"{"session_id":"s1","model":{"id":"claude-opus-5-5"},"effort":{"level":"high"}}"#
+        let live = try #require(LiveEffort.parse(Data(json.utf8), at: Date(timeIntervalSince1970: 100)))
+        #expect(live.level == "high" && live.sessionID == "s1")
+        // Claude Code before effort was passed: no level.
+        #expect(LiveEffort.parse(Data(#"{"session_id":"s1"}"#.utf8), at: Date()) == nil)
+
+        // Before any reply the live level shows; a pick shows until a newer input.
+        let stats = StatsSnapshot()
+        #expect(ModelSwitchController.displayedEffort(pick: nil, live: live, stats: stats)?.level == "high")
+        let low = try #require(ClaudeEffortChoice.matching(level: "low"))
+        let pick = ModelSwitchController.EffortPick(choice: low, at: Date(timeIntervalSince1970: 150))
+        #expect(ModelSwitchController.displayedEffort(pick: pick, live: live, stats: stats) == low)
+        let newer = LiveEffort(level: "medium", sessionID: "s1", at: Date(timeIntervalSince1970: 151))
+        #expect(ModelSwitchController.displayedEffort(pick: pick, live: newer, stats: stats)?.level == "medium")
+    }
+
+    @Test func statusLineScriptKeepsTheInputAndRunsTheUsersCommand() throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: "xylem-sl-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let settingsPath = try #require(ClaudeHookBridge.install(root: root))
+        let settings = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: settingsPath))) as? [String: Any])
+        let statusLine = try #require(settings["statusLine"] as? [String: String])
+        #expect(statusLine["type"] == "command")
+
+        // Run it the way Claude Code does: JSON on stdin, the tab's env.
+        let tab = UUID()
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", statusLine["command"]!]
+        process.environment = [ClaudeHookBridge.environmentKey: tab.uuidString,
+                               ClaudeHookBridge.userStatusLineKey: "cat >/dev/null; printf 'users line'"]
+        let input = Pipe(), output = Pipe()
+        process.standardInput = input
+        process.standardOutput = output
+        try process.run()
+        input.fileHandleForWriting.write(Data(#"{"session_id":"s1","effort":{"level":"xhigh"}}"#.utf8))
+        try input.fileHandleForWriting.close()
+        process.waitUntilExit()
+        let printed = String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        #expect(printed == "users line")
+        let events = root.appending(path: "tab-events")
+        #expect(ClaudeHookBridge.latestStatusEffort(forTab: tab, in: events)?.level == "xhigh")
+        let mode = try FileManager.default.attributesOfItem(atPath: ClaudeHookBridge.statusFile(forTab: tab, in: events).path)[.posixPermissions] as? Int
+        #expect(mode == 0o600)
+    }
+
+    @Test func usersStatusLineFollowsClaudeCodesPrecedence() {
+        struct Settings: ClaudeSettingsReading {
+            let global: String?, shared: String?, local: String?
+            func decode(_ command: String?) -> ClaudeSettings? {
+                command.flatMap { try? JSONDecoder().decode(ClaudeSettings.self, from: Data(#"{"statusLine":{"type":"command","command":"\#($0)"}}"#.utf8)) }
+            }
+            func readGlobalSettings() -> ClaudeSettings? { decode(global) }
+            func readProjectSettings(at projectDirectory: String) -> (shared: ClaudeSettings?, local: ClaudeSettings?) { (decode(shared), decode(local)) }
+        }
+        let all = Settings(global: "g", shared: "p", local: "l")
+        #expect(TerminalSessionFactory.userStatusLineCommand(directory: "/x", settings: all) == "l")
+        #expect(TerminalSessionFactory.userStatusLineCommand(directory: "/x", settings: Settings(global: "g", shared: "p", local: nil)) == "p")
+        #expect(TerminalSessionFactory.userStatusLineCommand(directory: nil, settings: all) == "g")
+        #expect(TerminalSessionFactory.userStatusLineCommand(directory: "/x", settings: Settings(global: nil, shared: nil, local: nil)) == nil)
+        let env = TerminalSessionFactory.tabEnvironment(tabID: UUID(), directory: nil, settings: Settings(global: nil, shared: nil, local: nil))
+        #expect(env[ClaudeHookBridge.userStatusLineKey] == nil && env[ClaudeHookBridge.environmentKey] != nil)
+    }
 }

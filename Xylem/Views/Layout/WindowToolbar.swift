@@ -243,9 +243,9 @@ private struct ModelToolbarItem: View {
 
 // MARK: - Effort
 
-/// Effort menu: picking a level sets it for the active session only,
-/// through Claude Code's `/effort` picker (see ModelSwitchController). Shows the level of the newest reply,
-/// or a dash before the first one.
+/// Effort menu: shows the level the active session runs at (its status line
+/// input, else the transcript) and sets a new one for that session only
+/// (see ModelSwitchController). A dash while neither tells.
 private struct EffortToolbarItem: View {
     let app: AppModel
 
@@ -253,7 +253,8 @@ private struct EffortToolbarItem: View {
         let session = app.activeSession
         let stats = session == nil ? StatsSnapshot() : app.sessionStats.stats
         let shown = session.flatMap {
-            ModelSwitchController.displayedEffort(pick: app.modelSwitcher.effortPicks[$0.id], stats: stats)
+            ModelSwitchController.displayedEffort(pick: app.modelSwitcher.effortPicks[$0.id],
+                                                  live: app.tabs.activeTab?.liveEffort, stats: stats)
         }
         let canSwitch = session?.launchedClaude == true
 
@@ -287,7 +288,7 @@ private struct EffortToolbarItem: View {
     private static func help(canSwitch: Bool, shown: ClaudeEffortChoice?) -> String {
         guard canSwitch else { return "Open a Claude session to set its effort" }
         guard shown != nil else {
-            return "Effort: shown after Claude's first reply. Pick a level to set it for this session"
+            return "Effort: not known yet. Pick a level to set it for this session"
         }
         return "Set the effort of this Claude session only (/effort)"
     }
