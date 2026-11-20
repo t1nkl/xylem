@@ -188,18 +188,17 @@ struct TerminalSessionFactory {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: events.path, isDirectory: &isDirectory), isDirectory.boolValue
         else { return }
-        ClaudeHookBridge.setUserStatusLine(userStatusLineCommand(directory: directory, settings: settings),
+        ClaudeHookBridge.setUserStatusLine(userStatusLine(directory: directory, settings: settings)?.command,
                                            forTab: tabID, in: events)
     }
 
-    /// The status line command Claude Code would run in the folder without
-    /// Xylem's: local, then project, then user settings.
-    static func userStatusLineCommand(directory: String?, settings: ClaudeSettingsReading) -> String? {
+    /// The status line Claude Code would run in the folder without Xylem's:
+    /// local, then project, then user settings (its padding is applied from
+    /// the user's global one, see ClaudeHookBridge).
+    static func userStatusLine(directory: String?, settings: ClaudeSettingsReading) -> ClaudeSettings.StatusLine? {
         let project = directory.map { settings.readProjectSettings(at: $0) }
-        let command = project?.local?.statusLine?.command
-            ?? project?.shared?.statusLine?.command
-            ?? settings.readGlobalSettings()?.statusLine?.command
-        return command?.isEmpty == false ? command : nil
+        let candidates = [project?.local?.statusLine, project?.shared?.statusLine, settings.readGlobalSettings()?.statusLine]
+        return candidates.compactMap { $0 }.first { $0.command?.isEmpty == false }
     }
 
     // MARK: - Commands (pure, unit-tested)

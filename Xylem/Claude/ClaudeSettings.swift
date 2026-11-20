@@ -65,8 +65,10 @@ nonisolated struct ClaudeSettings: Decodable {
 
     /// Optional for the same reason as hooks: a malformed `statusLine`
     /// shouldn't take the rest of the file down with it.
-    struct StatusLine: Decodable {
+    struct StatusLine: Decodable, Equatable {
         let type: String?
         let command: String?
+        /// Columns before the line's text (Claude Code's default is 0).
+        var padding: Int?
     }
 }

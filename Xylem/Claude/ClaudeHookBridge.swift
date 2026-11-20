@@ -30,7 +30,12 @@
 //  toolbar, then runs the user's own status line command, if any, with the
 //  same input (kept per tab in `<tab id>.statusline`, owner-only, from
 //  their settings), so their line still shows: a `statusLine` in
-//  `--settings` replaces theirs. Claude Code runs a status line only in a
+//  `--settings` replaces theirs. Its `padding` comes from the user's global
+//  status line, read when the files are written (each launch): Claude Code
+//  drops leading spaces from a status line's output, so the script can't
+//  indent it, and the settings file is one for all tabs, so a project's own
+//  padding isn't followed (measured on Claude Code 2.1.329: padding 6 puts
+//  the text 6 columns further right than none or 0). Claude Code runs a status line only in a
 //  trusted folder and not with `disableAllHooks` (2.1.329), so the user's
 //  command runs exactly when Claude Code itself would run it.
 //
@@ -93,7 +98,7 @@ nonisolated enum ClaudeHookBridge {
     /// tab's script; owner-only like the events.
     static func setUserStatusLine(_ command: String?, forTab id: UUID, in directory: URL = eventsDirectory) {
         let url = userStatusLineFile(forTab: id, in: directory)
-        guard let command else {
+        guard let command, !command.isEmpty else {
             try? FileManager.default.removeItem(at: url)
             return
         }
@@ -117,7 +122,8 @@ nonisolated enum ClaudeHookBridge {
     /// settings path for `--settings`; nil if they can't be written, in
     /// which case tabs simply run without the bridge.
     @discardableResult
-    static func install(root: URL = rootDirectory) -> String? {
+    static func install(root: URL = rootDirectory,
+                        userSettings: ClaudeSettingsReading = ClaudeSettingsReader()) -> String? {
         let hooksDir = root.appending(path: "hooks", directoryHint: .isDirectory)
         let eventsDir = root.appending(path: "tab-events", directoryHint: .isDirectory)
         let script = hooksDir.appending(path: "tab-event.sh")
@@ -133,7 +139,9 @@ nonisolated enum ClaudeHookBridge {
             try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: script.path)
             try writeIfChanged(statusScriptSource(eventsDirectory: eventsDir.path), to: statusScript)
             try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: statusScript.path)
-            try writeIfChanged(settingsSource(scriptPath: script.path, statusScriptPath: statusScript.path), to: settings)
+            let padding = userSettings.readGlobalSettings()?.statusLine?.padding
+            try writeIfChanged(settingsSource(scriptPath: script.path, statusScriptPath: statusScript.path,
+                                              statusLinePadding: padding), to: settings)
             return settings.path
         } catch {
             return nil
@@ -195,14 +203,15 @@ nonisolated enum ClaudeHookBridge {
         """
     }
 
-    static func settingsSource(scriptPath: String, statusScriptPath: String) -> String {
+    static func settingsSource(scriptPath: String, statusScriptPath: String, statusLinePadding: Int? = nil) -> String {
         let command = "/bin/sh " + shellQuote(scriptPath)
         func hook(_ command: String) -> [String: Any] { ["hooks": [["type": "command", "command": command]]] }
         var hooks: [String: Any] = [:]
         for event in events {
             hooks[event] = [hook(event == "UserPromptSubmit" ? command + " " + promptArgument : command)]
         }
-        let statusLine: [String: Any] = ["type": "command", "command": "/bin/sh " + shellQuote(statusScriptPath)]
+        var statusLine: [String: Any] = ["type": "command", "command": "/bin/sh " + shellQuote(statusScriptPath)]
+        if let statusLinePadding { statusLine["padding"] = statusLinePadding }
         let data = (try? JSONSerialization.data(
             withJSONObject: ["hooks": hooks, "statusLine": statusLine],
             options: [.prettyPrinted, .sortedKeys]

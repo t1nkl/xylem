@@ -176,10 +176,10 @@ struct EffortChoiceTests {
             func readProjectSettings(at projectDirectory: String) -> (shared: ClaudeSettings?, local: ClaudeSettings?) { (decode(shared), decode(local)) }
         }
         let all = Settings(global: "g", shared: "p", local: "l")
-        #expect(TerminalSessionFactory.userStatusLineCommand(directory: "/x", settings: all) == "l")
-        #expect(TerminalSessionFactory.userStatusLineCommand(directory: "/x", settings: Settings(global: "g", shared: "p", local: nil)) == "p")
-        #expect(TerminalSessionFactory.userStatusLineCommand(directory: nil, settings: all) == "g")
-        #expect(TerminalSessionFactory.userStatusLineCommand(directory: "/x", settings: Settings(global: nil, shared: nil, local: nil)) == nil)
+        #expect(TerminalSessionFactory.userStatusLine(directory: "/x", settings: all)?.command == "l")
+        #expect(TerminalSessionFactory.userStatusLine(directory: "/x", settings: Settings(global: "g", shared: "p", local: nil))?.command == "p")
+        #expect(TerminalSessionFactory.userStatusLine(directory: nil, settings: all)?.command == "g")
+        #expect(TerminalSessionFactory.userStatusLine(directory: "/x", settings: Settings(global: nil, shared: nil, local: nil)) == nil)
         // Kept beside the hook settings in use; nothing without that folder.
         let root = FileManager.default.temporaryDirectory.appending(path: "xylem-slenv-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
@@ -192,5 +192,26 @@ struct EffortChoiceTests {
                                                   settings: Settings(global: nil, shared: nil, local: nil))
         TerminalSessionFactory.keepUserStatusLine(tabID: tab, directory: "/x", hookSettingsPath: "/nonexistent/hooks/settings.json", settings: all)
         #expect(!FileManager.default.fileExists(atPath: ClaudeHookBridge.userStatusLineFile(forTab: tab, in: events).path))
+    }
+
+    /// Claude Code drops leading spaces from a status line's output, so the
+    /// user's padding goes into Xylem's own status line setting.
+    @Test func usersGlobalPaddingGoesIntoXylemsStatusLine() throws {
+        struct Settings: ClaudeSettingsReading {
+            let padding: Int?
+            func readGlobalSettings() -> ClaudeSettings? {
+                let json = padding.map { #"{"statusLine":{"type":"command","command":"x","padding":\#($0)}}"# } ?? "{}"
+                return try? JSONDecoder().decode(ClaudeSettings.self, from: Data(json.utf8))
+            }
+            func readProjectSettings(at projectDirectory: String) -> (shared: ClaudeSettings?, local: ClaudeSettings?) { (nil, nil) }
+        }
+        for padding in [6, nil] {
+            let root = FileManager.default.temporaryDirectory.appending(path: "xylem-pad-\(UUID().uuidString)")
+            defer { try? FileManager.default.removeItem(at: root) }
+            let path = try #require(ClaudeHookBridge.install(root: root, userSettings: Settings(padding: padding)))
+            let settings = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: path))) as? [String: Any])
+            let statusLine = try #require(settings["statusLine"] as? [String: Any])
+            #expect(statusLine["padding"] as? Int == padding)
+        }
     }
 }
