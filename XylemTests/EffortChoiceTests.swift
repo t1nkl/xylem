@@ -147,8 +147,11 @@ struct EffortChoiceTests {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
         process.arguments = ["-c", statusLine["command"]!]
-        process.environment = [ClaudeHookBridge.environmentKey: tab.uuidString,
-                               ClaudeHookBridge.userStatusLineKey: "cat >/dev/null; printf 'users line'"]
+        let events = root.appending(path: "tab-events")
+        ClaudeHookBridge.setUserStatusLine("cat >/dev/null; printf 'users line'", forTab: tab, in: events)
+        let commandMode = try FileManager.default.attributesOfItem(atPath: ClaudeHookBridge.userStatusLineFile(forTab: tab, in: events).path)[.posixPermissions] as? Int
+        #expect(commandMode == 0o600)
+        process.environment = [ClaudeHookBridge.environmentKey: tab.uuidString]
         let input = Pipe(), output = Pipe()
         process.standardInput = input
         process.standardOutput = output
@@ -158,13 +161,12 @@ struct EffortChoiceTests {
         process.waitUntilExit()
         let printed = String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
         #expect(printed == "users line")
-        let events = root.appending(path: "tab-events")
         #expect(ClaudeHookBridge.latestStatusEffort(forTab: tab, in: events)?.level == "xhigh")
         let mode = try FileManager.default.attributesOfItem(atPath: ClaudeHookBridge.statusFile(forTab: tab, in: events).path)[.posixPermissions] as? Int
         #expect(mode == 0o600)
     }
 
-    @Test func usersStatusLineFollowsClaudeCodesPrecedence() {
+    @Test func usersStatusLineFollowsClaudeCodesPrecedence() throws {
         struct Settings: ClaudeSettingsReading {
             let global: String?, shared: String?, local: String?
             func decode(_ command: String?) -> ClaudeSettings? {
@@ -178,7 +180,17 @@ struct EffortChoiceTests {
         #expect(TerminalSessionFactory.userStatusLineCommand(directory: "/x", settings: Settings(global: "g", shared: "p", local: nil)) == "p")
         #expect(TerminalSessionFactory.userStatusLineCommand(directory: nil, settings: all) == "g")
         #expect(TerminalSessionFactory.userStatusLineCommand(directory: "/x", settings: Settings(global: nil, shared: nil, local: nil)) == nil)
-        let env = TerminalSessionFactory.tabEnvironment(tabID: UUID(), directory: nil, settings: Settings(global: nil, shared: nil, local: nil))
-        #expect(env[ClaudeHookBridge.userStatusLineKey] == nil && env[ClaudeHookBridge.environmentKey] != nil)
+        // Kept beside the hook settings in use; nothing without that folder.
+        let root = FileManager.default.temporaryDirectory.appending(path: "xylem-slenv-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let hooks = try #require(ClaudeHookBridge.install(root: root))
+        let events = root.appending(path: "tab-events")
+        let tab = UUID()
+        TerminalSessionFactory.keepUserStatusLine(tabID: tab, directory: "/x", hookSettingsPath: hooks, settings: all)
+        #expect((try? String(contentsOf: ClaudeHookBridge.userStatusLineFile(forTab: tab, in: events), encoding: .utf8)) == "l")
+        TerminalSessionFactory.keepUserStatusLine(tabID: tab, directory: nil, hookSettingsPath: hooks,
+                                                  settings: Settings(global: nil, shared: nil, local: nil))
+        TerminalSessionFactory.keepUserStatusLine(tabID: tab, directory: "/x", hookSettingsPath: "/nonexistent/hooks/settings.json", settings: all)
+        #expect(!FileManager.default.fileExists(atPath: ClaudeHookBridge.userStatusLineFile(forTab: tab, in: events).path))
     }
 }

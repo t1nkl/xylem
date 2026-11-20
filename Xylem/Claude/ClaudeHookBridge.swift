@@ -28,8 +28,11 @@
 //  keeps the JSON Claude Code passes (model, effort, context; Claude Code
 //  2.1.325 and later carry `effort.level`) as `<tab id>.status` for the
 //  toolbar, then runs the user's own status line command, if any, with the
-//  same input (`XYLEM_USER_STATUSLINE`, set per tab from their settings), so
-//  their line still shows: a `statusLine` in `--settings` replaces theirs.
+//  same input (kept per tab in `<tab id>.statusline`, owner-only, from
+//  their settings), so their line still shows: a `statusLine` in
+//  `--settings` replaces theirs. Claude Code runs a status line only in a
+//  trusted folder and not with `disableAllHooks` (2.1.329), so the user's
+//  command runs exactly when Claude Code itself would run it.
 //
 //  The script is silent and always exits 0: hook stdout can be fed back to
 //  Claude, and a failing hook would show up in the user's session. Without
@@ -49,11 +52,10 @@ nonisolated enum ClaudeHookBridge {
 
     static let environmentKey = "XYLEM_TAB_ID"
 
+    static let statusExtension = "status"
     /// The user's own status line command for the tab's folder, run by the
     /// status line script after it has kept the input.
-    static let userStatusLineKey = "XYLEM_USER_STATUSLINE"
-
-    static let statusExtension = "status"
+    static let userStatusLineExtension = "statusline"
 
     /// On the command line of every claude a Xylem tab starts (`--settings
     /// …/.xylem/hooks/settings.json`): tells our processes from others.
@@ -81,6 +83,25 @@ nonisolated enum ClaudeHookBridge {
     /// The tab's latest status line input.
     static func statusFile(forTab id: UUID, in directory: URL = eventsDirectory) -> URL {
         directory.appending(path: "\(id.uuidString).\(statusExtension)")
+    }
+
+    static func userStatusLineFile(forTab id: UUID, in directory: URL = eventsDirectory) -> URL {
+        directory.appending(path: "\(id.uuidString).\(userStatusLineExtension)")
+    }
+
+    /// Keeps (or, with nil, removes) the user's status line command for the
+    /// tab's script; owner-only like the events.
+    static func setUserStatusLine(_ command: String?, forTab id: UUID, in directory: URL = eventsDirectory) {
+        let url = userStatusLineFile(forTab: id, in: directory)
+        guard let command else {
+            try? FileManager.default.removeItem(at: url)
+            return
+        }
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
+                                                 attributes: [.posixPermissions: 0o700])
+        guard FileManager.default.createFile(atPath: url.path, contents: Data(command.utf8),
+                                             attributes: [.posixPermissions: 0o600]) else { return }
+        try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
     }
 
     /// The script argument UserPromptSubmit's hook passes.
@@ -166,7 +187,9 @@ nonisolated enum ClaudeHookBridge {
                 rm -f "$tmp" 2>/dev/null
             ) ;;
         esac
-        [ -n "$\(userStatusLineKey)" ] && printf '%s' "$input" | /bin/sh -c "$\(userStatusLineKey)"
+        case "$id" in ''|*[!A-Za-z0-9-]*) exit 0 ;; esac
+        user=\(shellQuote(eventsDirectory))"/$id.\(userStatusLineExtension)"
+        [ -s "$user" ] && printf '%s' "$input" | /bin/sh -c "$(cat "$user")"
         exit 0
 
         """
@@ -233,6 +256,7 @@ nonisolated enum ClaudeHookBridge {
         try? FileManager.default.removeItem(at: eventFile(forTab: id, in: directory))
         try? FileManager.default.removeItem(at: promptMarker(forTab: id, in: directory))
         try? FileManager.default.removeItem(at: statusFile(forTab: id, in: directory))
+        try? FileManager.default.removeItem(at: userStatusLineFile(forTab: id, in: directory))
     }
 
     /// Drops event files of tabs that no longer exist. Closing a tab
@@ -243,7 +267,7 @@ nonisolated enum ClaudeHookBridge {
         guard let files = try? FileManager.default.contentsOfDirectory(
             at: directory, includingPropertiesForKeys: [.contentModificationDateKey]
         ) else { return }
-        let extensions: Set<String> = ["json", promptMarkerExtension, statusExtension]
+        let extensions: Set<String> = ["json", promptMarkerExtension, statusExtension, userStatusLineExtension]
         for file in files where extensions.contains(file.pathExtension) {
             guard let id = UUID(uuidString: file.deletingPathExtension().lastPathComponent), !live.contains(id),
                   let modified = (try? file.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate,

@@ -158,12 +158,15 @@ struct TerminalSessionFactory {
 
     private func session(tabID: UUID, title: String, directory: String?, launch: Launch?,
                          startsImmediately: Bool = true) -> TerminalSession {
-        TerminalSession(
+        if launch != nil, let hooks = hookSettingsPath() {
+            Self.keepUserStatusLine(tabID: tabID, directory: directory, hookSettingsPath: hooks)
+        }
+        return TerminalSession(
             id: tabID,
             title: title,
             configuration: .loginShell(
                 workingDirectory: directory,
-                extraEnvironment: Self.tabEnvironment(tabID: tabID, directory: directory),
+                extraEnvironment: [ClaudeHookBridge.environmentKey: tabID.uuidString],
                 initialCommand: launch?.command
             ),
             claudeSessionID: launch?.sessionID,
@@ -171,16 +174,22 @@ struct TerminalSessionFactory {
         )
     }
 
-    /// The tab id the hooks write under, and the user's own status line
-    /// command for the folder, which Xylem's status line script runs after
-    /// keeping its input (ClaudeHookBridge).
-    static func tabEnvironment(tabID: UUID, directory: String?,
-                               settings: ClaudeSettingsReading = ClaudeSettingsReader()) -> [String: String] {
-        var environment = [ClaudeHookBridge.environmentKey: tabID.uuidString]
-        if let command = userStatusLineCommand(directory: directory, settings: settings) {
-            environment[ClaudeHookBridge.userStatusLineKey] = command
-        }
-        return environment
+    /// Keeps the user's own status line command for the folder where
+    /// Xylem's status line script reads it: `tab-events` beside the hook
+    /// settings the tab's claude starts with (ClaudeHookBridge), owner-only,
+    /// not in the tab's environment where every program would see it.
+    /// Nothing is written when that folder doesn't exist (hooks not
+    /// installed there).
+    static func keepUserStatusLine(tabID: UUID, directory: String?, hookSettingsPath: String,
+                                   settings: ClaudeSettingsReading = ClaudeSettingsReader()) {
+        let events = URL(fileURLWithPath: hookSettingsPath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appending(path: "tab-events", directoryHint: .isDirectory)
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: events.path, isDirectory: &isDirectory), isDirectory.boolValue
+        else { return }
+        ClaudeHookBridge.setUserStatusLine(userStatusLineCommand(directory: directory, settings: settings),
+                                           forTab: tabID, in: events)
     }
 
     /// The status line command Claude Code would run in the folder without
