@@ -167,6 +167,8 @@ final class AppModel {
 
     func switchModel(to choice: ClaudeModelChoice) {
         guard let session = activeSession, session.launchedClaude else { return }
+        // Not in the account's plan: Claude Code would refuse `/model`.
+        guard !claudeStates.unavailableModelFamilies.contains(choice.family) else { NSSound.beep(); return }
         modelSwitcher.switchModel(of: session, to: choice)
     }
 

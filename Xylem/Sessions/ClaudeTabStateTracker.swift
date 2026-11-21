@@ -67,6 +67,18 @@ final class ClaudeTabStateTracker {
     private(set) var planLimitsReportedAt: Date?
     /// The input `planLimits` comes from.
     @ObservationIgnored private var newestLimits: (limits: ClaudeLiveStatus.RateLimits, at: Date)?
+    /// The signed-in account (ClaudeAccountPlan), re-read when Claude
+    /// Code's global config changes, checked every `accountCheckInterval`
+    /// ticks.
+    @ObservationIgnored private var accountID: String?
+    /// Model families the account's plan doesn't include (ClaudeAccountPlan),
+    /// for the model menu. Equality-guarded.
+    private(set) var unavailableModelFamilies: Set<String> = []
+    @ObservationIgnored private var accountConfigMtime: Date?
+    /// After an account change: inputs from before it are the old account's.
+    @ObservationIgnored private var limitsNotBefore: Date?
+    @ObservationIgnored private var ticksSinceAccountCheck: Int?
+    static let accountCheckInterval = 30
 
     /// Latest event that carries state, per tab (an `.other` event such as
     /// an auth notice doesn't replace it).
@@ -105,16 +117,21 @@ final class ClaudeTabStateTracker {
     /// Keeps the version a tab's claude reports (ClaudeCLIVersion); tests
     /// pass their own so they never write the app's preferences.
     @ObservationIgnored private let rememberVersion: (String?) -> Void
+    /// Claude Code's global config (the signed-in account); tests pass
+    /// their own or nil.
+    @ObservationIgnored private let accountConfigFile: () -> URL?
     /// Called when a tab moved to another Claude session (to persist it).
     @ObservationIgnored var onBindingChange: () -> Void = {}
 
     init(eventsDirectory: URL = ClaudeHookBridge.eventsDirectory, notifier: AttentionNotifying,
          hooksInstalled: Bool = ClaudeHookBridge.installedSettingsPath != nil,
-         rememberVersion: @escaping (String?) -> Void = ClaudeCLIVersion.remember) {
+         rememberVersion: @escaping (String?) -> Void = ClaudeCLIVersion.remember,
+         accountConfigFile: @escaping () -> URL? = { ClaudeConfigDirectory.globalConfigFile }) {
         self.eventsDirectory = eventsDirectory
         self.notifier = notifier
         self.hooksInstalled = hooksInstalled
         self.rememberVersion = rememberVersion
+        self.accountConfigFile = accountConfigFile
     }
 
     func refresh(tabs: [TerminalTab], activeTabID: UUID?, appIsActive: Bool, now: Date = Date()) async {
@@ -129,6 +146,7 @@ final class ClaudeTabStateTracker {
         let prune = ticksSincePrune >= 60
         if prune { ticksSincePrune = 0 }
         let reads = await Self.read(queries, in: eventsDirectory, pruneKeeping: prune ? Set(tabs.map(\.id)) : nil)
+        await checkAccount(now: now)
         apply(reads: reads, tabs: tabs, activeTabID: activeTabID, appIsActive: appIsActive, now: now)
     }
 
@@ -192,7 +210,7 @@ final class ClaudeTabStateTracker {
                 // Account-wide: any input counts, also one from before this
                 // launch or from a teammate's session.
                 if let live = status.live, let limits = live.rateLimits,
-                   live.at >= (newestLimits?.at ?? .distantPast) {
+                   live.at >= max(newestLimits?.at ?? .distantPast, limitsNotBefore ?? .distantPast) {
                     newestLimits = (limits, live.at)
                 }
                 if let live = status.live, live.at >= startedAt.addingTimeInterval(-1),
@@ -269,8 +287,48 @@ final class ClaudeTabStateTracker {
             if let reset = window.resetsAt, reset <= now { return nil }
             return window
         }
-        let result = ClaudeLiveStatus.RateLimits(fiveHour: keep(limits.fiveHour), sevenDay: keep(limits.sevenDay))
+        var spend = limits.spend
+        if let reset = spend?.resetsAt, reset <= now { spend = nil }
+        let result = ClaudeLiveStatus.RateLimits(fiveHour: keep(limits.fiveHour), sevenDay: keep(limits.sevenDay),
+                                                 spend: spend)
         return result.isEmpty ? nil : result
+    }
+
+    /// Re-reads the signed-in account when Claude Code's global config changed:
+    /// at the first tick, then every `accountCheckInterval` ticks (one stat,
+    /// a parse only after a change), off main.
+    private func checkAccount(now: Date) async {
+        if let ticks = ticksSinceAccountCheck, ticks + 1 < Self.accountCheckInterval {
+            ticksSinceAccountCheck = ticks + 1
+            return
+        }
+        ticksSinceAccountCheck = 0
+        guard let url = accountConfigFile() else { return }
+        guard let read = await Self.readAccount(url, previousMtime: accountConfigMtime) else { return }
+        let first = accountConfigMtime == nil && accountID == nil
+        accountConfigMtime = read.mtime
+        // Another account (`/login`, or signed out to an API key): what was
+        // reported before the config changed is the old account's.
+        if !first, read.snapshot?.accountID != accountID {
+            let since = read.mtime ?? now
+            limitsNotBefore = since
+            if let kept = newestLimits, kept.at < since { newestLimits = nil }
+        }
+        accountID = read.snapshot?.accountID
+        let families = read.snapshot?.unavailableFamilies ?? []
+        if unavailableModelFamilies != families { unavailableModelFamilies = families }
+    }
+
+    /// nil when the file is unchanged since `previousMtime`, or there but
+    /// unreadable (caught mid-write: read again at the next check). A
+    /// missing file reads as no account.
+    @concurrent nonisolated
+    private static func readAccount(_ url: URL, previousMtime: Date?) async -> (mtime: Date?, snapshot: ClaudeAccountPlan.Snapshot?)? {
+        let mtime = ClaudeAccountPlan.modificationDate(of: url)
+        guard mtime != previousMtime else { return nil }
+        guard mtime != nil else { return (nil, nil) }
+        guard let snapshot = ClaudeAccountPlan.read(url) else { return nil }
+        return (mtime, snapshot)
     }
 
     private func updateHookHealth(tabs: [TerminalTab], now: Date) {

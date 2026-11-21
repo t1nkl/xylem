@@ -40,4 +40,11 @@ nonisolated struct ClaudeModelChoice: Identifiable, Hashable, Sendable {
         let lower = modelID.lowercased()
         return all.first { lower.contains($0.family) }
     }
+
+    /// The choices split by the account's plan (`unavailableFamilies` from
+    /// ClaudeAccountPlan): the menu greys the excluded ones, ⌘K leaves them
+    /// out and a switch to one is refused.
+    static func byPlan(unavailableFamilies: Set<String>) -> (included: [ClaudeModelChoice], excluded: [ClaudeModelChoice]) {
+        (all.filter { !unavailableFamilies.contains($0.family) }, all.filter { unavailableFamilies.contains($0.family) })
+    }
 }

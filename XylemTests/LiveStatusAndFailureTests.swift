@@ -187,7 +187,7 @@ struct StopFailureTrackerTests {
         let tab = TerminalTab(id: tabID, title: "t", state: .session(session))
         tab.claudeSessionID = "A"
         let notifier = FakeNotifier()
-        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true, rememberVersion: { _ in })
+        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: notifier, hooksInstalled: true, rememberVersion: { _ in }, accountConfigFile: { nil })
         let start = Date().addingTimeInterval(1)
         func write(_ json: String, to url: URL, at offset: TimeInterval) throws {
             try Data(json.utf8).write(to: url)
@@ -214,6 +214,196 @@ struct StopFailureTrackerTests {
         await tracker.refresh(tabs: [tab], activeTabID: nil, appIsActive: false, now: start.addingTimeInterval(3_700))
         #expect(tracker.planLimits == nil)
         #expect(tracker.planLimitsReportedAt == nil)
+    }
+}
+
+/// Behind a Claude gateway: `rate_limits.spend_limit` (Claude Code 2.1.330's
+/// documented shape: percent, reset, optional dollars and period).
+@MainActor
+struct GatewaySpendLimitTests {
+    private func parse(_ json: String) -> ClaudeLiveStatus.RateLimits? {
+        ClaudeLiveStatus.parse(Data(json.utf8), at: Date(timeIntervalSince1970: 100))?.rateLimits
+    }
+
+    @Test func readsTheSpendLimit() throws {
+        let full = try #require(parse(#"""
+            {"version":"2.1.330","rate_limits":{"spend_limit":{"used_percentage":12.4,"resets_at":1800000000,
+             "used_usd":12.4,"limit_usd":100,"period":"monthly"}}}
+            """#))
+        #expect(full.spend == .init(usedPercentage: 12.4, resetsAt: Date(timeIntervalSince1970: 1_800_000_000),
+                                    usedUSD: 12.4, limitUSD: 100, period: "monthly"))
+        #expect(full.fiveHour == nil && full.sevenDay == nil && !full.isEmpty)
+        // An older gateway: the percent only.
+        let bare = try #require(parse(#"{"version":"2.1.330","rate_limits":{"spend_limit":{"used_percentage":130,"resets_at":1800000000}}}"#))
+        #expect(bare.spend == .init(usedPercentage: 130, resetsAt: Date(timeIntervalSince1970: 1_800_000_000)))
+        // No percent: nothing to show.
+        #expect(parse(#"{"version":"2.1.330","rate_limits":{"spend_limit":{"used_usd":3}}}"#) == nil)
+        // Windows of a plan alongside are kept.
+        let both = try #require(parse(#"{"version":"2.1.330","rate_limits":{"seven_day":{"used_percentage":40,"resets_at":1800000000},"spend_limit":{"used_percentage":5,"resets_at":1800000000}}}"#))
+        #expect(both.sevenDay?.usedPercentage == 40 && both.spend?.usedPercentage == 5)
+    }
+
+    @Test func spendPastItsResetIsLeftOut() {
+        let now = Date(timeIntervalSince1970: 1_000)
+        let passed = ClaudeLiveStatus.RateLimits(spend: .init(usedPercentage: 50, resetsAt: Date(timeIntervalSince1970: 999)))
+        #expect(ClaudeTabStateTracker.current(passed, now: now) == nil)
+        let ahead = ClaudeLiveStatus.RateLimits(spend: .init(usedPercentage: 50, resetsAt: Date(timeIntervalSince1970: 2_000)))
+        #expect(ClaudeTabStateTracker.current(ahead, now: now) == ahead)
+    }
+
+    @Test func toolbarAndTooltipText() {
+        let spend = ClaudeLiveStatus.RateLimits.Spend(usedPercentage: 12.4, resetsAt: nil, usedUSD: 12.4, limitUSD: 100, period: "monthly")
+        #expect(PlanLimitsToolbarItem.spendText(spend) == "$12.40/$100")
+        #expect(PlanLimitsToolbarItem.spendText(.init(usedPercentage: 130, resetsAt: nil)) == "$ 130%")
+        #expect(PlanLimitsToolbarItem.spendText(.init(usedPercentage: 24, resetsAt: nil, usedUSD: 12, limitUSD: 50)) == "$12/$50")
+        #expect(PlanLimitsToolbarItem.dollars(1234.5) == "$1235")
+        #expect(PlanLimitsToolbarItem.dollars(0.5) == "$0.50")
+        let help = PlanLimitsToolbarItem.help(.init(spend: spend), reportedAt: nil)
+        #expect(help == "Spend limit (from Claude Code)\nSpend: $12.40 of $100 this month (12%)")
+        let over = PlanLimitsToolbarItem.help(.init(spend: .init(usedPercentage: 130, resetsAt: nil, period: "weekly")), reportedAt: nil)
+        #expect(over == "Spend limit (from Claude Code)\nSpend: 130% used this week")
+        // A plan's windows keep their text; the spend is one more line.
+        let plan = ClaudeLiveStatus.RateLimits(sevenDay: .init(usedPercentage: 44, resetsAt: nil))
+        #expect(PlanLimitsToolbarItem.help(plan, reportedAt: nil) == "Plan usage limits (from Claude Code)\nWeekly: 44% used")
+        #expect(PlanLimitsToolbarItem.accessibilityText(.init(sevenDay: .init(usedPercentage: 44, resetsAt: nil), spend: spend))
+                == "Plan usage: weekly 44%, spend limit 12%")
+    }
+}
+
+/// The models the account's plan includes, as Claude Code keeps them in
+/// `modelAccessCache` (`apiName` + `entitled`).
+@MainActor
+struct PlanModelAccessTests {
+    @Test func familiesWithNoEntitledModelAreUnavailable() {
+        #expect(ClaudeAccountPlan.unavailableFamilies(nil) == [])
+        #expect(ClaudeAccountPlan.unavailableFamilies([[String: Any]]()) == [])
+        let pro: [[String: Any]] = [["apiName": "claude-opus-5-5", "entitled": false],
+                                    ["apiName": "claude-opus-5-1", "entitled": false],
+                                    ["apiName": "claude-sonnet-5-5", "entitled": true],
+                                    ["apiName": "claude-fable-5-2", "entitled": false],
+                                    ["apiName": "claude-fable-5-1", "entitled": true],
+                                    ["apiName": "some-other-model", "entitled": false],
+                                    ["entitled": false]]
+        // Fable still has an entitled model: Claude Code steps a refused alias
+        // down to the newest model it may use, so the pick isn't blocked here.
+        #expect(ClaudeAccountPlan.unavailableFamilies(pro) == ["opus"])
+    }
+
+    @Test func menuPaletteAndSwitchSplitByPlan() {
+        let none = ClaudeModelChoice.byPlan(unavailableFamilies: [])
+        #expect(none.included == ClaudeModelChoice.all && none.excluded.isEmpty)
+        let pro = ClaudeModelChoice.byPlan(unavailableFamilies: ["opus"])
+        #expect(pro.included.map(\.alias) == ["fable", "sonnet", "haiku"])
+        #expect(pro.excluded.map(\.alias) == ["opus"])
+        // A family name no choice has changes nothing.
+        #expect(ClaudeModelChoice.byPlan(unavailableFamilies: ["mythos"]).included == ClaudeModelChoice.all)
+    }
+
+    @Test func trackerPublishesThemFromTheConfig() async throws {
+        let dir = FileManager.default.temporaryDirectory.appending(path: "xylem-access-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let configURL = dir.appending(path: "claude.json")
+        try JSONSerialization.data(withJSONObject: [
+            "oauthAccount": ["accountUuid": "a1"],
+            "modelAccessCache": [["apiName": "claude-opus-5-5", "entitled": false]]
+        ]).write(to: configURL)
+        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: FakeNotifier(), hooksInstalled: true,
+                                            rememberVersion: { _ in }, accountConfigFile: { configURL })
+        await tracker.refresh(tabs: [], activeTabID: nil, appIsActive: true)
+        #expect(tracker.unavailableModelFamilies == ["opus"])
+        #expect(ClaudeAccountPlan.read(configURL) == .init(accountID: "a1", unavailableFamilies: ["opus"]))
+    }
+}
+
+/// A `/login` to another account drops the limits the old one reported.
+@MainActor
+struct AccountSwitchLimitsTests {
+    @Test func anotherAccountForgetsTheOldLimits() async throws {
+        let dir = FileManager.default.temporaryDirectory.appending(path: "xylem-events-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let configURL = dir.appending(path: "claude.json")
+        func account(_ id: String, at time: Date) throws {
+            try JSONSerialization.data(withJSONObject: ["oauthAccount": ["accountUuid": id, "organizationType": "claude_max"]])
+                .write(to: configURL)
+            try FileManager.default.setAttributes([.modificationDate: time], ofItemAtPath: configURL.path)
+        }
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let tabID = UUID()
+        let session = TerminalSessionFactory(autoStartClaude: { false }).makeSession(tabID: tabID, title: "t", directory: "/tmp")
+        defer { session.close() }
+        let tab = TerminalTab(id: tabID, title: "t", state: .session(session))
+        tab.claudeSessionID = "A"
+        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: FakeNotifier(), hooksInstalled: true,
+                                            rememberVersion: { _ in }, accountConfigFile: { configURL })
+        let start = Date().addingTimeInterval(1)
+        try account("one", at: start)
+        #expect(ClaudeAccountPlan.read(configURL)?.accountID == "one")
+        #expect(ClaudeAccountPlan.read(dir.appending(path: "missing.json")) == nil)
+        let reset = Int(start.addingTimeInterval(3_600).timeIntervalSince1970)
+        let status = ClaudeHookBridge.statusFile(forTab: tabID, in: dir)
+        try Data(#"{"version":"2.1.330","session_id":"A","rate_limits":{"seven_day":{"used_percentage":44,"resets_at":\#(reset)}}}"#.utf8).write(to: status)
+        try FileManager.default.setAttributes([.modificationDate: start], ofItemAtPath: status.path)
+        await tracker.refresh(tabs: [tab], activeTabID: tabID, appIsActive: true, now: start.addingTimeInterval(1))
+        #expect(tracker.planLimits?.sevenDay?.usedPercentage == 44)
+        // The config caught mid-write (not JSON) is read again later, not taken for another account.
+        try Data("{\"oauthAcc".utf8).write(to: configURL)
+        try FileManager.default.setAttributes([.modificationDate: start.addingTimeInterval(3)], ofItemAtPath: configURL.path)
+        for offset in 2...(ClaudeTabStateTracker.accountCheckInterval + 2) {
+            await tracker.refresh(tabs: [tab], activeTabID: tabID, appIsActive: true, now: start.addingTimeInterval(Double(offset)))
+        }
+        #expect(tracker.planLimits?.sevenDay?.usedPercentage == 44)
+        // Signed in as another account; its first input has no limits yet.
+        try account("two", at: start.addingTimeInterval(5))
+        for offset in 2...(ClaudeTabStateTracker.accountCheckInterval + 2) {
+            await tracker.refresh(tabs: [tab], activeTabID: tabID, appIsActive: true, now: start.addingTimeInterval(Double(offset)))
+        }
+        #expect(tracker.planLimits == nil)
+    }
+
+    /// An input that is read again every tick (older than its tab's claude,
+    /// or a teammate's) doesn't bring the old account's limits back; the
+    /// new account's input from after the switch shows.
+    @Test func oldInputsStayOutAfterTheSwitch() async throws {
+        let dir = FileManager.default.temporaryDirectory.appending(path: "xylem-events-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let configURL = dir.appending(path: "claude.json")
+        func account(_ id: String, at time: Date) throws {
+            try JSONSerialization.data(withJSONObject: ["oauthAccount": ["accountUuid": id]]).write(to: configURL)
+            try FileManager.default.setAttributes([.modificationDate: time], ofItemAtPath: configURL.path)
+        }
+        func status(_ tab: UUID, session: String, percent: Int, at time: Date) throws {
+            let url = ClaudeHookBridge.statusFile(forTab: tab, in: dir)
+            let reset = Int(time.addingTimeInterval(86_400).timeIntervalSince1970)
+            try Data(#"{"version":"2.1.330","session_id":"\#(session)","rate_limits":{"seven_day":{"used_percentage":\#(percent),"resets_at":\#(reset)}}}"#.utf8).write(to: url)
+            try FileManager.default.setAttributes([.modificationDate: time], ofItemAtPath: url.path)
+        }
+        let tabID = UUID()
+        let session = TerminalSessionFactory(autoStartClaude: { false }).makeSession(tabID: tabID, title: "t", directory: "/tmp")
+        defer { session.close() }
+        let tab = TerminalTab(id: tabID, title: "t", state: .session(session))
+        tab.claudeSessionID = "A"
+        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: FakeNotifier(), hooksInstalled: true,
+                                            rememberVersion: { _ in }, accountConfigFile: { configURL })
+        let start = Date().addingTimeInterval(1)
+        try account("one", at: start)
+        // A teammate's input under the same tab id: never marked read, read every tick.
+        try status(tabID, session: "teammate", percent: 44, at: start)
+        func ticks(from first: Int, count: Int) async {
+            for offset in first..<(first + count) {
+                await tracker.refresh(tabs: [tab], activeTabID: tabID, appIsActive: true, now: start.addingTimeInterval(Double(offset)))
+            }
+        }
+        await ticks(from: 1, count: 1)
+        #expect(tracker.planLimits?.sevenDay?.usedPercentage == 44)
+        try account("two", at: start.addingTimeInterval(5))
+        await ticks(from: 2, count: ClaudeTabStateTracker.accountCheckInterval + 2)
+        #expect(tracker.planLimits == nil)
+        // The new account's first input.
+        try status(tabID, session: "teammate", percent: 3, at: start.addingTimeInterval(40))
+        await ticks(from: 41, count: 1)
+        #expect(tracker.planLimits?.sevenDay?.usedPercentage == 3)
     }
 }
 

@@ -262,16 +262,18 @@ private struct ModelToolbarItem: View {
             : ModelSwitchController.defaultModelDisplay(app.environment.defaultModel)
         let canSwitch = session?.launchedClaude == true
 
+        // Families the account's plan doesn't include (Claude Code refuses
+        // `/model` for them) sit greyed under a short header, like the
+        // effort levels an older Claude Code can't set.
+        let (included, excluded) = ClaudeModelChoice.byPlan(unavailableFamilies: app.claudeStates.unavailableModelFamilies)
+
         Menu {
-            ForEach(ClaudeModelChoice.all) { choice in
-                Button { app.switchModel(to: choice) } label: {
-                    if choice == model.choice {
-                        Label(choice.title, systemImage: "checkmark")
-                    } else {
-                        Text(choice.title)
-                    }
+            if !excluded.isEmpty {
+                Section(Self.notInPlanHeader) {
+                    ForEach(excluded) { choice in item(choice, model: model).disabled(true) }
                 }
             }
+            ForEach(included) { choice in item(choice, model: model) }
         } label: {
             // Own chevron right after the text and equal padding on both
             // sides: the system indicator sits at the capsule's far edge,
@@ -290,6 +292,15 @@ private struct ModelToolbarItem: View {
         .help(canSwitch
               ? "Switch the model of this Claude session (/model)"
               : "Open a Claude session to switch its model")
+    }
+
+    static let notInPlanHeader = "Not included in your plan"
+
+    /// A toggle, so the menu item carries the system checkmark (an icon
+    /// label isn't drawn in this menu). Choosing the current one sends it again.
+    private func item(_ choice: ClaudeModelChoice, model: (title: String?, choice: ClaudeModelChoice?)) -> some View {
+        Toggle(choice.title, isOn: Binding(get: { choice == model.choice },
+                                           set: { _ in app.switchModel(to: choice) }))
     }
 }
 
@@ -340,14 +351,10 @@ private struct EffortToolbarItem: View {
         .accessibilityLabel("Effort \(shown?.title ?? "unknown")")
     }
 
+    /// A toggle for the system checkmark, like the model menu.
     private func item(_ choice: ClaudeEffortChoice, shown: ClaudeEffortChoice?) -> some View {
-        Button { app.switchEffort(to: choice) } label: {
-            if choice == shown {
-                Label(choice.title, systemImage: "checkmark")
-            } else {
-                Text(choice.title)
-            }
-        }
+        Toggle(choice.title, isOn: Binding(get: { choice == shown },
+                                           set: { _ in app.switchEffort(to: choice) }))
     }
 
     private static func help(canSwitch: Bool, shown: ClaudeEffortChoice?, version: String?) -> String {
@@ -362,18 +369,20 @@ private struct EffortToolbarItem: View {
 
 // MARK: - Plan limits
 
-/// The plan's usage limits as Claude Code reports them (5-hour and weekly
-/// windows, percent used): "7d 44%". Shown by the meters only when there
-/// are some (none for API keys, before a request, past every reset).
-/// Account-wide: the same in every tab.
-private struct PlanLimitsToolbarItem: View {
+/// The plan's usage limits as Claude Code reports them: the 5-hour and
+/// weekly windows of a Claude plan ("⌛ 5h 23% · 7d 81%"), and behind a
+/// Claude gateway its spend limit ("$12.40/$100"). Shown by the meters only
+/// when there are some (none for API keys, before a request, past every
+/// reset). Account-wide: the same in every tab.
+struct PlanLimitsToolbarItem: View {
     let tracker: ClaudeTabStateTracker
 
     var body: some View {
         if let limits = tracker.planLimits {
             let windows = Self.windows(limits)
             HStack(spacing: 5) {
-                Image(systemName: "hourglass")
+                // The same grey as the numbers beside it.
+                if !windows.isEmpty { Image(systemName: "hourglass").foregroundStyle(.secondary) }
                 ForEach(windows, id: \.name) { window in
                     if window.name != windows.first?.name {
                         Text("·").foregroundStyle(.tertiary)
@@ -382,11 +391,16 @@ private struct PlanLimitsToolbarItem: View {
                         .monospacedDigit()
                         .foregroundStyle(Self.color(for: window.value.usedPercentage))
                 }
+                if let spend = limits.spend {
+                    if !windows.isEmpty { Text("·").foregroundStyle(.tertiary) }
+                    Text(Self.spendText(spend))
+                        .monospacedDigit()
+                        .foregroundStyle(Self.color(for: spend.usedPercentage))
+                }
             }
-            .instantTooltip(Self.help(windows, reportedAt: tracker.planLimitsReportedAt))
+            .instantTooltip(Self.help(limits, reportedAt: tracker.planLimitsReportedAt))
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Plan usage: " + windows.map { "\($0.title) \(Self.percent($0.value.usedPercentage))" }
-                .joined(separator: ", "))
+            .accessibilityLabel(Self.accessibilityText(limits))
         }
     }
 
@@ -413,16 +427,59 @@ private struct PlanLimitsToolbarItem: View {
         return .secondary
     }
 
-    static func help(_ windows: [Shown], reportedAt: Date?, now: Date = Date()) -> String {
-        var lines = ["Plan usage limits (from Claude Code)"]
-        for window in windows {
+    /// "$12.40/$100" with the dollars, else "$ 12%" (past 100% once exceeded).
+    static func spendText(_ spend: ClaudeLiveStatus.RateLimits.Spend) -> String {
+        guard let used = spend.usedUSD, let limit = spend.limitUSD else { return "$ " + share(spend.usedPercentage) }
+        return dollars(used) + "/" + dollars(limit)
+    }
+
+    /// A spend limit's percent: not capped at 100, it can be exceeded.
+    static func share(_ value: Double) -> String {
+        "\(Int(max(value, 0).rounded()))%"
+    }
+
+    /// "$12.40" under $100, "$50" for whole dollars, "$120" from $100.
+    static func dollars(_ value: Double) -> String {
+        value < 100 && value != value.rounded() ? String(format: "$%.2f", value) : String(format: "$%.0f", value.rounded())
+    }
+
+    static func help(_ limits: ClaudeLiveStatus.RateLimits, reportedAt: Date?, now: Date = Date()) -> String {
+        var lines = [limits.fiveHour == nil && limits.sevenDay == nil ? "Spend limit (from Claude Code)"
+                                                                        : "Plan usage limits (from Claude Code)"]
+        for window in windows(limits) {
             var line = "\(window.title.prefix(1).uppercased() + window.title.dropFirst()): \(percent(window.value.usedPercentage)) used"
             if let reset = window.value.resetsAt { line += ", resets " + dayTime(reset, now: now, todayPrefix: "at ") }
+            lines.append(line)
+        }
+        if let spend = limits.spend {
+            let percentUsed = share(spend.usedPercentage)
+            var line = "Spend: "
+            if let used = spend.usedUSD, let limit = spend.limitUSD {
+                line += "\(dollars(used)) of \(dollars(limit))" + periodText(spend.period) + " (\(percentUsed))"
+            } else {
+                line += percentUsed + " used" + periodText(spend.period)
+            }
+            if let reset = spend.resetsAt { line += ", resets " + dayTime(reset, now: now, todayPrefix: "at ") }
             lines.append(line)
         }
         // Claude Code reports them with its requests: an idle Mac shows the last ones.
         if let reportedAt { lines.append("As of " + dayTime(reportedAt, now: now)) }
         return lines.joined(separator: "\n")
+    }
+
+    static func periodText(_ period: String?) -> String {
+        switch period {
+        case "daily": return " today"
+        case "weekly": return " this week"
+        case "monthly": return " this month"
+        default: return ""
+        }
+    }
+
+    static func accessibilityText(_ limits: ClaudeLiveStatus.RateLimits) -> String {
+        var parts = windows(limits).map { "\($0.title) \(percent($0.value.usedPercentage))" }
+        if let spend = limits.spend { parts.append("spend limit \(share(spend.usedPercentage))") }
+        return "Plan usage: " + parts.joined(separator: ", ")
     }
 
     /// "14:10" today (after `todayPrefix`), else "Mon 09:00".

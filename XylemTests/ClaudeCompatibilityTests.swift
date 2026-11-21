@@ -182,7 +182,8 @@ private struct CompatibilityJudge {
         if let raw = object["rate_limits"] as? [String: Any], !raw.isEmpty {
             if let limits = live.rateLimits, !limits.isEmpty {
                 let windows = [limits.fiveHour.map { "5-hour \(Int($0.usedPercentage))%" },
-                               limits.sevenDay.map { "weekly \(Int($0.usedPercentage))%" }].compactMap { $0 }
+                               limits.sevenDay.map { "weekly \(Int($0.usedPercentage))%" },
+                               limits.spend.map { "spend limit \(Int($0.usedPercentage))%" }].compactMap { $0 }
                 let unknown = Set(raw.keys).subtracting(["five_hour", "seven_day", "spend_limit"])
                 if unknown.isEmpty {
                     ok("statusLine.limits", feature: limitsFeature, "rate_limits reads as " + windows.joined(separator: ", "))
@@ -192,7 +193,7 @@ private struct CompatibilityJudge {
                 }
             } else {
                 fail("statusLine.limits", feature: limitsFeature,
-                     "rate_limits is there but no window has a numeric used_percentage: the toolbar shows nothing")
+                     "rate_limits is there but no window or spend limit has a numeric used_percentage: the toolbar shows nothing")
             }
         } else {
             skip("statusLine.limits", feature: limitsFeature,

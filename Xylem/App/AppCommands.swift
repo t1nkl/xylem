@@ -88,7 +88,8 @@ enum AppCommands {
 
         // Model switches for the active session.
         if app.activeSession?.launchedClaude == true {
-            for choice in ClaudeModelChoice.all {
+            // Not the families the account's plan doesn't include: Claude Code refuses them.
+            for choice in ClaudeModelChoice.byPlan(unavailableFamilies: app.claudeStates.unavailableModelFamilies).included {
                 commands.append(PaletteCommand(
                     id: "model-\(choice.alias)", title: "Claude · Switch to \(choice.title)",
                     subtitle: "Send \(choice.command) to active session",

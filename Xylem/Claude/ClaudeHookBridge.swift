@@ -358,13 +358,26 @@ nonisolated struct ClaudeLiveStatus: Equatable, Sendable {
     nonisolated struct RateLimits: Equatable, Sendable {
         var fiveHour: Window?
         var sevenDay: Window?
+        /// Behind a Claude gateway: the fullest spend limit (`spend_limit`).
+        var spend: Spend? = nil
 
         nonisolated struct Window: Equatable, Sendable {
             var usedPercentage: Double
             var resetsAt: Date?
         }
 
-        var isEmpty: Bool { fiveHour == nil && sevenDay == nil }
+        /// A gateway spend limit: the percent used (above 100 once exceeded)
+        /// and, from a gateway that reports them, the dollars and the
+        /// period (daily, weekly, monthly).
+        nonisolated struct Spend: Equatable, Sendable {
+            var usedPercentage: Double
+            var resetsAt: Date?
+            var usedUSD: Double? = nil
+            var limitUSD: Double? = nil
+            var period: String? = nil
+        }
+
+        var isEmpty: Bool { fiveHour == nil && sevenDay == nil && spend == nil }
     }
 
     static func parse(_ data: Data, at time: Date) -> ClaudeLiveStatus? {
@@ -402,6 +415,16 @@ nonisolated struct ClaudeLiveStatus: Equatable, Sendable {
             let resets = number(window["resets_at"]).flatMap { $0 > 0 ? Date(timeIntervalSince1970: $0) : nil }
             return RateLimits.Window(usedPercentage: used, resetsAt: resets)
         }
-        return RateLimits(fiveHour: window(object["five_hour"]), sevenDay: window(object["seven_day"]))
+        var spend: RateLimits.Spend?
+        if let raw = object["spend_limit"] as? [String: Any], let used = number(raw["used_percentage"]) {
+            spend = RateLimits.Spend(
+                usedPercentage: used,
+                resetsAt: number(raw["resets_at"]).flatMap { $0 > 0 ? Date(timeIntervalSince1970: $0) : nil },
+                usedUSD: number(raw["used_usd"]).flatMap { $0 >= 0 ? $0 : nil },
+                limitUSD: number(raw["limit_usd"]).flatMap { $0 > 0 ? $0 : nil },
+                period: (raw["period"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+            )
+        }
+        return RateLimits(fiveHour: window(object["five_hour"]), sevenDay: window(object["seven_day"]), spend: spend)
     }
 }
