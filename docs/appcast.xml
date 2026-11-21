@@ -7,6 +7,27 @@
     <language>en</language>
     <!-- items: newest first -->
     <item>
+      <title>v1.2.9</title>
+      <pubDate>Sat, 21 Nov 2026 07:40:16 GMT</pubDate>
+      <sparkle:version>28</sparkle:version>
+      <sparkle:shortVersionString>1.2.9</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <description sparkle:format="markdown"><![CDATA[
+### New
+- **Plan usage limits in the toolbar.** With a Claude plan, the toolbar shows how much of the 5-hour and weekly limits you have used, the same numbers Claude Code's `/usage` shows. They turn amber from 70% and red from 90%, and hovering shows when each one resets.
+- **"Stopped" when an API error ends a turn.** When a rate limit, a sign-in problem or a server error stops Claude mid-turn, the tab gets a red mark and says why, with a notification and the Dock badge, instead of looking finished. Needs Claude Code 2.1.78 or later.
+- **Next tab waiting for you.** ⌃⌘U jumps to the next tab where Claude has finished, asks for permission or has stopped on an error. Also in the Tabs menu and ⌘K; you can change the shortcut in Settings > Hotkeys.
+
+### Improved
+- **A context ring.** The context is now a ring next to the plan limits, and model and effort have a capsule of their own. Hovering the ring shows at once how much is used and how much is left.
+- **The context Claude Code counts.** The ring and All Sessions show the context the way Claude Code counts it. After `/compact` the ring waits for the next reply instead of showing the size from before.
+
+### Fixed
+- On a Ukrainian or other non-Latin keyboard layout, Shift+Command shortcuts typed while the terminal has the keyboard reach their own menu item: ⇧⌘G finds the previous match instead of the next one.
+]]></description>
+      <enclosure url="https://github.com/t1nkl/xylem/releases/download/v1.2.9/Xylem-v1.2.9.dmg" type="application/octet-stream" sparkle:edSignature="PjoZQ4hJbcghNyhy8hBRAuq3QHA3T7mRNv2ZZN2GJlulFgCmGZMWRvcRGyGXGa00edjUJHO+BfC/E0cIg6m+Cw==" length="10428619"/>
+    </item>
+    <item>
       <title>v1.2.8</title>
       <pubDate>Fri, 20 Nov 2026 09:02:05 GMT</pubDate>
       <sparkle:version>27</sparkle:version>
