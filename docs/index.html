@@ -95,6 +95,7 @@
     --w-busy: #FACC15;
     --w-blue: #6EA8FE;
     --w-amber: #F5A524;
+    --w-red: #F0605A;
     --w-seg: #108E3F;
 
     --body: "Schibsted Grotesk", ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -199,11 +200,23 @@
   .wtitle span { color: var(--w-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pill { display: flex; align-items: center; gap: 10px; height: 30px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,.07); color: var(--w-text2); font-size: 13px; white-space: nowrap; }
   .pill.ctx { margin-left: auto; }
-  .gauge { width: 62px; height: 6px; border-radius: 3px; background: #3A3A3A; overflow: hidden; }
-  .gauge i { display: block; height: 100%; width: 43%; background: var(--accent); border-radius: 3px; }
   .pill .sep { width: 1px; height: 16px; background: #3A3A3A; }
   .pill .model { display: flex; align-items: center; gap: 5px; color: var(--w-text); }
   .pill .model .ico.small { width: 10px; height: 10px; color: var(--w-text2); }
+  .pill.meters { gap: 10px; }
+  .cring { width: 16px; height: 16px; display: block; transform: rotate(-90deg); }
+  .cring circle { fill: none; stroke-width: 3; }
+  .cring .track { stroke: rgba(255,255,255,.18); }
+  .cring .fill { stroke: var(--accent); stroke-linecap: round; transition: stroke-dasharray .4s ease-out; }
+  .limits { display: flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+  .limits .ico { width: 12px; height: 12px; }
+  .limits .dim { color: var(--w-muted); }
+  .limits .hi { color: var(--w-amber); }
+  /* The app's tooltips here show at once, not after the system's delay. */
+  [data-tip] { position: relative; }
+  [data-tip]:hover::after { content: attr(data-tip); position: absolute; top: calc(100% + 10px); right: -8px; z-index: 20; white-space: pre; padding: 5px 8px; border-radius: 6px; background: #262626; border: 1px solid #3A3A3A; color: var(--w-text); font: 12px/1.35 var(--sys); box-shadow: 0 6px 18px rgba(0,0,0,.45); pointer-events: none; }
+  .bang.red { background: var(--w-red); }
+  .p.err, .tp.err { color: var(--w-red); }
   .pill.icons { gap: 2px; padding: 0 4px; }
   .pill.icons + .pill.icons { margin-left: -4px; }
   .pill.icons .ib { width: 32px; }
@@ -217,6 +230,7 @@
   .term .y { color: #E5C07B; }
   .term .c { color: #B48EF0; }
   .term .gap { margin-top: 9px; }
+  .term .err { color: var(--w-red); }
   .term .prompt { border-top: 1px solid #4A4A4A; border-bottom: 1px solid #4A4A4A; padding: 6px 0; color: #EBEBEB; margin-top: 10px; }
   .term .hint { color: #7A7A7A; padding: 6px 0 12px; }
   /* New Tab: the folder picker (NewTabPickerView) instead of a terminal */
@@ -501,7 +515,7 @@
   .ov-card .bar { height: 4px; border-radius: 2px; background: #3A3A3A; overflow: hidden; }
   .ov-card .bar i { display: block; height: 100%; background: var(--accent); }
   .ov-card .st { font-size: 11px; color: var(--w-text2); }
-  .ov-card .st.busy { color: var(--w-busy); } .ov-card .st.warn { color: var(--w-amber); } .ov-card .st.done { color: var(--w-blue); }
+  .ov-card .st.busy { color: var(--w-busy); } .ov-card .st.warn { color: var(--w-amber); } .ov-card .st.done { color: var(--w-blue); } .ov-card .st.err { color: var(--w-red); }
 
   .toast { position: absolute; z-index: 4; left: calc(252px + (100% - 512px) / 2); bottom: 50px; transform: translateX(-50%); background: #2F2F2F; border: 1px solid #3F3F3F; border-radius: 8px; padding: 6px 12px; font-size: 12px; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s, visibility .2s; }
   .toast.show { opacity: 1; visibility: visible; }
@@ -562,7 +576,7 @@
     .tab { grid-template-columns: 34px; padding: 3px; }
     .tab > div:nth-child(2) { display: none; }
     .toolbar { grid-row: 1; grid-column: 1; padding: 0 10px; }
-    .pill .sep, .pill .model { display: none; }
+    .pill .sep, .pill .model, .limits { display: none; }
     .term { grid-row: 3; grid-column: 1; padding: 12px 14px 0; }
     .strip { grid-row: 4; grid-column: 1; }
     .overlay { left: 50%; top: 100px; }
@@ -627,7 +641,7 @@
   .tcard.show { display: block; }
   .tcard b { display: block; font-size: 13px; color: var(--w-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tcard .st { font-size: 11px; font-weight: 500; color: var(--w-muted); }
-  .tcard .st.busy { color: var(--w-busy); } .tcard .st.warn { color: var(--w-amber); } .tcard .st.done { color: var(--w-blue); }
+  .tcard .st.busy { color: var(--w-busy); } .tcard .st.warn { color: var(--w-amber); } .tcard .st.done { color: var(--w-blue); } .tcard .st.err { color: var(--w-red); }
   .tcard p { margin: 8px 0; color: #CCCCCC; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
   .tcard small { display: flex; align-items: center; gap: 4px; color: var(--w-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tcard small + small { margin-top: 3px; }
@@ -701,6 +715,7 @@
     <symbol id="i-cpu" viewBox="0 0 16 16"><rect x="4" y="4" width="8" height="8" rx="1.5"/><rect x="6.3" y="6.3" width="3.4" height="3.4" rx=".5"/><path d="M6 1.8V4M10 1.8V4M6 12v2.2M10 12v2.2M1.8 6H4M1.8 10H4M12 6h2.2M12 10h2.2"/></symbol>
     <symbol id="i-chev-down" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></symbol>
     <symbol id="i-chev-right" viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></symbol>
+    <symbol id="i-hourglass" viewBox="0 0 16 16"><path d="M4 2h8M4 14h8M5 2c0 3 6 3 6 6s-6 3-6 6M11 2c0 3-6 3-6 6s6 3 6 6"/></symbol>
     <symbol id="i-chart" viewBox="0 0 16 16"><rect x="2" y="8" width="3" height="5.5" rx=".8"/><rect x="6.5" y="4.5" width="3" height="9" rx=".8"/><rect x="11" y="2.5" width="3" height="11" rx=".8"/></symbol>
     <symbol id="i-inspector" viewBox="0 0 16 16"><rect x="1.5" y="2.5" width="13" height="11" rx="2.5"/><path d="M10 2.5v11M11.7 5.2h1M11.7 7.2h1"/></symbol>
     <symbol id="i-sparkles" viewBox="0 0 16 16"><path d="M6.5 2.5l1.1 3.1 3.1 1.1-3.1 1.1-1.1 3.1-1.1-3.1-3.1-1.1 3.1-1.1zM12 9.5l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></symbol>
@@ -752,7 +767,8 @@
       <div class="toolbar">
         <button type="button" class="round" data-act="newtab" aria-label="New Tab"><svg class="ico"><use href="#i-plus"/></svg></button>
         <div class="wtitle"><b></b><span></span></div>
-        <div class="pill ctx"><span class="gauge" aria-hidden="true"><i></i></span><span class="pct"></span><span class="sep"></span><button type="button" class="model" data-act="model" aria-haspopup="menu" aria-label="Model"><svg class="ico" aria-hidden="true"><use href="#i-cpu"/></svg><span class="mname">Opus</span><svg class="ico small" aria-hidden="true"><use href="#i-chev-down"/></svg></button><span class="sep"></span><button type="button" class="model effort" data-act="effort" aria-haspopup="menu" aria-label="Effort"><svg class="ico" aria-hidden="true"><use href="#i-brain"/></svg><span class="ename">Medium</span><svg class="ico small" aria-hidden="true"><use href="#i-chev-down"/></svg></button></div>
+        <div class="pill ctx"><button type="button" class="model" data-act="model" aria-haspopup="menu" aria-label="Model"><svg class="ico" aria-hidden="true"><use href="#i-cpu"/></svg><span class="mname">Opus</span><svg class="ico small" aria-hidden="true"><use href="#i-chev-down"/></svg></button><span class="sep"></span><button type="button" class="model effort" data-act="effort" aria-haspopup="menu" aria-label="Effort"><svg class="ico" aria-hidden="true"><use href="#i-brain"/></svg><span class="ename">Medium</span><svg class="ico small" aria-hidden="true"><use href="#i-chev-down"/></svg></button></div>
+        <div class="pill meters"><span class="ctxring" data-tip="" role="img" aria-label="Context"><svg class="cring" viewBox="0 0 16 16" aria-hidden="true"><circle class="track" cx="8" cy="8" r="6.5"/><circle class="fill" cx="8" cy="8" r="6.5" stroke-dasharray="0 41"/></svg></span><span class="sep"></span><span class="limits" data-tip="Plan usage limits (from Claude Code)&#10;5-hour: 34% used, resets at 16:10&#10;Weekly: 58% used, resets Mon 09:00" aria-label="Plan usage: 5-hour 34%, weekly 58%"><svg class="ico" aria-hidden="true"><use href="#i-hourglass"/></svg>5h 34%<span class="dim">·</span>7d 58%</span></div>
         <div class="pill icons"><button type="button" class="ib usage" data-act="usage" aria-label="Usage"><svg class="ico"><use href="#i-chart"/></svg></button></div>
         <div class="pill icons"><button type="button" class="ib" data-act="insp" aria-label="Show or hide the right panel"><svg class="ico"><use href="#i-inspector"/></svg></button></div>
       </div>
@@ -835,7 +851,7 @@
     <p class="try">Xylem runs the same <code>claude</code> you use in Terminal and leaves your Claude Code settings alone. Try it: the window above works. Switch tabs, answer Claude's question, open ⌘K, browse the project's files and changes from the icons on the right,<span class="wide"> put the tabs above the terminal,</span> or pick a feature below.</p>
     <h2 class="sr-only">Features</h2>
     <div class="tour" id="features">
-      <button type="button" data-key="attention" aria-pressed="false"><span class="sym"><span class="r"></span></span><h3>See which tab needs you</h3><p>A yellow ring while Claude is working, a blue dot when it has finished, an orange mark when it needs your permission. The Dock badge and notifications point to the same tab.</p></button>
+      <button type="button" data-key="attention" aria-pressed="false"><span class="sym"><span class="r"></span></span><h3>See which tab needs you</h3><p>A yellow ring while Claude is working, a blue dot when it has finished, an orange mark when it needs your permission, a red one when an API error stopped it. The Dock badge, notifications and ⌃⌘U point to the same tab.</p></button>
       <button type="button" data-key="tabs" aria-pressed="false"><span class="sym"><svg class="ico fi" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8a4.5 4.5 0 1 0 1.4-3.3M3.5 2.5v2.6h2.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><h3>Tabs that remember</h3><p>Quit Xylem and open it again: every tab picks up its own conversation where you left off.</p></button>
       <button type="button" data-key="panel" aria-pressed="false"><span class="sym"><svg class="ico fi" aria-hidden="true"><use href="#i-inspector"/></svg></span><h3>Your setup, in one panel</h3><p>Skills, agents, MCP servers, plugins, permissions and hooks for the current project, and where each one comes from.</p></button>
       <button type="button" data-key="usage" aria-pressed="false"><span class="sym"><kbd>⌘</kbd><kbd>U</kbd></span><h3>Know what you've used</h3><p>Tokens and what they would cost at API prices, by model, project, session and day, subagents included.</p></button>
@@ -940,7 +956,7 @@
   const win = document.querySelector('.win');
   const $ = s => win.querySelector(s);
   const term = $('.term'), tabList = $('.tabs'), insp = $('.insp'), strip = $('.strip');
-  const title = $('.wtitle b'), path = $('.wtitle span'), pct = $('.pct'), gauge = $('.gauge i');
+  const title = $('.wtitle b'), path = $('.wtitle span'), ctxRing = $('.ctxring'), ctxFill = $('.cring .fill');
   const modelBtn = $('.pill .model'), modelName = $('.mname');
   const effortBtn = $('.pill .effort'), effortName = $('.ename');
   const palette = $('.overlay.palette'), palField = palette.querySelector('.field'), palList = palette.querySelector('.results');
@@ -1011,6 +1027,10 @@
     mk({ name: 'infra', path: '~/code/infra', ctx: 12, prompt: 'Bump the staging node pool',
       lines: [you('Bump the staging node pool'), tool('Update', 'terraform/staging/nodes.tf'), res('node_count 3 to 5'),
         say('The plan adds two nodes and changes nothing else. Apply it when you\'re ready.')] }),
+    mk({ name: 'billing-worker', path: '~/code/billing-worker', branch: 'main', ctx: 18, status: 'stopped', unseen: true,
+      prompt: 'Reconcile yesterday\'s payouts against the ledger',
+      lines: [you('Reconcile yesterday\'s payouts against the ledger'), tool('Read', 'src/payouts.py'),
+        '<div class="gap err">⎿  API Error: Request rejected (429) · rate limited</div>'] }),
     mk({ picker: true, name: 'New Tab', path: 'Pick a folder' })
   ];
   let activeId = tabs[0].id;
@@ -1069,6 +1089,7 @@
     if (t.picker) return '';
     if (t.status === 'working') return '<span class="ring"></span>';
     if (t.status === 'needs') return '<span class="bang">!</span>';
+    if (t.status === 'stopped' && t.unseen) return '<span class="bang red">!</span>';
     if (t.unseen) return '<span class="dot blue"></span>';
     return t.id === activeId ? '' : '<span class="dot green"></span>';
   }
@@ -1083,23 +1104,25 @@
     const shown = tabs.filter(t => !q || (t.name + ' ' + t.prompt + ' ' + (t.branch || '')).toLowerCase().includes(q));
     tabList.innerHTML = shown.map(t => {
       const on = t.id === activeId;
-      const line = t.picker ? 'Pick a folder' : t.status === 'needs' ? 'Needs your permission…' : (t.prompt || 'No prompt yet');
-      const state = t.picker ? 'pick a folder' : t.status === 'working' ? 'Claude is working' : t.status === 'needs' ? 'needs your permission' : t.unseen ? 'finished' : 'quiet';
+      const stopped = t.status === 'stopped' && t.unseen;
+      const line = t.picker ? 'Pick a folder' : t.status === 'needs' ? 'Needs your permission…' : stopped ? STOPPED : (t.prompt || 'No prompt yet');
+      const state = t.picker ? 'pick a folder' : t.status === 'working' ? 'Claude is working' : t.status === 'needs' ? 'needs your permission' : stopped ? 'stopped by an API error' : t.unseen ? 'finished' : 'quiet';
       return `<div class="tab${on ? ' on' : ''}${t.picker ? ' picker' : ''}" role="button" tabindex="0" data-tab="${t.id}" aria-pressed="${on}" aria-label="${esc(t.name)}, ${state}">
         <div class="ava">${t.picker ? ico('folder') : esc((folder(t.path).replace(/^\./, '')[0] || '?').toUpperCase())}${mark(t)}</div>
-        <div><div class="t">${esc(t.name)}</div><div class="p${t.status === 'needs' ? ' warn' : ''}">${esc(line)}</div><div class="b">${where(t)}</div></div>
+        <div><div class="t">${esc(t.name)}</div><div class="p${t.status === 'needs' ? ' warn' : stopped ? ' err' : ''}">${esc(line)}</div><div class="b">${where(t)}</div></div>
         <button type="button" class="x" data-close="${t.id}" aria-label="Close ${esc(t.name)}">${ico('plus', 'rot')}</button></div>`;
     }).join('') || '<div class="none">No tabs match.</div>';
     renderTopTabs();
   }
 
   // ---------- tabs above the terminal ----------
-  const stateOf = t => t.picker ? ['', 'Waiting for a folder'] : t.status === 'working' ? ['busy', 'Claude is working'] : t.status === 'needs' ? ['warn', 'Needs your permission'] : t.unseen ? ['done', 'Claude finished'] : ['', 'Idle'];
+  const STOPPED = 'Stopped: Rate limit reached';
+  const stateOf = t => t.picker ? ['', 'Waiting for a folder'] : t.status === 'working' ? ['busy', 'Claude is working'] : t.status === 'needs' ? ['warn', 'Needs your permission'] : t.status === 'stopped' && t.unseen ? ['err', STOPPED] : t.unseen ? ['done', 'Claude finished'] : ['', 'Idle'];
   function renderTopTabs() {
     if (!isTop() || drag) return; // a drag moves the nodes itself
     topList.innerHTML = tabs.map(t => {
       const on = t.id === activeId;
-      const [line, cls] = t.picker ? ['Pick a folder', ' none'] : t.status === 'needs' ? ['Needs your permission…', ' warn'] : t.prompt ? [t.prompt, ''] : ['No prompt yet', ' none'];
+      const [line, cls] = t.picker ? ['Pick a folder', ' none'] : t.status === 'needs' ? ['Needs your permission…', ' warn'] : t.status === 'stopped' && t.unseen ? [STOPPED, ' err'] : t.prompt ? [t.prompt, ''] : ['No prompt yet', ' none'];
       return `<div class="ttab${on ? ' on' : ''}${t.picker ? ' picker' : ''}" role="button" tabindex="0" data-tab="${t.id}" aria-pressed="${on}" aria-label="${esc(t.name)}, ${stateOf(t)[1].toLowerCase()}">
         <div class="ava">${t.picker ? ico('folder') : esc((folder(t.path).replace(/^\./, '')[0] || '?').toUpperCase())}${mark(t)}</div>
         <div class="txt"><div class="tt"><span>${esc(t.name)}</span><button type="button" class="x" data-close="${t.id}" aria-label="Close ${esc(t.name)}">${ico('plus', 'rot')}</button></div><div class="tp${cls}">${esc(line)}</div></div></div>`;
@@ -1252,9 +1275,12 @@
     const t = active();
     title.textContent = t.name;
     path.textContent = t.path;
-    // No session yet: the app shows "-" instead of 0%.
-    pct.textContent = t.ctx == null ? '-' : t.ctx + '%';
-    gauge.style.width = (t.ctx || 0) + '%';
+    // The ring and its tooltip: used and left of a 1M window; empty with no session yet.
+    const used = t.ctx || 0, len = 2 * Math.PI * 6.5;
+    ctxFill.setAttribute('stroke-dasharray', `${len * used / 100} ${len}`);
+    ctxFill.style.stroke = used > 90 ? 'var(--w-red)' : used > 70 ? 'var(--w-amber)' : '';
+    const tip = t.ctx == null ? 'Context: not known until the next reply' : `Context: ${used}% used, ${100 - used}% left (${used * 10}K of 1M tokens)`;
+    ctxRing.dataset.tip = tip; ctxRing.setAttribute('aria-label', tip);
     modelName.textContent = t.model;
     modelBtn.disabled = !!t.picker;
     effortName.textContent = t.picker ? '-' : t.effort;
@@ -1749,7 +1775,7 @@ export function useAuth() {
   }
   function openOverview() {
     const cards = tabs.filter(t => !t.picker).map(t => {
-      const [cls, st] = t.status === 'working' ? ['busy', 'Working'] : t.status === 'needs' ? ['warn', 'Waiting for you'] : t.unseen ? ['done', 'Finished'] : ['', 'Idle'];
+      const [cls, st] = t.status === 'working' ? ['busy', 'Working'] : t.status === 'needs' ? ['warn', 'Waiting for you'] : t.status === 'stopped' && t.unseen ? ['err', 'Stopped'] : t.unseen ? ['done', 'Finished'] : ['', 'Idle'];
       return `<button type="button" class="ov-card" data-tab="${t.id}"><b>${esc(t.name)}</b><small>${esc(t.path)}</small><span class="bar"><i style="width:${t.ctx || 0}%"></i></span><small>${t.model}${t.ctx == null ? '' : ` · ${t.ctx}% context`}</small><small>${esc(t.prompt || 'No prompt yet')}</small><span class="st ${cls}">${st}</span></button>`;
     }).join('');
     overview.innerHTML = `<div class="ov-grid">${cards || '<div class="nothing">No sessions open.</div>'}</div>`;
