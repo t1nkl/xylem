@@ -563,6 +563,29 @@ private struct CompatibilityJudge {
             skip("config.mcp", feature: "MCP servers in the right panel", "no readable .claude.json")
         }
 
+        // The last /usage answer: the plan limits when the status line has none.
+        let usageFeature = "Plan usage limits from /usage"
+        if let raw = jsonObject(globalConfig), let cache = raw["cachedUsageUtilization"] as? [String: Any] {
+            let account = (raw["oauthAccount"] as? [String: Any])?["accountUuid"] as? String
+            let utilization = cache["utilization"] as? [String: Any] ?? [:]
+            let hasWindow = ["five_hour", "seven_day"].contains { utilization[$0] is [String: Any] }
+            if cache["accountUuid"] as? String != account {
+                skip("config.usageCache", feature: usageFeature, "the kept /usage answer is another account's")
+            } else if !hasWindow {
+                skip("config.usageCache", feature: usageFeature, "the kept /usage answer has no 5-hour or weekly window")
+            } else if let parsed = ClaudeAccountPlan.cachedUsage(cache, accountID: account),
+                      [parsed.limits.fiveHour, parsed.limits.sevenDay].compactMap({ $0 }).allSatisfy({ $0.resetsAt != nil }) {
+                let windows = [parsed.limits.fiveHour.map { "5-hour \(Int($0.usedPercentage))%" },
+                               parsed.limits.sevenDay.map { "weekly \(Int($0.usedPercentage))%" }].compactMap { $0 }
+                ok("config.usageCache", feature: usageFeature, "cachedUsageUtilization reads as " + windows.joined(separator: ", "))
+            } else {
+                fail("config.usageCache", feature: usageFeature,
+                     "cachedUsageUtilization has a window but its fields changed: no percent or reset time is read")
+            }
+        } else {
+            skip("config.usageCache", feature: usageFeature, "no /usage answer kept in .claude.json (run /usage once)")
+        }
+
         // Agent teams
         let teams = root.appending(path: "teams")
         let configs = ((try? fm.contentsOfDirectory(atPath: teams.path)) ?? [])

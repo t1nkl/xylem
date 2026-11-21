@@ -77,6 +77,9 @@ final class ClaudeTabStateTracker {
     @ObservationIgnored private var accountConfigMtime: Date?
     /// After an account change: inputs from before it are the old account's.
     @ObservationIgnored private var limitsNotBefore: Date?
+    /// The account's last `/usage` answer: the limits when no status line
+    /// input carries them (or only an older one does), while it is fresh.
+    @ObservationIgnored private var cachedUsage: ClaudeAccountPlan.CachedUsage?
     @ObservationIgnored private var ticksSinceAccountCheck: Int?
     static let accountCheckInterval = 30
 
@@ -268,16 +271,41 @@ final class ClaudeTabStateTracker {
         leavesPromptMarkers = leavesPromptMarkers.filter { live.contains($0) }
 
         notifier.setBadgeCount(tabs.filter(\.needsAttention).count)
-        let limits = newestLimits.flatMap { Self.current($0.limits, now: now) }
+        let shown = Self.shownLimits(reported: newestLimits, cached: cachedUsage, now: now)
+        let limits = shown?.limits
         if planLimits != limits { planLimits = limits }
         // To the minute, as the tooltip shows it: inputs arrive every second
         // while a tab streams, and each would re-render the limits.
-        let reportedAt = limits == nil ? nil : newestLimits.map {
+        let reportedAt = shown.map {
             Date(timeIntervalSince1970: ($0.at.timeIntervalSince1970 / 60).rounded(.down) * 60)
         }
         if planLimitsReportedAt != reportedAt { planLimitsReportedAt = reportedAt }
         if bindingChanged { onBindingChange() }
         updateHookHealth(tabs: tabs, now: now)
+    }
+
+    /// The newer of the status line's limits and the account's `/usage`
+    /// answer (only while that is at most `cachedUsageLifetime` old), each
+    /// with the windows whose reset is still ahead; nil when neither has one.
+    nonisolated static func shownLimits(
+        reported: (limits: ClaudeLiveStatus.RateLimits, at: Date)?,
+        cached: ClaudeAccountPlan.CachedUsage?,
+        now: Date
+    ) -> (limits: ClaudeLiveStatus.RateLimits, at: Date)? {
+        let fromStatus = reported.flatMap { r in current(r.limits, now: now).map { (limits: $0, at: r.at) } }
+        let fromUsage = cached.flatMap { c -> (limits: ClaudeLiveStatus.RateLimits, at: Date)? in
+            // A time ahead of the clock (another Mac's, synced) would always win.
+            let age = now.timeIntervalSince(c.fetchedAt)
+            guard age >= -60, age <= ClaudeAccountPlan.cachedUsageLifetime else { return nil }
+            return current(c.limits, now: now).map { (limits: $0, at: c.fetchedAt) }
+        }
+        guard let fromUsage else { return fromStatus }
+        guard let fromStatus else { return fromUsage }
+        guard fromUsage.at > fromStatus.at else { return fromStatus }
+        // `/usage` has no gateway spend limit: the status line's stays.
+        var limits = fromUsage.limits
+        limits.spend = fromStatus.limits.spend
+        return (limits, fromUsage.at)
     }
 
     /// The windows whose reset is still ahead; nil when none is.
@@ -315,6 +343,7 @@ final class ClaudeTabStateTracker {
             if let kept = newestLimits, kept.at < since { newestLimits = nil }
         }
         accountID = read.snapshot?.accountID
+        if cachedUsage != read.snapshot?.cachedUsage { cachedUsage = read.snapshot?.cachedUsage }
         let families = read.snapshot?.unavailableFamilies ?? []
         if unavailableModelFamilies != families { unavailableModelFamilies = families }
     }

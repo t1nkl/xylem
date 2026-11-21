@@ -512,3 +512,103 @@ struct NextWaitingTabTests {
         #expect(TabsViewModel.nextWaitingTab(in: [], after: nil) == nil)
     }
 }
+
+/// Claude Code's last `/usage` answer (`cachedUsageUtilization` in its global
+/// config) stands in when the status line has no plan limits.
+struct CachedUsageLimitsTests {
+    private let account = "acct-1"
+
+    private func cache(fetched: Date, account: String = "acct-1", fiveHour: Any = NSNull(),
+                       sevenDay: Any = NSNull()) -> [String: Any] {
+        ["fetchedAtMs": fetched.timeIntervalSince1970 * 1000, "accountUuid": account,
+         "utilization": ["five_hour": fiveHour, "seven_day": sevenDay, "extra_usage": ["is_enabled": false]]]
+    }
+
+    @Test func readsTheAccountsUsageAnswer() {
+        let fetched = Date(timeIntervalSince1970: 1_800_000_000)
+        let parsed = ClaudeAccountPlan.cachedUsage(
+            cache(fetched: fetched, fiveHour: ["utilization": 12, "resets_at": "2027-01-15T08:00:00.871238+00:00"],
+                  sevenDay: ["utilization": 46.5, "resets_at": 1_800_100_000]),
+            accountID: account)
+        #expect(parsed?.fetchedAt == fetched)
+        #expect(parsed?.limits.fiveHour?.usedPercentage == 12)
+        #expect(parsed?.limits.fiveHour?.resetsAt == TimestampParser.parse("2027-01-15T08:00:00.871Z"))
+        #expect(parsed?.limits.fiveHour?.resetsAt != nil)
+        #expect(parsed?.limits.sevenDay == .init(usedPercentage: 46.5, resetsAt: Date(timeIntervalSince1970: 1_800_100_000)))
+        // Another account's answer, no window, a Bool, no account: nothing.
+        #expect(ClaudeAccountPlan.cachedUsage(cache(fetched: fetched, account: "other", sevenDay: ["utilization": 5]),
+                                              accountID: account) == nil)
+        #expect(ClaudeAccountPlan.cachedUsage(cache(fetched: fetched), accountID: account) == nil)
+        #expect(ClaudeAccountPlan.cachedUsage(cache(fetched: fetched, sevenDay: ["utilization": true]), accountID: account) == nil)
+        #expect(ClaudeAccountPlan.cachedUsage(cache(fetched: fetched, sevenDay: ["utilization": 5]), accountID: nil) == nil)
+    }
+
+    @Test func theNewerSourceWinsAndAnOldAnswerExpires() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let reset = now.addingTimeInterval(86_400)
+        let fromStatus = ClaudeLiveStatus.RateLimits(
+            fiveHour: nil, sevenDay: .init(usedPercentage: 40, resetsAt: reset),
+            spend: .init(usedPercentage: 10, resetsAt: reset))
+        let usage = ClaudeAccountPlan.CachedUsage(
+            limits: .init(fiveHour: .init(usedPercentage: 7, resetsAt: reset), sevenDay: .init(usedPercentage: 41, resetsAt: reset)),
+            fetchedAt: now.addingTimeInterval(-600))
+        // No status line limits: the answer shows, as of its time.
+        let alone = ClaudeTabStateTracker.shownLimits(reported: nil, cached: usage, now: now)
+        #expect(alone?.limits.fiveHour?.usedPercentage == 7)
+        #expect(alone?.at == usage.fetchedAt)
+        // A newer status line input wins.
+        let newer = ClaudeTabStateTracker.shownLimits(reported: (fromStatus, now.addingTimeInterval(-60)), cached: usage, now: now)
+        #expect(newer?.limits == fromStatus)
+        // An older one loses, but its gateway spend limit stays.
+        let older = ClaudeTabStateTracker.shownLimits(reported: (fromStatus, now.addingTimeInterval(-3_000)), cached: usage, now: now)
+        #expect(older?.limits.sevenDay?.usedPercentage == 41)
+        #expect(older?.limits.spend == fromStatus.spend)
+        // Over an hour old: not used.
+        var stale = usage
+        stale.fetchedAt = now.addingTimeInterval(-ClaudeAccountPlan.cachedUsageLifetime - 1)
+        #expect(ClaudeTabStateTracker.shownLimits(reported: nil, cached: stale, now: now) == nil)
+        #expect(ClaudeTabStateTracker.shownLimits(reported: (fromStatus, now.addingTimeInterval(-7_200)), cached: stale, now: now)?
+            .limits == fromStatus)
+        // An answer dated ahead of the clock is not trusted.
+        var ahead = usage
+        ahead.fetchedAt = now.addingTimeInterval(600)
+        #expect(ClaudeTabStateTracker.shownLimits(reported: (fromStatus, now.addingTimeInterval(-60)), cached: ahead, now: now)?
+            .limits == fromStatus)
+        // Its windows past their reset are dropped like the status line's.
+        var reset1 = usage
+        reset1.limits.fiveHour?.resetsAt = now.addingTimeInterval(-1)
+        #expect(ClaudeTabStateTracker.shownLimits(reported: nil, cached: reset1, now: now)?.limits.fiveHour == nil)
+    }
+
+    /// End to end: a tab whose status line never carries limits (the
+    /// headers didn't come) shows the `/usage` answer the config holds.
+    @Test func trackerShowsTheAnswerWithoutStatusLineLimits() async throws {
+        let dir = FileManager.default.temporaryDirectory.appending(path: "xylem-events-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let configURL = dir.appending(path: "claude.json")
+        let start = Date().addingTimeInterval(1)
+        let reset = start.addingTimeInterval(7_200)
+        try JSONSerialization.data(withJSONObject: [
+            "oauthAccount": ["accountUuid": account],
+            "cachedUsageUtilization": cache(fetched: start, fiveHour: ["utilization": 23, "resets_at": ISO8601DateFormatter().string(from: reset)]),
+        ]).write(to: configURL)
+        let tabID = UUID()
+        let session = TerminalSessionFactory(autoStartClaude: { false }).makeSession(tabID: tabID, title: "t", directory: "/tmp")
+        defer { session.close() }
+        let tab = TerminalTab(id: tabID, title: "t", state: .session(session))
+        tab.claudeSessionID = "A"
+        let status = ClaudeHookBridge.statusFile(forTab: tabID, in: dir)
+        try Data(#"{"version":"2.1.330","session_id":"A","rate_limits":null}"#.utf8).write(to: status)
+        let tracker = ClaudeTabStateTracker(eventsDirectory: dir, notifier: FakeNotifier(), hooksInstalled: true,
+                                            rememberVersion: { _ in }, accountConfigFile: { configURL })
+        await tracker.refresh(tabs: [tab], activeTabID: tabID, appIsActive: true, now: start.addingTimeInterval(60))
+        #expect(tracker.planLimits?.fiveHour?.usedPercentage == 23)
+        #expect(tracker.planLimitsReportedAt != nil)
+        // An hour after the answer it is gone, with no new read of the config.
+        await tracker.refresh(tabs: [tab], activeTabID: tabID, appIsActive: true,
+                              now: start.addingTimeInterval(ClaudeAccountPlan.cachedUsageLifetime + 1))
+        #expect(tracker.planLimits == nil)
+        #expect(tracker.planLimitsReportedAt == nil)
+    }
+}
