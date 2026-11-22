@@ -91,15 +91,7 @@ struct XylemApp: App {
 
             // The standard About window, with this year in the copyright.
             CommandGroup(replacing: .appInfo) {
-                // While an update waits for a quit (it may wait for days).
-                if let version = updater.readyVersion {
-                    Button("Install Update \(version)…") { updater.checkForUpdates() }
-                        .disabled(!updater.canCheckForUpdates)
-                    Divider()
-                }
-                Button("About Xylem") { AboutPanel.show() }
-                Button("Check for Updates…") { updater.checkForUpdates() }
-                    .disabled(!updater.canCheckForUpdates)
+                UpdateMenuItems(updater: updater)
             }
 
             // No File > Close / Close All: they own ⌘W, so "Close Tab" got no
@@ -183,6 +175,25 @@ struct XylemApp: App {
 
     private func post(_ action: MenuTabAction) {
         NotificationCenter.default.post(name: .xylemMenuAction, object: action)
+    }
+}
+
+/// The Xylem menu's first items, in their own view: every update check
+/// flips `canCheckForUpdates`, and a read in the scene's `commands` would
+/// rebuild the whole window (ContentView and everything under it) each time.
+private struct UpdateMenuItems: View {
+    let updater: AppUpdater
+
+    var body: some View {
+        // While an update waits for a quit (it may wait for days).
+        if let version = updater.readyVersion {
+            Button("Install Update \(version)…") { updater.checkForUpdates() }
+                .disabled(!updater.canCheckForUpdates)
+            Divider()
+        }
+        Button("About Xylem") { AboutPanel.show() }
+        Button("Check for Updates…") { updater.checkForUpdates() }
+            .disabled(!updater.canCheckForUpdates)
     }
 }
 
