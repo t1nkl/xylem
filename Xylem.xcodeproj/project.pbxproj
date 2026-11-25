@@ -123,6 +123,7 @@
 				E71FBE9D2F97A783003DA750 /* Sources */,
 				E71FBE9E2F97A783003DA750 /* Frameworks */,
 				E71FBE9F2F97A783003DA750 /* Resources */,
+				E7A0B0C12F97A790003DA750 /* Bundle Release Notes */,
 			);
 			buildRules = (
 			);
@@ -261,6 +262,30 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		E7A0B0C12F97A790003DA750 /* Bundle Release Notes */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/release-notes/v$(MARKETING_VERSION).md",
+			);
+			name = "Bundle Release Notes";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/ReleaseNotes.md",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# The About window's What's New: this version's notes from release-notes/ (empty when there are none).\nNOTES=\"${SRCROOT}/release-notes/v${MARKETING_VERSION}.md\"\nif [ -f \"$NOTES\" ]; then cp \"$NOTES\" \"${SCRIPT_OUTPUT_FILE_0}\"; else : > \"${SCRIPT_OUTPUT_FILE_0}\"; fi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		E71FBE9D2F97A783003DA750 /* Sources */ = {

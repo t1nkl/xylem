@@ -2,11 +2,9 @@
 //  OpenSourceLicensesView.swift
 //  Xylem
 //
-//  Help > Open-Source Licenses: Xylem's own license (GPL v3, which asks an
-//  interactive program to show its notice) and every third-party library
-//  shipped inside Xylem.app with its full license text (MIT/BSD/zlib
-//  require the notice in the app or its documentation). The About window only lists the
-//  names and points here - the full texts didn't fit its small credits box.
+//  Xylem's own license and every third-party library shipped inside
+//  Xylem.app, with their full license texts, shown by the About window
+//  (License and Libraries; Help > Open-Source Licenses opens Libraries).
 //
 //  The texts are verbatim copies of the packages' LICENSE files, bundled
 //  from Xylem/Licenses/. A new package linked into the app needs a row here
@@ -75,76 +73,14 @@ struct OpenSourceLibrary: Identifiable, Equatable {
     var websiteURL: URL? { URL(string: "https://" + website) }
 }
 
-struct OpenSourceLicensesView: View {
-    var libraries: [OpenSourceLibrary] = OpenSourceLibrary.all
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 28) {
-                LibraryLicenseSection(library: .xylem)
-                Text("Xylem is built with these open-source libraries, each used under the license below.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(AppTheme.Colors.textSecondary)
-                ForEach(libraries) { library in
-                    LibraryLicenseSection(library: library)
-                }
-            }
-            .padding(24)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .frame(minWidth: 560, minHeight: 400)
-        .background(AppTheme.Colors.background)
-        .preferredColorScheme(.dark)
-    }
-}
-
-private struct LibraryLicenseSection: View {
-    let library: OpenSourceLibrary
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(library.name)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
-                Text(library.license)
-                    .font(.system(size: 12))
-                    .foregroundStyle(AppTheme.Colors.textMuted)
-                Spacer(minLength: 12)
-                if let url = library.websiteURL {
-                    Link(library.website, destination: url)
-                        .font(.system(size: 12))
-                }
-            }
-            Text(library.purpose)
-                .font(.system(size: 13))
-                .foregroundStyle(AppTheme.Colors.textSecondary)
-            Text(library.licenseText() ?? "License text missing from this build.")
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(AppTheme.Colors.textSecondary)
-                .textSelection(.enabled)
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(AppTheme.Colors.panelBackgroundRaised)
-                )
-                .padding(.top, 4)
-        }
-    }
-}
-
 /// The Help menu item. A View so it can read `openWindow`.
 struct OpenSourceLicensesMenuItem: View {
+    let aboutModel: AboutWindowModel
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         Button("Open-Source Licenses") {
-            openWindow(id: OpenSourceLicensesView.windowID)
+            AboutWindowOpener(model: aboutModel, openWindow: openWindow)(.libraries)
         }
     }
-}
-
-extension OpenSourceLicensesView {
-    static let windowID = "open-source-licenses"
 }

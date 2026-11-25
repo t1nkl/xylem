@@ -17,6 +17,8 @@ struct XylemApp: App {
     @State private var app: AppModel
     /// Sparkle (Release builds only).
     @State private var updater: AppUpdater
+    /// The About window's section (Help > Open-Source Licenses opens it on Libraries).
+    @State private var aboutModel = AboutWindowModel()
     /// Asks before ⌘Q cuts off a running turn (QuitConfirmation).
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
@@ -86,12 +88,12 @@ struct XylemApp: App {
 
             // Replaces "Xylem Help" (there is no help book).
             CommandGroup(replacing: .help) {
-                OpenSourceLicensesMenuItem()
+                OpenSourceLicensesMenuItem(aboutModel: aboutModel)
             }
 
-            // The standard About window, with this year in the copyright.
+            // About Xylem (our own window) and the update items.
             CommandGroup(replacing: .appInfo) {
-                UpdateMenuItems(updater: updater)
+                UpdateMenuItems(updater: updater, aboutModel: aboutModel)
             }
 
             // No File > Close / Close All: they own ⌘W, so "Close Tab" got no
@@ -163,12 +165,11 @@ struct XylemApp: App {
             SettingsView(updater: updater)
         }
 
-        // Help > Open-Source Licenses. The About window lists the names only.
-        Window("Open-Source Licenses", id: OpenSourceLicensesView.windowID) {
-            OpenSourceLicensesView()
+        // Xylem > About Xylem; Help > Open-Source Licenses opens it on Libraries.
+        Window("About Xylem", id: AboutWindowView.windowID) {
+            AboutWindowView(updater: updater, model: aboutModel)
         }
-        .defaultSize(width: 680, height: 600)
-        .windowResizability(.contentMinSize)
+        .windowResizability(.contentSize)
         .restorationBehavior(.disabled)
     }
 
@@ -183,6 +184,8 @@ struct XylemApp: App {
 /// rebuild the whole window (ContentView and everything under it) each time.
 private struct UpdateMenuItems: View {
     let updater: AppUpdater
+    let aboutModel: AboutWindowModel
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         // While an update waits for a quit (it may wait for days).
@@ -191,7 +194,7 @@ private struct UpdateMenuItems: View {
                 .disabled(!updater.canCheckForUpdates)
             Divider()
         }
-        Button("About Xylem") { AboutPanel.show() }
+        Button("About Xylem") { AboutWindowOpener(model: aboutModel, openWindow: openWindow)(.license) }
         Button("Check for Updates…") { updater.checkForUpdates() }
             .disabled(!updater.canCheckForUpdates)
     }

@@ -2,7 +2,7 @@
 //  AboutPanel.swift
 //  Xylem
 //
-//  The standard About window with a copyright line that keeps up with the
+//  The About window's copyright line, which keeps up with the
 //  calendar: "Copyright © 2026 t1nkl" this year, "Copyright © 2026-2027
 //  t1nkl" from next year on, without a rebuild. The Info.plist line
 //  (Finder's Get Info) stays the first year.
@@ -18,12 +18,5 @@ enum AboutPanel {
         let year = calendar.component(.year, from: now)
         let years = year > firstYear ? "\(firstYear)-\(year)" : "\(firstYear)"
         return "Copyright © \(years) \(holder)"
-    }
-
-    static func show() {
-        NSApp.activate()
-        NSApp.orderFrontStandardAboutPanel(options: [
-            NSApplication.AboutPanelOptionKey(rawValue: "Copyright"): copyright()
-        ])
     }
 }
