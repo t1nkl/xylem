@@ -205,7 +205,8 @@ final class TabsViewModel {
         let trimmed = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         // Empty, or confirmed without a change to what the tab shows (Enter
         // in the rename field): nothing to do - marking it custom would stop
-        // cwd tracking. Compared with `displayTitle`, which follows the cwd.
+        // cwd tracking. Compared with `displayTitle`: the session's name or
+        // the folder the shell is in.
         guard !trimmed.isEmpty, trimmed != tab.displayTitle else { return }
         tab.title = trimmed
         // Opt out of cwd-tracking once the user gives the tab a real name -

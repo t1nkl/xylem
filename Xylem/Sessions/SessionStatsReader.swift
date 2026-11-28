@@ -27,6 +27,10 @@ nonisolated struct SessionStatsReader: SessionStatsReading {
 
 /// Running totals for one session file, updated line by line.
 nonisolated struct SessionStatsAccumulator: JSONLFoldState {
+    /// The model Claude Code names on the error message it writes after a
+    /// failed request.
+    static let syntheticModel = "<synthetic>"
+
     private var totalTokens = 0
     private var cost: Double = 0
     private var lastModel: String?
@@ -74,6 +78,9 @@ nonisolated struct SessionStatsAccumulator: JSONLFoldState {
         if let id = message["id"] as? String, !countedMessageIDs.insert(id).inserted {
             return
         }
+        // The error text Claude Code writes after a failed request: no
+        // tokens, and not a model the session runs.
+        if message["model"] as? String == Self.syntheticModel { return }
 
         processedAnything = true
         if let model = message["model"] as? String { lastModel = model }

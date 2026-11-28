@@ -88,6 +88,7 @@ private struct CompatibilityJudge {
         checkStatusLineEffort()
         checkStatusLineContextAndLimits()
         checkStopFailure()
+        checkSessionDetails()
         checkRealConfig(projects: projects)
         checkRecentTranscripts(projects: projects)
     }
@@ -227,6 +228,40 @@ private struct CompatibilityJudge {
         } else {
             warn("hooks.stopFailure", feature: feature,
                  "HTTP 429 sent StopFailure with error \(raw["error"] ?? "none"), not rate_limit: the tab says \"API error\"")
+        }
+    }
+
+    /// The tab's prompt-cache timer, permission-mode mark and background
+    /// tasks read fields Claude Code added in 2.1.33x; the session's name
+    /// comes from the transcript's `ai-title` / `custom-title` lines.
+    mutating func checkSessionDetails() {
+        if let input = manifest["statusLineInput"] as? String, !input.isEmpty {
+            if let cache = ClaudeLiveStatus.parse(Data(input.utf8), at: Date())?.promptCache {
+                ok("statusLine.promptCache", feature: "Prompt cache timer in the toolbar",
+                   "prompt_cache gives expires_at (ttl \(cache.ttl ?? "?")) and \(cache.recacheTokens.map { "\($0) tokens to re-cache" } ?? "no re-cache size")")
+            } else {
+                warn("statusLine.promptCache", feature: "Prompt cache timer in the toolbar",
+                     "the status line input has no prompt_cache.expires_at: the toolbar shows no cache timer")
+            }
+        }
+        let captured = events("tui")
+        guard !captured.isEmpty else { return }
+        let parsed = captured.compactMap { raw -> ClaudeTabEvent? in
+            (try? JSONSerialization.data(withJSONObject: raw)).flatMap { ClaudeTabEvent.parse($0, at: Date()) }
+        }
+        if let mode = parsed.compactMap(\.permissionMode).last {
+            ok("hooks.permissionMode", feature: "Plan / Bypass mark on the tab", "hook events carry permission_mode (\(mode))")
+        } else {
+            warn("hooks.permissionMode", feature: "Plan / Bypass mark on the tab",
+                 "no hook event carried permission_mode: the tab never shows Plan or Bypass")
+        }
+        let stops = parsed.filter { $0.kind == .stop }
+        if stops.contains(where: { $0.runningBackgroundTasks != nil }) {
+            ok("hooks.backgroundTasks", feature: "Background tasks on the tab and before closing",
+               "Stop carries the background_tasks list")
+        } else if !stops.isEmpty {
+            warn("hooks.backgroundTasks", feature: "Background tasks on the tab and before closing",
+                 "Stop has no background_tasks list: tabs never show tasks and closing never asks")
         }
     }
 
@@ -637,7 +672,17 @@ private struct CompatibilityJudge {
         var forkMetasWithoutTool = 0
         let binaryDate = Date(timeIntervalSince1970: (manifest["binaryMtime"] as? Double) ?? 0)
 
+        var titled = 0
         for url in recentTranscripts(projects: projects, limit: 60, includeSubagents: true) {
+            // Title lines carry no version: counted only in transcripts this
+            // version wrote to.
+            var titles = 0
+            var written = false
+            forEachRecord(in: url) { record in
+                if ["ai-title", "custom-title"].contains(record["type"] as? String ?? "") { titles += 1 }
+                if record["version"] as? String == version { written = true }
+            }
+            if written { titled += titles }
             forEachRecord(in: url) { record in
                 guard record["version"] as? String == version else { return }
                 lines += 1
@@ -687,6 +732,13 @@ private struct CompatibilityJudge {
                 warn("recent.markers", feature: "Tab titles, prompt preview and Cmd+K prompt search",
                      "records Xylem takes for typed prompts start with \(newTags.keys.sorted()); if Claude Code writes those itself they will show as tab titles")
             }
+        }
+        if titled > 0 {
+            ok("recent.sessionTitles", feature: "Session names on the tabs",
+               "\(titled) ai-title / custom-title lines in recent transcripts")
+        } else {
+            warn("recent.sessionTitles", feature: "Session names on the tabs",
+                 "no ai-title or custom-title line in the recent transcripts: tabs keep the folder name")
         }
         if forkMetas == 0 {
             skip("recent.subagentForks", feature: "Subagent costs in Usage",

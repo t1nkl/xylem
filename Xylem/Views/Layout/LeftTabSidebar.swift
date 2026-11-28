@@ -148,6 +148,7 @@ private struct TabRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     title
+                    if !isEditing { PermissionModeBadge(mode: tab.permissionMode) }
                     Spacer(minLength: 4)
                     if !isEditing && canClose && isHovering {
                         Button(action: onClose) {
@@ -184,7 +185,7 @@ private struct TabRow: View {
         // `.combine` swallowed it and glued every child's tooltip together).
         .accessibilityElement(children: .contain)
         .accessibilityLabel(tab.displayTitle)
-        .help(pathLabel)
+        .help(tooltip)
         .contextMenu {
             Button("Rename…") { isEditing = true }
             Divider()
@@ -249,9 +250,19 @@ private struct TabRow: View {
             Text(pathLabel)
                 .lineLimit(1)
                 .truncationMode(.head)
+            if tab.runningBackgroundTasks > 0 {
+                Text("·")
+                BackgroundTasksMark(count: tab.runningBackgroundTasks)
+                    .layoutPriority(2)
+            }
         }
         .font(.system(size: 11))
         .foregroundStyle(.tertiary)
+    }
+
+    /// The path, then what the tab's claude runs with (mode, tasks).
+    private var tooltip: String {
+        ([pathLabel] + tab.detailLines(includingCache: false)).joined(separator: "\n")
     }
 
     /// Home reads as `~`; follows `liveCwd`, so a `cd` in the shell shows.

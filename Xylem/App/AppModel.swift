@@ -102,10 +102,12 @@ final class AppModel {
 
     /// Manual "refresh everything" (sidebar button, command palette).
     func refreshSidebar() {
-        ClaudeProjectPathResolver.clearCache()
-        environment.reload(projectDirectory: environment.currentDirectory)
-        sessionList.reload()
-        reloadAgentTeams()
+        Task {
+            await Task.detached { ClaudeProjectPathResolver.forgetChangedFolders() }.value
+            environment.reload(projectDirectory: environment.currentDirectory)
+            sessionList.reload()
+            reloadAgentTeams()
+        }
     }
 
     // MARK: - Polling
@@ -215,6 +217,25 @@ final class AppModel {
         }
         selectTab(id)
         return true
+    }
+
+    /// Closes a tab (×, ⌘W, the menus, the palette), asking first when its
+    /// claude runs background tasks that would end with it.
+    func closeTab(_ id: TerminalTab.ID) {
+        // The last tab never closes: nothing to ask about.
+        guard tabs.tabs.count > 1 else { return }
+        let closing = tabs.tabs.filter { $0.id == id }
+        if let confirmation = CloseTabConfirmation(closing: closing), !confirmation.ask() { return }
+        tabs.closeTab(id)
+    }
+
+    /// Closes every tab but `keepID` (the active one when nil), asking first
+    /// like `closeTab`.
+    func closeOtherTabs(keeping keepID: TerminalTab.ID? = nil) {
+        guard let keeper = keepID ?? tabs.activeTabID else { return }
+        let closing = tabs.tabs.filter { $0.id != keeper }
+        if let confirmation = CloseTabConfirmation(closing: closing), !confirmation.ask() { return }
+        tabs.closeOtherTabs(keeping: keeper)
     }
 
     /// A pick in the tab list. The list takes the keyboard on click, so the
@@ -399,10 +420,12 @@ extension AppModel {
             // answer until the shell replies.
             if shell == nil, case .notOnPath = self.doctorStatus, case .healthy = status { return }
             if self.doctorStatus != status { self.doctorStatus = status }
+            if case .missing = status { ClaudeExecutable.forget() }
             // Which hook settings the next tabs get (StopFailure from 2.1.78).
             if case .found(let path) = location {
                 let searchPath = shell?.path ?? ClaudeBinaryLocator.knownDirectories(
                     home: FileManager.default.homeDirectoryForCurrentUser.path)
+                ClaudeExecutable.remember(.init(path: path, searchPath: searchPath))
                 let version = await Task.detached {
                     ClaudeCLIVersion.read(executable: path, searchPath: searchPath)
                 }.value

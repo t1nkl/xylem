@@ -38,6 +38,7 @@ struct XylemApp: App {
         ClaudeConfigDirectory.bootstrap()
         // Before restore too: which hook settings restored tabs start with.
         ClaudeCLIVersion.bootstrap(configured: AppSettings.claudeBinaryPath)
+        ClaudeExecutable.seed(configured: AppSettings.claudeBinaryPath)
         let model = AppModel()
         let updater = AppUpdater()
         updater.notifier = model.attentionNotifier

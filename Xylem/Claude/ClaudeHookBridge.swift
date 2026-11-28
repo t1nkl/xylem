@@ -342,8 +342,26 @@ nonisolated struct ClaudeLiveStatus: Equatable, Sendable {
     /// The plan's usage limits (`rate_limits`); nil when the input has none
     /// (API keys, before the first request).
     var rateLimits: RateLimits? = nil
+    /// The session's prompt cache (`prompt_cache`, 2.1.332); nil when the
+    /// input has none or no expiry.
+    var promptCache: PromptCache? = nil
     /// When Claude Code passed it.
     var at: Date
+
+    /// When the cached prompt expires and what the next request re-reads
+    /// once it has. Claude Code writes the input after each request, so an
+    /// idle session's input keeps the expiry of its last request.
+    nonisolated struct PromptCache: Equatable, Sendable {
+        /// `expires_at`, unix seconds.
+        var expiresAt: Date
+        /// `ttl`: "1h" or "5m".
+        var ttl: String?
+        /// `recache_tokens_if_cold`: tokens the next request writes to the
+        /// cache again after the expiry.
+        var recacheTokens: Int?
+
+        func isWarm(at now: Date) -> Bool { expiresAt > now }
+    }
 
     nonisolated struct Context: Equatable, Sendable {
         /// `used_percentage`: nil until the first reply of the session, and
@@ -390,6 +408,7 @@ nonisolated struct ClaudeLiveStatus: Equatable, Sendable {
             sessionID: text(object["session_id"]),
             context: (object["context_window"] as? [String: Any]).map(Self.context),
             rateLimits: (object["rate_limits"] as? [String: Any]).map(Self.rateLimits).flatMap { $0.isEmpty ? nil : $0 },
+            promptCache: (object["prompt_cache"] as? [String: Any]).flatMap(Self.promptCache),
             at: time
         )
         return status.level == nil && status.modelID == nil && status.version == nil ? nil : status
@@ -406,6 +425,13 @@ nonisolated struct ClaudeLiveStatus: Equatable, Sendable {
         Context(usedPercentage: number(object["used_percentage"]),
                 usedTokens: number(object["total_input_tokens"]).map { Int($0) },
                 size: number(object["context_window_size"]).flatMap { $0 > 0 ? Int($0) : nil })
+    }
+
+    private static func promptCache(_ object: [String: Any]) -> PromptCache? {
+        guard let expires = number(object["expires_at"]), expires > 0 else { return nil }
+        return PromptCache(expiresAt: Date(timeIntervalSince1970: expires),
+                           ttl: (object["ttl"] as? String).flatMap { $0.isEmpty ? nil : $0 },
+                           recacheTokens: number(object["recache_tokens_if_cold"]).flatMap { $0 > 0 ? Int($0) : nil })
     }
 
     private static func rateLimits(_ object: [String: Any]) -> RateLimits {

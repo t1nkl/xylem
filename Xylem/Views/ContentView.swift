@@ -72,11 +72,11 @@ struct ContentView: View {
                 activeTabID: tabs.activeTabID,
                 onSelect: { app.selectTab($0) },
                 onReactivate: { app.focusActiveTerminal() },
-                onClose: tabs.closeTab,
+                onClose: { app.closeTab($0) },
                 onShowOverview: { activeSheet = .overview },
                 onRename: { tabs.renameTab(id: $0, to: $1) },
                 onMove: { tabs.moveTabs(fromOffsets: $0, toOffset: $1) },
-                onCloseOthers: { tabs.closeOtherTabs(keeping: $0) }
+                onCloseOthers: { app.closeOtherTabs(keeping: $0) }
             )
             // With the tabs on top the hidden column is pinned to its ideal
             // width: a drag at the window's edge (snapped shut at once) left
@@ -100,10 +100,10 @@ struct ContentView: View {
                         revealRequest: tabRevealRequest,
                         onSelect: { app.selectTab($0) },
                         onReactivate: { app.focusActiveTerminal() },
-                        onClose: tabs.closeTab,
+                        onClose: { app.closeTab($0) },
                         onRename: { tabs.renameTab(id: $0, to: $1) },
                         onMoveTab: { tabs.moveTab($0, by: $1) },
-                        onCloseOthers: { tabs.closeOtherTabs(keeping: $0) },
+                        onCloseOthers: { app.closeOtherTabs(keeping: $0) },
                         onNewTab: { tabs.openEmptyTab() },
                         onShowOverview: { activeSheet = .overview }
                     )
@@ -321,9 +321,9 @@ struct ContentView: View {
         case .newTab:
             tabs.openEmptyTab()
         case .closeTab:
-            if let id = tabs.activeTabID { tabs.closeTab(id) }
+            if let id = tabs.activeTabID { app.closeTab(id) }
         case .closeOtherTabs:
-            tabs.closeOtherTabs()
+            app.closeOtherTabs()
         case .clear:
             tabs.activeSession?.clearScreen()
         case .interrupt:
@@ -385,7 +385,7 @@ private struct TerminalsStackContainer: View {
             let folder = (cwd as NSString).lastPathComponent
             if !folder.isEmpty, folder != "/" { return folder }
         }
-        return tabs.activeTab?.displayTitle ?? "Xylem"
+        return tabs.activeTab?.folderTitle ?? "Xylem"
     }
 
     private var windowSubtitle: String {

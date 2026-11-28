@@ -35,6 +35,15 @@ final class TerminalTab: Identifiable {
     /// TabActivityViewModel on the same poll that flips `isBusy`. nil for
     /// picker tabs or sessions that have no user-typed messages yet.
     var lastPrompt: String?
+    /// The session's name as Claude Code gives it (LastPromptReader), from
+    /// the same poll as `lastPrompt`; nil until it has named the session.
+    var sessionTitle: String?
+    /// The tab's claude's permission mode (`permission_mode` of its newest
+    /// hook event that had one); nil while not known or claude isn't running.
+    var permissionMode: String?
+    /// Background tasks of the tab's claude still running at its last Stop
+    /// (shells, monitors, agents); closing the tab or quitting ends them.
+    var runningBackgroundTasks: Int = 0
 
     /// The Claude session this tab's claude writes to. Set when the tab
     /// starts claude (`--session-id` / `--resume`), then follows the tab's
@@ -80,6 +89,12 @@ final class TerminalTab: Identifiable {
         // without our hooks) is followed through the folder's newest
         // session, as before binding existed. The id stays for a relaunch.
         if claudeState == .notRunning { return nil }
+        return ownTranscriptURL
+    }
+
+    /// The transcript of the session the tab is bound to, also after its
+    /// claude has exited (the session's name stays the tab's); nil unbound.
+    var ownTranscriptURL: URL? {
         let own: URL? = if let transcriptPath {
             URL(fileURLWithPath: transcriptPath)
         } else if let id = claudeSessionID, let directory = workingDirectory {
@@ -125,10 +140,18 @@ final class TerminalTab: Identifiable {
         session?.reportedDirectory ?? session?.configuration.workingDirectory
     }
 
-    /// What the tab list and the window title render. If the user has renamed
-    /// the tab we respect that; otherwise it tracks the shell's live cwd so
-    /// `cd ../other` retitles the tab to `other`.
+    /// What the tab list, banners and menus call the tab: the name the user
+    /// gave it, else the session's name from Claude Code, else the folder.
     var displayTitle: String {
+        if hasCustomTitle { return title }
+        if let sessionTitle { return sessionTitle }
+        return folderTitle
+    }
+
+    /// The window title: the name the user gave the tab, else the folder of
+    /// the shell's live cwd, so `cd ../other` retitles it to `other` (the
+    /// tab's path is the window's subtitle).
+    var folderTitle: String {
         if hasCustomTitle { return title }
         if let cwd = liveCwd, !cwd.isEmpty {
             let last = (cwd as NSString).lastPathComponent
@@ -158,6 +181,8 @@ final class TerminalTab: Identifiable {
         self.transcriptPath = nil
         self.claudeState = nil
         self.needsAttention = false
+        self.permissionMode = nil
+        self.runningBackgroundTasks = 0
     }
 }
 

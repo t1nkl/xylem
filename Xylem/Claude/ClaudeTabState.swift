@@ -54,6 +54,16 @@ nonisolated struct ClaudeTabEvent: Equatable, Sendable {
     let sessionID: String?
     let transcriptPath: String?
     let time: Date
+    /// `permission_mode` (default, plan, acceptEdits, auto, dontAsk,
+    /// bypassPermissions); nil when the event has none.
+    var permissionMode: String? = nil
+    /// Background tasks still running or about to (`background_tasks`
+    /// entries with status running or pending). Of the events Xylem
+    /// subscribes to only Stop carries the list (2.1.332): nil on the others.
+    var runningBackgroundTasks: Int? = nil
+
+    /// Task statuses that still hold work the session would lose.
+    static let liveTaskStatuses: Set<String> = ["running", "pending"]
 
     static func parse(_ data: Data, at time: Date) -> ClaudeTabEvent? {
         guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -84,7 +94,12 @@ nonisolated struct ClaudeTabEvent: Equatable, Sendable {
         }
         let sessionID = (object["session_id"] as? String).flatMap { $0.isEmpty ? nil : $0 }
         let transcript = (object["transcript_path"] as? String).flatMap { $0.isEmpty ? nil : $0 }
-        return ClaudeTabEvent(kind: kind, sessionID: sessionID, transcriptPath: transcript, time: time)
+        let tasks = (object["background_tasks"] as? [Any]).map { list in
+            list.count(where: { (($0 as? [String: Any])?["status"] as? String).map(liveTaskStatuses.contains) ?? false })
+        }
+        return ClaudeTabEvent(kind: kind, sessionID: sessionID, transcriptPath: transcript, time: time,
+                              permissionMode: (object["permission_mode"] as? String).flatMap { $0.isEmpty ? nil : $0 },
+                              runningBackgroundTasks: tasks)
     }
 
     /// The tab's claude moved to another session (`/clear`, `/resume`).

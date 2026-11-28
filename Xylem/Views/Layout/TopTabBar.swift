@@ -298,13 +298,17 @@ private struct TopTab: View {
                 HStack(spacing: 4) {
                     TabTitleField(title: tab.displayTitle, isEditing: $isEditing,
                                   onRename: onRename, onFinish: onReactivate) {
+                        // A session's name reads from its start ("Ship the login…").
                         Text(tab.displayTitle)
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(isActive ? AppTheme.Colors.textPrimary : AppTheme.Colors.panelText)
                             .lineLimit(1)
-                            .truncationMode(.middle)
+                            .truncationMode(.tail)
                     }
                     .font(.system(size: 12, weight: .semibold))
+                    // Background tasks are in the hover card: a 200 pt tab
+                    // has room for the title and one mark.
+                    if !isEditing { PermissionModeBadge(mode: tab.permissionMode) }
                     Spacer(minLength: 2)
                     if !isEditing && canClose && isHovering {
                         Button(action: onClose) {
@@ -489,6 +493,9 @@ private struct TopTabHoverCard: View {
                     }
                 }
                 Text(path).lineLimit(2).truncationMode(.head)
+                ForEach(tab.detailLines(includingCache: true), id: \.self) { line in
+                    Text(line).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                }
             }
             .font(.system(size: 11))
             .foregroundStyle(AppTheme.Colors.textMuted)

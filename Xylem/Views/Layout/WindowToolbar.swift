@@ -172,7 +172,12 @@ private struct MetersToolbarItem: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            ContextRingItem(app: app)
+            // No stack spacing for the cache item: it is often empty, and an
+            // empty view would still get the gap. It pads itself when shown.
+            HStack(spacing: 0) {
+                ContextRingItem(app: app)
+                ActiveTabCacheItem(app: app)
+            }
             if app.claudeStates.planLimits != nil {
                 Rectangle()
                     .fill(Color.primary.opacity(0.15))
@@ -181,6 +186,16 @@ private struct MetersToolbarItem: View {
             }
         }
         .padding(.horizontal, 12)
+    }
+}
+
+/// The active tab's prompt cache, when it has expired or soon will. Its own
+/// View: the tab's status line input changes with every request.
+private struct ActiveTabCacheItem: View {
+    let app: AppModel
+
+    var body: some View {
+        PromptCacheToolbarItem(cache: app.activeSession == nil ? nil : app.tabs.activeTab?.liveStatus?.promptCache)
     }
 }
 
@@ -483,7 +498,7 @@ struct PlanLimitsToolbarItem: View {
     }
 
     /// "14:10" today (after `todayPrefix`), else "Mon 09:00".
-    static func dayTime(_ date: Date, now: Date, todayPrefix: String = "") -> String {
+    nonisolated static func dayTime(_ date: Date, now: Date, todayPrefix: String = "") -> String {
         if Calendar.current.isDate(date, inSameDayAs: now) {
             return todayPrefix + date.formatted(date: .omitted, time: .shortened)
         }

@@ -39,13 +39,19 @@ final class TabActivityViewModel {
         let transcript: URL?
         /// Unbound tabs: the folder whose newest session is used.
         let directory: String?
+        /// The session the tab is bound to, also after claude exited: the
+        /// only source of its name.
+        let own: URL?
         let previousMtime: Date?
     }
 
     private nonisolated struct Scan: Sendable {
         let id: UUID
         let mtime: Date
+        /// Read only when the file changed (`advanced`).
         let prompt: String?
+        /// The name of the tab's own session, read with the prompt.
+        let title: String?
         let advanced: Bool
     }
 
@@ -95,6 +101,7 @@ final class TabActivityViewModel {
                 id: tab.id,
                 transcript: transcript,
                 directory: transcript == nil ? dir : nil,
+                own: tab.ownTranscriptURL,
                 previousMtime: snapshots[tab.id]?.mtime
             )
         }
@@ -110,7 +117,7 @@ final class TabActivityViewModel {
 
         let now = Date()
         let activeIDs = Set(tabs.map(\.id))
-        var updates: [UUID: (busy: Bool, advanced: Bool, prompt: String?)] = [:]
+        var updates: [UUID: (busy: Bool, advanced: Bool, prompt: String?, title: String?)] = [:]
 
         for scan in scans {
             var snap = snapshots[scan.id] ?? Snapshot(mtime: .distantPast, lastChange: .distantPast)
@@ -120,7 +127,7 @@ final class TabActivityViewModel {
             }
             snapshots[scan.id] = snap
             let busy = now.timeIntervalSince(snap.lastChange) < busyWindow
-            updates[scan.id] = (busy, scan.advanced, scan.prompt)
+            updates[scan.id] = (busy, scan.advanced, scan.prompt, scan.title)
         }
 
         // Drop tabs that no longer exist so the snapshot map doesn't grow.
@@ -137,8 +144,13 @@ final class TabActivityViewModel {
                 let shouldBeBusy = update?.busy ?? false
                 if tab.isBusy != shouldBeBusy { tab.isBusy = shouldBeBusy }
             }
-            if let update, update.advanced, tab.lastPrompt != update.prompt {
-                tab.lastPrompt = update.prompt
+            if let update, update.advanced {
+                if tab.lastPrompt != update.prompt { tab.lastPrompt = update.prompt }
+                if tab.sessionTitle != update.title { tab.sessionTitle = update.title }
+            } else if update == nil, tab.sessionTitle != nil {
+                // No transcript at all (a new session before its first
+                // message): a name from before isn't this one's.
+                tab.sessionTitle = nil
             }
         }
 
@@ -196,19 +208,29 @@ final class TabActivityViewModel {
         return BranchKey(cwd: query.cwd, headPath: headPath, headMtime: mtime)
     }
 
-    /// Re-reads the latest user prompt only for tabs whose mtime advanced -
+    /// Re-reads the latest user prompt and the session's name only for tabs
+    /// whose mtime advanced -
     /// untouched jsonl files cost one directory listing and one stat, and
     /// LastPromptReader itself parses only appended lines.
     @concurrent nonisolated
     private static func scan(_ queries: [Query]) async -> [Scan] {
         queries.compactMap { query in
-            guard let url = query.transcript ?? query.directory.flatMap({ SessionFileLocator.latestSessionFile(for: $0) }),
+            guard let url = query.transcript ?? query.directory.flatMap({ SessionFileLocator.latestSessionFile(for: $0) })
+                    ?? query.own,
                   let mtime = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?
                     .contentModificationDate
             else { return nil }
             let advanced = query.previousMtime.map { $0 != mtime } ?? true
-            let prompt = advanced ? LastPromptReader.read(from: url) : nil
-            return Scan(id: query.id, mtime: mtime, prompt: prompt, advanced: advanced)
+            guard advanced else { return Scan(id: query.id, mtime: mtime, prompt: nil, title: nil, advanced: false) }
+            let preview = LastPromptReader.preview(from: url)
+            // The name only from the tab's own session: the folder's newest
+            // (claude exited, a shell without one) may be another tab's.
+            let title = if let own = query.own {
+                own == url ? preview?.title : LastPromptReader.preview(from: own)?.title
+            } else {
+                nil as String?
+            }
+            return Scan(id: query.id, mtime: mtime, prompt: preview?.prompt, title: title, advanced: true)
         }
     }
 }

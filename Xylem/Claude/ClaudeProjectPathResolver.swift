@@ -11,7 +11,10 @@
 //  session file in the folder.
 //
 //  Resolutions are cached by folder path; session files rarely change their
-//  cwd, and reading them is the slow part.
+//  cwd, and reading them is the slow part. An answer from a transcript keeps
+//  the folder's mtime (it moves when a transcript is added or removed), so a
+//  manual refresh re-reads only the folders that changed; one decoded from
+//  the disk is always looked up again.
 //
 
 import Foundation
@@ -29,8 +32,15 @@ nonisolated enum ClaudeProjectPathResolver {
             return cached
         }
         let name = url.lastPathComponent
-        let resolved = cwdFromSessions(in: url) ?? decodeOnDisk(name) ?? naiveDecode(name)
-        cache.write(resolved, for: key)
+        let stamp = modificationDate(of: key)
+        if let cwd = cwdFromSessions(in: url) {
+            cache.write(cwd, stamp: stamp, for: key)
+            return cwd
+        }
+        // Read off the disk, not the folder: a volume mounted since changes
+        // it, so a refresh always looks again.
+        let resolved = decodeOnDisk(name) ?? naiveDecode(name)
+        cache.write(resolved, stamp: nil, for: key)
         return resolved
     }
 
@@ -40,9 +50,19 @@ nonisolated enum ClaudeProjectPathResolver {
         return resolve(folder: folder)
     }
 
-    /// Clear the in-memory cache. Intended for tests and manual refresh
-    /// actions where session files may have been rewritten.
+    /// Clear the in-memory cache. Intended for tests.
     static func clearCache() { cache.clear() }
+
+    /// Manual refresh: forgets the answers whose folder changed since they
+    /// were found (a transcript added or removed) and those decoded from the
+    /// disk; the rest stay. One `stat` per cached folder: call it off main.
+    static func forgetChangedFolders() {
+        cache.removeChanged(currentStamp: modificationDate(of:))
+    }
+
+    private static func modificationDate(of path: String) -> Date? {
+        (try? FileManager.default.attributesOfItem(atPath: path))?[.modificationDate] as? Date
+    }
 
     // MARK: - Private
 
@@ -200,19 +220,35 @@ nonisolated enum ClaudeProjectPathResolver {
     // MARK: - Thread-safe storage
 
     private final class PathCache: @unchecked Sendable {
-        private let queue = DispatchQueue(label: "com.xylem.path-resolver-cache", attributes: .concurrent)
-        private var storage: [String: String] = [:]
-
-        func read(for key: String) -> String? {
-            queue.sync { storage[key] }
+        private struct Entry {
+            let path: String
+            /// The folder's mtime when it was resolved.
+            let stamp: Date?
         }
 
-        func write(_ value: String, for key: String) {
-            queue.async(flags: .barrier) { self.storage[key] = value }
+        private let queue = DispatchQueue(label: "com.xylem.path-resolver-cache", attributes: .concurrent)
+        private var storage: [String: Entry] = [:]
+
+        func read(for key: String) -> String? {
+            queue.sync { storage[key]?.path }
+        }
+
+        func write(_ value: String, stamp: Date?, for key: String) {
+            queue.async(flags: .barrier) { self.storage[key] = Entry(path: value, stamp: stamp) }
         }
 
         func clear() {
             queue.async(flags: .barrier) { self.storage.removeAll() }
+        }
+
+        /// One `stat` per cached folder, outside the lock.
+        func removeChanged(currentStamp: (String) -> Date?) {
+            let stamps = queue.sync { storage.mapValues(\.stamp) }
+            let changed = stamps.filter { key, stamp in stamp == nil || currentStamp(key) != stamp }.map(\.key)
+            guard !changed.isEmpty else { return }
+            queue.async(flags: .barrier) {
+                for key in changed { self.storage[key] = nil }
+            }
         }
     }
 }

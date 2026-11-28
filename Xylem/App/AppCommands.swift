@@ -30,7 +30,7 @@ enum AppCommands {
                            run: { tabs.openEmptyTab() }),
             PaletteCommand(id: "close-tab", title: "Close Tab", subtitle: nil,
                            keywords: ["close", "tab"], icon: "xmark.square", shortcut: "⌘W",
-                           run: { if let id = tabs.activeTabID { tabs.closeTab(id) } }),
+                           run: { if let id = tabs.activeTabID { app.closeTab(id) } }),
             PaletteCommand(id: "next-waiting-tab", title: "Next Tab Waiting for You",
                            subtitle: "A tab where Claude finished, asks for permission or stopped on an error",
                            keywords: ["next", "waiting", "attention", "permission", "finished", "unread", "tab"],

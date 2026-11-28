@@ -185,10 +185,16 @@ final class ClaudeTabStateTracker {
                         tab.claudeSessionID = id
                         tab.transcriptPath = nil
                         if tab.liveStatus != nil { tab.liveStatus = nil }
+                        // Tasks are the process's, not the conversation's: the
+                        // count stays until the new session's first Stop.
                         bindingChanged = true
                     }
                     if id == tab.claudeSessionID {
                         if event.carriesState { events[tab.id] = event }
+                        if let mode = event.permissionMode, tab.permissionMode != mode { tab.permissionMode = mode }
+                        if let tasks = event.runningBackgroundTasks, tab.runningBackgroundTasks != tasks {
+                            tab.runningBackgroundTasks = tasks
+                        }
                         if event.kind == .promptSubmitted { notePrompt(event.time, tab: tab.id) }
                         if let path = event.transcriptPath, tab.transcriptPath != path {
                             tab.transcriptPath = path
@@ -241,8 +247,9 @@ final class ClaudeTabStateTracker {
                 state = resolved
             }
             if old != state { tab.claudeState = state }
-            // Claude has exited: no level to show until the next one reports.
-            if state == .notRunning, tab.liveStatus != nil { tab.liveStatus = nil }
+            // Claude has exited: no level, mode or tasks to show until the
+            // next one reports (its tasks ended with it).
+            if state == .notRunning { clearLiveDetails(of: tab) }
             // Not running: claude exited, the busy flag goes back to the
             // transcript-mtime fallback (claude may be restarted by hand).
             if let state, state != .notRunning {
@@ -426,7 +433,13 @@ final class ClaudeTabStateTracker {
         leavesPromptMarkers.remove(tab.id)
         if tab.claudeState != nil { tab.claudeState = nil }
         if tab.needsAttention { tab.needsAttention = false }
+        clearLiveDetails(of: tab)
+    }
+
+    private func clearLiveDetails(of tab: TerminalTab) {
         if tab.liveStatus != nil { tab.liveStatus = nil }
+        if tab.permissionMode != nil { tab.permissionMode = nil }
+        if tab.runningBackgroundTasks != 0 { tab.runningBackgroundTasks = 0 }
     }
 
     @concurrent nonisolated
